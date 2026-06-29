@@ -1,0 +1,81 @@
+{
+  "description": "Provenance and integrity metadata for the filtered BACI HS17 Parquet extract used by this project.",
+  "baci_source_name": "CEPII BACI",
+  "source_provider": "CEPII (Centre d'Etudes Prospectives et d'Informations Internationales)",
+  "source_homepage": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
+  "baci_release": "202601",
+  "hs_revision": "HS17",
+  "original_files_used": [
+    "BACI_HS17_Y2017_V202601.csv",
+    "BACI_HS17_Y2018_V202601.csv",
+    "BACI_HS17_Y2019_V202601.csv",
+    "BACI_HS17_Y2020_V202601.csv",
+    "BACI_HS17_Y2021_V202601.csv",
+    "BACI_HS17_Y2022_V202601.csv",
+    "BACI_HS17_Y2023_V202601.csv",
+    "BACI_HS17_Y2024_V202601.csv"
+  ],
+  "original_files_dir": "dataset raw/BACI_HS17_V202601",
+  "filtered_output_file": "baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+  "filtered_output_relpath": "output/baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+  "produced_by_script": "extract_baci_products.py",
+  "years_included": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+  "hs6_codes_included": ["151110", "740311", "710812"],
+  "hs6_code_descriptions": {
+    "151110": "Palm oil, crude",
+    "740311": "Copper, refined: cathodes and sections of cathodes, unwrought",
+    "710812": "Gold, non-monetary: unwrought forms (excluding powder)"
+  },
+  "columns_retained": ["t", "k", "i", "j", "v", "q"],
+  "column_definitions": {
+    "t": "year",
+    "k": "HS6 product code (six-character string)",
+    "i": "exporter country code (BACI numeric country code)",
+    "j": "importer country code (BACI numeric country code)",
+    "v": "trade value",
+    "q": "quantity"
+  },
+  "record_counts": {
+    "total_records": 25844,
+    "by_hs6_code": {
+      "151110": 6717,
+      "740311": 6922,
+      "710812": 12205
+    },
+    "by_year": {
+      "2017": 2783,
+      "2018": 3094,
+      "2019": 3279,
+      "2020": 3162,
+      "2021": 3358,
+      "2022": 3510,
+      "2023": 3445,
+      "2024": 3213
+    },
+    "reconciliation": "An independent ground-truth count (stdlib csv field-4 scan, no pandas) equals the number of records written to the Parquet for every (year, hs6_code). Zero records were lost; full table in output/extraction_report.csv."
+  },
+  "important_transformations_done_before_upload": "None beyond filtering. Rows were filtered to the three selected HS6 codes only. Column k was read and stored as a six-character string (validated via left zero-fill); no retained value was altered, because every BACI code is already stored as six characters. No rows were aggregated and no derived fields were added. Derived fields are created later by the project pipeline.",
+  "important_unit_notes": {
+    "v": "BACI trade value in thousands of current USD",
+    "q": "BACI quantity in metric tons (missing quantities are encoded as NA in the source)",
+    "k": "HS6 product code; must remain a six-character string"
+  },
+  "not_synthetic": true,
+  "data_provenance": "official-derived (filtered extract of official CEPII BACI files); not synthetic fixture data",
+  "created_by": "manual local filtering from official CEPII BACI files via extract_baci_products.py",
+  "created_date": "2026-06-28",
+  "checksums": {
+    "hash_algorithm": "sha256",
+    "filtered_output_sha256": "0e493e057c8fd57902328551a9c874d22aea0e4c3437432617489c7c3571fe12",
+    "country_codes_sha256": "c6892f28bea23d689b29b074d299cea7f5196c708b03026fbe419fa4ecb4e820",
+    "product_codes_sha256": "4abb74d330c3a1969ccfc4652e6ef849963980d55e45ad768eb54a32747efd5e",
+    "world_bank_workbook_sha256": "9fbcb348f40ecdb02eb1bcf858a2965383d2aaf3445e8920dd7d60ae7b04af51"
+  },
+  "checksum_source_files": {
+    "filtered_output_sha256": "output/baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+    "country_codes_sha256": "dataset raw/BACI_HS17_V202601/country_codes_V202601.csv",
+    "product_codes_sha256": "dataset raw/BACI_HS17_V202601/product_codes_HS17_V202601.csv",
+    "world_bank_workbook_sha256": "dataset raw/CMO-Historical-Data-Annual.xlsx"
+  },
+  "world_bank_workbook_note": "CMO-Historical-Data-Annual.xlsx is the World Bank Commodity Markets Outlook ('Pink Sheet') annual historical series. It is a separate official reference dataset (commodity prices) used downstream by the project pipeline; it is not part of the BACI extract."
+}

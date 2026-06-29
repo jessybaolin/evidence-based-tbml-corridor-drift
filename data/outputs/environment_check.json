@@ -1,0 +1,93 @@
+{
+  "checks": [
+    {
+      "module": "pandas",
+      "status": "pass",
+      "version": "3.0.4"
+    },
+    {
+      "module": "pyarrow",
+      "status": "pass",
+      "version": "24.0.0"
+    },
+    {
+      "module": "openpyxl",
+      "status": "pass",
+      "version": "3.1.5"
+    },
+    {
+      "module": "numpy",
+      "status": "pass",
+      "version": "2.4.6"
+    },
+    {
+      "module": "sklearn",
+      "status": "pass",
+      "version": "1.9.0"
+    },
+    {
+      "module": "xgboost",
+      "status": "pass",
+      "version": "3.3.0"
+    },
+    {
+      "module": "shap",
+      "status": "pass",
+      "version": "0.52.0"
+    },
+    {
+      "module": "matplotlib",
+      "status": "pass",
+      "version": "3.11.0"
+    },
+    {
+      "module": "yaml",
+      "status": "pass",
+      "version": "6.0.3"
+    },
+    {
+      "module": "tabulate",
+      "status": "pass",
+      "version": "0.10.0"
+    },
+    {
+      "module": "jinja2",
+      "status": "pass",
+      "version": "3.1.6"
+    },
+    {
+      "module": "pygments",
+      "status": "pass",
+      "version": "2.20.0"
+    },
+    {
+      "module": "weasyprint",
+      "status": "pass",
+      "version": "69.0"
+    },
+    {
+      "module": "pypdf",
+      "status": "pass",
+      "version": "6.14.2"
+    },
+    {
+      "module": "PIL",
+      "status": "pass",
+      "version": "12.2.0"
+    },
+    {
+      "module": "joblib",
+      "status": "pass",
+      "version": "1.5.3"
+    },
+    {
+      "module": "graphviz",
+      "status": "pass",
+      "version": "0.21"
+    }
+  ],
+  "generated_at": "2026-06-29T08:41:56+00:00",
+  "python_executable": "C:\\Users\\jessl\\Projects\\evidence-based-tbml-corridor-drift\\.venv\\Scripts\\python.exe",
+  "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
+  "status": "pass"
+}
