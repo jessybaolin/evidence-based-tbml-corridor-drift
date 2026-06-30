@@ -1,0 +1,60 @@
+typology_cards:
+  - typology_id: TBML_VALUATION_CONTEXT
+    source_document: Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf; Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf
+    source_page_or_section: 2020 report, common TBML techniques section around pp. 26-27; 2021 risk indicators, trade document and commodity risk indicators around p. 5.
+    plain_english_meaning: Over- or under-valuation and inconsistent market values are recognised TBML risk contexts, but public aggregate data cannot prove invoice mispricing.
+    related_project_features: [benchmark_residual, benchmark_adjusted_drift, robust_historical_z, same_family_year_peer_percentile]
+    allowed_language: "The observation has valuation-style features that merit human review."
+    prohibited_language: "This proves over-invoicing, money laundering, fraud, or criminal intent."
+    required_caveats:
+      - World Bank benchmarks are broad market context, not invoice-level fair values.
+      - BACI rows are annual aggregates, not invoices or shipments.
+    recommended_human_review_steps:
+      - Compare invoices, contracts, customs declarations, and settlement records.
+      - Check product grade, freight, insurance, Incoterms, and contract timing.
+  - typology_id: TBML_HIGH_VALUE_LOW_VOLUME_CONTEXT
+    source_document: Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf
+    source_page_or_section: Economic sectors and products vulnerable to TBML activity, around pp. 20-23.
+    plain_english_meaning: High-value products and products with wide pricing margins, including precious metals, can be relevant typology context.
+    related_project_features: [unit_value_usd_per_metric_ton, quantity_yoy_change, value_quantity_divergence, valid_extreme_flag]
+    allowed_language: "High-value/low-volume commodity context increases the need for caveated review."
+    prohibited_language: "The commodity is inherently suspicious."
+    required_caveats:
+      - HS6 product groups may contain product heterogeneity.
+      - Legitimate commercial reasons may explain high unit values.
+    recommended_human_review_steps:
+      - Review quality, purity, form, and route documentation.
+      - Check whether trade volumes are commercially plausible for the entity.
+  - typology_id: TBML_PHANTOM_SHIPMENT_LIMITATION
+    source_document: Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf
+    source_page_or_section: Common TBML techniques section around pp. 26-27.
+    plain_english_meaning: Phantom shipment is a known technique, but this lab cannot detect whether goods physically moved because it lacks shipment-level evidence.
+    related_project_features: [missing_quantity_flag, corridor_novelty_flag, corridor_reactivation_flag]
+    allowed_language: "The public-data pattern may motivate checking shipment evidence."
+    prohibited_language: "No goods moved."
+    required_caveats:
+      - BACI does not contain bills of lading, vessel movements, or inspection records.
+    recommended_human_review_steps:
+      - Obtain shipping documents, bills of lading, and customs inspection records.
+  - typology_id: TBML_BENIGN_MARKET_SHOCK_CAVEAT
+    source_document: Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf
+    source_page_or_section: Handling notes around p. 2 and trade document/commodity indicators around p. 5.
+    plain_english_meaning: A risk indicator is not conclusive; commodity price shocks, freight, quality, and contract effects can be benign explanations.
+    related_project_features: [benchmark_yoy_change, benchmark_consistency_gap, benchmark_residual]
+    allowed_language: "Benchmark-consistent movement may lower review priority or require benign explanation checks."
+    prohibited_language: "A high score is a suspicious activity report conclusion."
+    required_caveats:
+      - One or more indicators alone does not establish TBML.
+    recommended_human_review_steps:
+      - Compare the movement with market benchmarks and peer corridors.
+  - typology_id: TBML_MISSING_PRIVATE_INFO_REVIEW_STEPS
+    source_document: Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf
+    source_page_or_section: Audience and use of risk indicators around p. 2.
+    plain_english_meaning: Several useful indicators require external data held by banks, customs, or counterparties; public data is only a triage layer.
+    related_project_features: [missing_quantity_flag, missing_country_mapping_flag, data_quality_score]
+    allowed_language: "The case requires private records and human judgement before any conclusion."
+    prohibited_language: "The public-data model is sufficient for disposition."
+    required_caveats:
+      - This lab lacks customer, payment, invoice, beneficial-owner, and shipment records.
+    recommended_human_review_steps:
+      - Gather customer due diligence, ownership, payment, invoice, and logistics records.

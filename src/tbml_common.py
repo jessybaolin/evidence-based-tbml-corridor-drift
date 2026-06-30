@@ -105,6 +105,42 @@ def write_json(path: Path, payload: Any) -> None:
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
+def load_yaml(path: Path) -> Any:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def write_yaml(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8")
+
+
+
+# ===== Config loaders (thin readers for configs/*.yml) =====
+# def project_config() -> dict[str, Any]:
+#     # Years, seeds, train/val/test split, top_k, the boundary sentence, etc.
+#     return load_yaml(CONFIGS / "project.yml")
+
+
+# def families() -> list[dict[str, Any]]:
+#     # The three HS6 commodity families and their metadata.
+#     return load_yaml(CONFIGS / "hs_families.yml")["families"]
+
+
+def benchmarks_config() -> list[dict[str, Any]]:
+    # World Bank benchmark series mapping + unit/conversion info.
+    return load_yaml(CONFIGS / "benchmark_series.yml")["benchmarks"]
+
+
+# def thresholds() -> dict[str, Any]:
+#     # Rule weights/reference values, model-selection settings, evidence limits.
+#     return load_yaml(CONFIGS / "thresholds.yml")
+
+
+def benchmark_lookup_by_label() -> dict[str, dict[str, Any]]:
+    # Index the benchmark config by its workbook "source_label" (lowercased) so the World Bank
+    # parser can find the Palm oil / Copper / Gold columns by name.
+    return {str(item["source_label"]).strip().casefold(): item for item in benchmarks_config()}
+
 
 # ===== Source loading & validation =====
 def get_raw_path(filename: str) -> Path:
@@ -196,7 +232,89 @@ def source_notes_check(notes: dict[str, Any]) -> dict[str, Any]:
         "not_synthetic": bool(notes.get("not_synthetic")) is True,
     }
 
-def extract_worldbank_benchmarks():
+def extract_worldbank_benchmarks(workbook_path: Path | None = None) -> pd.DataFrame:
+    # Parse the World Bank "Pink Sheet" annual workbook into one tidy benchmark row per
+    # (commodity, year). The sheet layout is discovered (not hard-coded by cell) so it is robust.
+    workbook_path = workbook_path or get_raw_path(WORLD_BANK_FILE)
+    workbook = pd.ExcelFile(workbook_path)
+    if "Annual Prices (Nominal)" not in workbook.sheet_names:
+        raise ValueError(f"Expected Annual Prices (Nominal) sheet; available={workbook.sheet_names}")
+    sheet = pd.read_excel(workbook_path, sheet_name="Annual Prices (Nominal)", header=None, engine="openpyxl")
+    # Discover commodity names and units rather than hard-coding cell coordinates.
+    # Scan the first ~20 rows for the one that contains all three commodity labels (Palm oil/Copper/Gold).
+    label_map = benchmark_lookup_by_label()
+    commodity_row = None
+    commodity_cols: dict[str, int] = {}
+    for r in range(min(20, len(sheet))):
+        row_values = [str(x).strip().casefold() for x in sheet.iloc[r].tolist()]
+        found = {}
+        for label in label_map:
+            if label in row_values:
+                found[label] = row_values.index(label)
+        if len(found) == len(label_map):
+            commodity_row = r
+            commodity_cols = found
+            break
+    if commodity_row is None:
+        raise ValueError("Could not locate Palm oil, Copper, and Gold columns in World Bank annual sheet")
+    # The unit string sits directly under the commodity header row.
+    unit_row = commodity_row + 1
+    # Find the column that holds the years (it must contain all of 2017..2024).
+    year_col = None
+    for c in range(min(5, sheet.shape[1])):
+        years = pd.to_numeric(sheet.iloc[:, c], errors="coerce")
+        if set(EXPECTED_YEARS).issubset(set(years.dropna().astype(int).tolist())):
+            year_col = c
+            break
+    if year_col is None:
+        raise ValueError("Could not locate year column in World Bank annual sheet")
+    # Walk each data row; for years in scope, read each commodity's price and normalize units.
+    rows: list[dict[str, Any]] = []
+    for row_idx in range(unit_row + 1, len(sheet)):
+        year_val = pd.to_numeric(pd.Series([sheet.iat[row_idx, year_col]]), errors="coerce").iat[0]
+        if pd.isna(year_val):
+            continue
+        year = int(year_val)
+        if year not in EXPECTED_YEARS:
+            continue
+        for label, col in commodity_cols.items():
+            meta = label_map[label]
+            value = pd.to_numeric(pd.Series([sheet.iat[row_idx, col]]), errors="coerce").iat[0]
+            if pd.isna(value):
+                continue
+            # Guard: the workbook's compact unit must match what the config expects for this series.
+            unit_compact = str(sheet.iat[unit_row, col]).strip()
+            expected_compact = str(meta.get("workbook_unit"))
+            if unit_compact != expected_compact:
+                raise ValueError(f"World Bank unit mismatch for {meta['source_label']}: {unit_compact} != {expected_compact}")
+            price_original = float(value)
+            # Only gold needs converting (troy-ounce -> metric-ton); palm oil/copper are already per-ton.
+            if str(meta["family_id"]) == "gold_unwrought":
+                price_per_mt = price_original * GOLD_TROY_OUNCE_TO_METRIC_TON_FACTOR
+            else:
+                price_per_mt = price_original
+            rows.append({
+                "family_id": meta["family_id"],
+                "hs6": str(meta["hs6"]),
+                "benchmark_series_id": meta["benchmark_series_id"],
+                "benchmark_price_original": price_original,     # keep the raw value
+                "benchmark_unit_original": meta["original_unit"],
+                "benchmark_price_usd_per_metric_ton": float(price_per_mt),  # normalized value
+                "benchmark_year": year,
+                "benchmark_conversion_method": meta["conversion_method"],
+                "benchmark_caveat": meta["caveat"],
+                "source_filename": workbook_path.name,
+                "source_sheet": "Annual Prices (Nominal)",
+                "source_compact_unit": unit_compact,
+            })
+    result = pd.DataFrame(rows).sort_values(["family_id", "benchmark_year"], kind="mergesort").reset_index(drop=True)
+    # Year-over-year log change of the benchmark itself (used later for benchmark-consistency checks).
+    result["benchmark_yoy_change"] = result.groupby("family_id", sort=False)["benchmark_price_usd_per_metric_ton"].transform(lambda s: np.log(s / s.shift(1)))
+    result["benchmark_yoy_change"] = result["benchmark_yoy_change"].replace([np.inf, -np.inf], np.nan)
+    # Sanity check: exactly 3 commodities x 8 years = 24 rows.
+    expected_rows = len(EXPECTED_YEARS) * len(EXPECTED_HS6)
+    if len(result) != expected_rows:
+        raise ValueError(f"Expected {expected_rows} annual benchmark rows; parsed {len(result)}")
+    return result
 
-    return 0
 

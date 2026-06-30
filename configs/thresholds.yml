@@ -1,0 +1,19 @@
+rules:
+  robust_z_reference: 4.0
+  benchmark_residual_reference: 1.0
+  benchmark_drift_reference: 0.70
+  yoy_reference: 0.80
+  divergence_reference: 0.80
+  peer_tail_reference: 0.90
+  novelty_weight: 0.06
+  reactivation_weight: 0.08
+  valid_extreme_weight: 0.14
+  quality_penalty_weight: 0.08
+  benchmark_consistency_credit: 0.15
+model_selection:
+  selected_metric: average_precision
+  hard_negative_fpr_tolerance: 0.20
+  hybrid_weights: [0.25, 0.50, 0.75]
+evidence:
+  top_n: 30
+  max_evidence_per_case: 5

@@ -1,0 +1,309 @@
+{
+  "baci_source_confirmed": {
+    "actual_by_hs6": {
+      "151110": 6717,
+      "710812": 12205,
+      "740311": 6922
+    },
+    "actual_by_year": {
+      "2017": 2783,
+      "2018": 3094,
+      "2019": 3279,
+      "2020": 3162,
+      "2021": 3358,
+      "2022": 3510,
+      "2023": 3445,
+      "2024": 3213
+    },
+    "by_hs6_matches_notes": true,
+    "by_year_matches_notes": true,
+    "expected_file": "baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+    "hs6_exact": true,
+    "k_dtype_after_normalization": "string",
+    "notes_total_records": 25844,
+    "preview": [
+      {
+        "i": 8,
+        "j": 380,
+        "k": "710812",
+        "q": 0.006,
+        "t": 2017,
+        "v": 212.456
+      },
+      {
+        "i": 8,
+        "j": 757,
+        "k": "710812",
+        "q": 0.011,
+        "t": 2017,
+        "v": 405.058
+      },
+      {
+        "i": 8,
+        "j": 792,
+        "k": "710812",
+        "q": 0.032,
+        "t": 2017,
+        "v": 968.556
+      },
+      {
+        "i": 12,
+        "j": 380,
+        "k": "710812",
+        "q": 0.006,
+        "t": 2017,
+        "v": 258.479
+      },
+      {
+        "i": 12,
+        "j": 792,
+        "k": "710812",
+        "q": 0.011,
+        "t": 2017,
+        "v": 497.92
+      },
+      {
+        "i": 28,
+        "j": 842,
+        "k": "710812",
+        "q": 0.001,
+        "t": 2017,
+        "v": 53.021
+      },
+      {
+        "i": 31,
+        "j": 757,
+        "k": "710812",
+        "q": 7.177,
+        "t": 2017,
+        "v": 143056.405
+      },
+      {
+        "i": 31,
+        "j": 792,
+        "k": "710812",
+        "q": 0.276,
+        "t": 2017,
+        "v": 11931.131
+      }
+    ],
+    "required_columns_present": true,
+    "row_count": 25844,
+    "row_count_matches_notes": true,
+    "row_count_nonzero": true,
+    "sha256": "0e493e057c8fd57902328551a9c874d22aea0e4c3437432617489c7c3571fe12",
+    "years_exact": true
+  },
+  "created_at": "2026-06-30T09:32:51.172977+00:00",
+  "data_source_notes_checks": {
+    "hs17": true,
+    "no_derived_fields_added": true,
+    "not_synthetic": true,
+    "official_derived_cepii_baci": true,
+    "release_202601": true,
+    "retained_fields": true,
+    "selected_hs6_families": true,
+    "years_2017_2024": true
+  },
+  "data_source_notes_payload": {
+    "baci_release": "202601",
+    "baci_source_name": "CEPII BACI",
+    "checksum_source_files": {
+      "country_codes_sha256": "dataset raw/BACI_HS17_V202601/country_codes_V202601.csv",
+      "filtered_output_sha256": "output/baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+      "product_codes_sha256": "dataset raw/BACI_HS17_V202601/product_codes_HS17_V202601.csv",
+      "world_bank_workbook_sha256": "dataset raw/CMO-Historical-Data-Annual.xlsx"
+    },
+    "checksums": {
+      "country_codes_sha256": "c6892f28bea23d689b29b074d299cea7f5196c708b03026fbe419fa4ecb4e820",
+      "filtered_output_sha256": "0e493e057c8fd57902328551a9c874d22aea0e4c3437432617489c7c3571fe12",
+      "hash_algorithm": "sha256",
+      "product_codes_sha256": "4abb74d330c3a1969ccfc4652e6ef849963980d55e45ad768eb54a32747efd5e",
+      "world_bank_workbook_sha256": "9fbcb348f40ecdb02eb1bcf858a2965383d2aaf3445e8920dd7d60ae7b04af51"
+    },
+    "column_definitions": {
+      "i": "exporter country code (BACI numeric country code)",
+      "j": "importer country code (BACI numeric country code)",
+      "k": "HS6 product code (six-character string)",
+      "q": "quantity",
+      "t": "year",
+      "v": "trade value"
+    },
+    "columns_retained": [
+      "t",
+      "k",
+      "i",
+      "j",
+      "v",
+      "q"
+    ],
+    "created_by": "manual local filtering from official CEPII BACI files via extract_baci_products.py",
+    "created_date": "2026-06-28",
+    "data_provenance": "official-derived (filtered extract of official CEPII BACI files); not synthetic fixture data",
+    "description": "Provenance and integrity metadata for the filtered BACI HS17 Parquet extract used by this project.",
+    "filtered_output_file": "baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+    "filtered_output_relpath": "output/baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+    "hs6_code_descriptions": {
+      "151110": "Palm oil, crude",
+      "710812": "Gold, non-monetary: unwrought forms (excluding powder)",
+      "740311": "Copper, refined: cathodes and sections of cathodes, unwrought"
+    },
+    "hs6_codes_included": [
+      "151110",
+      "740311",
+      "710812"
+    ],
+    "hs_revision": "HS17",
+    "important_transformations_done_before_upload": "None beyond filtering. Rows were filtered to the three selected HS6 codes only. Column k was read and stored as a six-character string (validated via left zero-fill); no retained value was altered, because every BACI code is already stored as six characters. No rows were aggregated and no derived fields were added. Derived fields are created later by the project pipeline.",
+    "important_unit_notes": {
+      "k": "HS6 product code; must remain a six-character string",
+      "q": "BACI quantity in metric tons (missing quantities are encoded as NA in the source)",
+      "v": "BACI trade value in thousands of current USD"
+    },
+    "not_synthetic": true,
+    "original_files_dir": "dataset raw/BACI_HS17_V202601",
+    "original_files_used": [
+      "BACI_HS17_Y2017_V202601.csv",
+      "BACI_HS17_Y2018_V202601.csv",
+      "BACI_HS17_Y2019_V202601.csv",
+      "BACI_HS17_Y2020_V202601.csv",
+      "BACI_HS17_Y2021_V202601.csv",
+      "BACI_HS17_Y2022_V202601.csv",
+      "BACI_HS17_Y2023_V202601.csv",
+      "BACI_HS17_Y2024_V202601.csv"
+    ],
+    "produced_by_script": "extract_baci_products.py",
+    "record_counts": {
+      "by_hs6_code": {
+        "151110": 6717,
+        "710812": 12205,
+        "740311": 6922
+      },
+      "by_year": {
+        "2017": 2783,
+        "2018": 3094,
+        "2019": 3279,
+        "2020": 3162,
+        "2021": 3358,
+        "2022": 3510,
+        "2023": 3445,
+        "2024": 3213
+      },
+      "reconciliation": "An independent ground-truth count (stdlib csv field-4 scan, no pandas) equals the number of records written to the Parquet for every (year, hs6_code). Zero records were lost; full table in output/extraction_report.csv.",
+      "total_records": 25844
+    },
+    "source_homepage": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
+    "source_provider": "CEPII (Centre d'Etudes Prospectives et d'Informations Internationales)",
+    "world_bank_workbook_note": "CMO-Historical-Data-Annual.xlsx is the World Bank Commodity Markets Outlook ('Pink Sheet') annual historical series. It is a separate official reference dataset (commodity prices) used downstream by the project pipeline; it is not part of the BACI extract.",
+    "years_included": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ]
+  },
+  "fatf_egmont_pdf_checks": [
+    {
+      "file_name": "Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf",
+      "pages": 66,
+      "readable": true,
+      "sample_text_length_first_pages": 3461
+    },
+    {
+      "file_name": "Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf",
+      "pages": 10,
+      "readable": true,
+      "sample_text_length_first_pages": 4408
+    }
+  ],
+  "fatf_egmont_web_check": {
+    "status": "manual_web_check_recorded_in_reports",
+    "summary": "Web search found official FATF pages for the 2020 trends report and 2021 risk indicators; no newer official TBML-specific replacement was identified during this run."
+  },
+  "project_boundary": "This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent.",
+  "source_inventory": [
+    {
+      "file_name": "baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+      "relpath": "data\\raw\\baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet",
+      "sha256": "0e493e057c8fd57902328551a9c874d22aea0e4c3437432617489c7c3571fe12",
+      "size_bytes": 340203
+    },
+    {
+      "file_name": "data_source_notes.json",
+      "relpath": "data\\raw\\data_source_notes.json",
+      "sha256": "a8a973d0797cbfcd4064b1dfd071faa441bdc7b766e719af9bbb53014365bfe6",
+      "size_bytes": 4342
+    },
+    {
+      "file_name": "CMO-Historical-Data-Annual.xlsx",
+      "relpath": "data\\raw\\CMO-Historical-Data-Annual.xlsx",
+      "sha256": "9fbcb348f40ecdb02eb1bcf858a2965383d2aaf3445e8920dd7d60ae7b04af51",
+      "size_bytes": 3177955
+    },
+    {
+      "file_name": "Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf",
+      "relpath": "data\\raw\\Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf",
+      "sha256": "0969e49877a1937a7bc49ac02ab10a444adca2c2ff2c7803ee6a35adea9f6828",
+      "size_bytes": 3108080
+    },
+    {
+      "file_name": "Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf",
+      "relpath": "data\\raw\\Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf",
+      "sha256": "670b80270b33354b17263d44393cd65386a96bdb1a171365f217048e7cca6afb",
+      "size_bytes": 2079148
+    },
+    {
+      "file_name": "country_codes_V202601.csv",
+      "relpath": "data\\raw\\country_codes_V202601.csv",
+      "sha256": "c6892f28bea23d689b29b074d299cea7f5196c708b03026fbe419fa4ecb4e820",
+      "size_bytes": 5346
+    },
+    {
+      "file_name": "product_codes_HS17_V202601.csv",
+      "relpath": "data\\raw\\product_codes_HS17_V202601.csv",
+      "sha256": "4abb74d330c3a1969ccfc4652e6ef849963980d55e45ad768eb54a32747efd5e",
+      "size_bytes": 598831
+    },
+    {
+      "file_name": "baci-readme.txt",
+      "relpath": "data\\raw\\baci-readme.txt",
+      "sha256": "156c8fe9d8582f24fdec5c43d912e3736dc515a6efd5cd04e513095a0db44c66",
+      "size_bytes": 571
+    }
+  ],
+  "world_bank_source_check": {
+    "annual_sheet_found": true,
+    "gold_2024_usd_per_metric_ton": 76766337.58191302,
+    "gold_conversion_factor": 32150.746568627983,
+    "rows_extracted": 24,
+    "sheet_names": [
+      "AFOSHEET",
+      "Annual Prices (Nominal)",
+      "Annual Indices (Nominal)",
+      "Annual Prices (Real)",
+      "Annual Indices (Real)",
+      "Description",
+      "Definitions",
+      "Index Weights"
+    ],
+    "units_by_family": {
+      "crude_palm_oil": "USD per metric ton",
+      "gold_unwrought": "USD per troy ounce",
+      "refined_copper_cathodes": "USD per metric ton"
+    },
+    "years": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ]
+  }
+}

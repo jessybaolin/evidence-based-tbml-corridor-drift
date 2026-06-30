@@ -1,0 +1,16 @@
+project_name: Evidence-First TBML Corridor Drift Lab
+project_slug: tbml-corridor-drift-lab-official
+project_version: "official-data-simplified-v1"
+analysis_start_year: 2017
+analysis_end_year: 2024
+hs_revision: HS17
+baci_release: "202601"
+source_access_date: "2026-06-28"
+primary_seed: 20260117
+scenario_seeds: [20260117, 20260123, 20260141]
+train_years: [2017, 2018, 2019, 2020]
+validation_years: [2021, 2022]
+test_years: [2023, 2024]
+top_k: 50
+brief_top_n: 5
+conclusion_boundary: "This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent."

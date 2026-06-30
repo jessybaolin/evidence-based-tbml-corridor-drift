@@ -68,57 +68,57 @@ def main() -> None:
     baci_checks = validate_baci_against_notes(baci, notes)
     notes_checks = source_notes_check(notes)
 
-    # # ---- 3. Parse the World Bank workbook + summarize benchmarks ----
-    # # Confirms the expected "Annual Prices (Nominal)" sheet exists and records the units per
-    # # commodity plus the gold troy-ounce -> metric-ton conversion factor (1,000,000 / 31.1034768).
-    # wb_path = get_raw_path(WORLD_BANK_FILE)
-    # workbook = pd.ExcelFile(wb_path)
-    # benchmarks = extract_worldbank_benchmarks(wb_path)
-    # benchmark_summary = {
-    #     "sheet_names": workbook.sheet_names,
-    #     "annual_sheet_found": "Annual Prices (Nominal)" in workbook.sheet_names,
-    #     "rows_extracted": int(len(benchmarks)),
-    #     "years": sorted(benchmarks["benchmark_year"].unique().astype(int).tolist()),
-    #     "units_by_family": benchmarks.groupby("family_id")["benchmark_unit_original"].first().to_dict(),
-    #     "gold_conversion_factor": 1_000_000 / 31.1034768,
-    #     # Spot-check one converted value (gold, 2024) so a reviewer can eyeball the unit math.
-    #     "gold_2024_usd_per_metric_ton": float(benchmarks.loc[(benchmarks["family_id"] == "gold_unwrought") & (benchmarks["benchmark_year"] == 2024), "benchmark_price_usd_per_metric_ton"].iloc[0]),
-    # }
+    # ---- 3. Parse the World Bank workbook + summarize benchmarks ----
+    # Confirms the expected "Annual Prices (Nominal)" sheet exists and records the units per
+    # commodity plus the gold troy-ounce -> metric-ton conversion factor (1,000,000 / 31.1034768).
+    wb_path = get_raw_path(WORLD_BANK_FILE)
+    workbook = pd.ExcelFile(wb_path)
+    benchmarks = extract_worldbank_benchmarks(wb_path)
+    benchmark_summary = {
+        "sheet_names": workbook.sheet_names,
+        "annual_sheet_found": "Annual Prices (Nominal)" in workbook.sheet_names,
+        "rows_extracted": int(len(benchmarks)),
+        "years": sorted(benchmarks["benchmark_year"].unique().astype(int).tolist()),
+        "units_by_family": benchmarks.groupby("family_id")["benchmark_unit_original"].first().to_dict(),
+        "gold_conversion_factor": 1_000_000 / 31.1034768,
+        # Spot-check one converted value (gold, 2024) so a reviewer can eyeball the unit math.
+        "gold_2024_usd_per_metric_ton": float(benchmarks.loc[(benchmarks["family_id"] == "gold_unwrought") & (benchmarks["benchmark_year"] == 2024), "benchmark_price_usd_per_metric_ton"].iloc[0]),
+    }
 
-    # # ---- 4. Confirm the FATF-Egmont PDFs are readable (typology context only) ----
-    # pdf_checks = [check_pdf_readable(FATF_2020_FILE), check_pdf_readable(FATF_2021_FILE)]
+    # ---- 4. Confirm the FATF-Egmont PDFs are readable (typology context only) ----
+    pdf_checks = [check_pdf_readable(FATF_2020_FILE), check_pdf_readable(FATF_2021_FILE)]
 
-    # # ---- 5. Assemble + write the source manifest ----
-    # # This single JSON is the authoritative "what are our inputs and are they valid" record.
-    # # BOUNDARY embeds the project's non-overclaiming conclusion sentence into the manifest.
-    # source_manifest = {
-    #     "created_at": pd.Timestamp.utcnow().isoformat(),
-    #     "project_boundary": BOUNDARY,
-    #     "source_inventory": inventory.to_dict(orient="records"),
-    #     "baci_source_confirmed": {
-    #         "expected_file": BACI_FILE,
-    #         "sha256": sha256_file(get_raw_path(BACI_FILE)),
-    #         **baci_checks,  # merge in the year/HS6/row-count check results
-    #     },
-    #     "data_source_notes_checks": notes_checks,
-    #     "data_source_notes_payload": notes,
-    #     "world_bank_source_check": benchmark_summary,
-    #     "fatf_egmont_pdf_checks": pdf_checks,
-    #     "fatf_egmont_web_check": {
-    #         "status": "manual_web_check_recorded_in_reports",
-    #         "summary": "Web search found official FATF pages for the 2020 trends report and 2021 risk indicators; no newer official TBML-specific replacement was identified during this run.",
-    #     },
-    # }
-    # write_json(DATA_OUTPUTS / "source_manifest.json", source_manifest)
+    # ---- 5. Assemble + write the source manifest ----
+    # This single JSON is the authoritative "what are our inputs and are they valid" record.
+    # BOUNDARY embeds the project's non-overclaiming conclusion sentence into the manifest.
+    source_manifest = {
+        "created_at": pd.Timestamp.utcnow().isoformat(),
+        "project_boundary": BOUNDARY,
+        "source_inventory": inventory.to_dict(orient="records"),
+        "baci_source_confirmed": {
+            "expected_file": BACI_FILE,
+            "sha256": sha256_file(get_raw_path(BACI_FILE)),
+            **baci_checks,  # merge in the year/HS6/row-count check results
+        },
+        "data_source_notes_checks": notes_checks,
+        "data_source_notes_payload": notes,
+        "world_bank_source_check": benchmark_summary,
+        "fatf_egmont_pdf_checks": pdf_checks,
+        "fatf_egmont_web_check": {
+            "status": "manual_web_check_recorded_in_reports",
+            "summary": "Web search found official FATF pages for the 2020 trends report and 2021 risk indicators; no newer official TBML-specific replacement was identified during this run.",
+        },
+    }
+    write_json(DATA_OUTPUTS / "source_manifest.json", source_manifest)
 
-    # # Console summary of the headline checks.
-    # print(json.dumps({
-    #     "inventory_rows": len(inventory),
-    #     "baci_row_count": baci_checks["row_count"],
-    #     "baci_counts_match_notes": baci_checks["row_count_matches_notes"],
-    #     "benchmark_rows": benchmark_summary["rows_extracted"],
-    #     "pdf_checks": pdf_checks,
-    # }, indent=2))
+    # Console summary of the headline checks.
+    print(json.dumps({
+        "inventory_rows": len(inventory),
+        "baci_row_count": baci_checks["row_count"],
+        "baci_counts_match_notes": baci_checks["row_count_matches_notes"],
+        "benchmark_rows": benchmark_summary["rows_extracted"],
+        "pdf_checks": pdf_checks,
+    }, indent=2))
 
 
 if __name__ == "__main__":

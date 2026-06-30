@@ -1,0 +1,26 @@
+scenarios:
+  - scenario_id: synthetic_overvaluation
+    label: synthetic_review_priority
+    target_value: 1
+    hard_negative: false
+    transformation: Trade value is multiplied while quantity is held constant.
+  - scenario_id: synthetic_undervaluation
+    label: synthetic_review_priority
+    target_value: 1
+    hard_negative: false
+    transformation: Trade value is reduced while quantity is held constant.
+  - scenario_id: synthetic_low_volume_high_value
+    label: synthetic_review_priority
+    target_value: 1
+    hard_negative: false
+    transformation: Trade value rises while quantity falls.
+  - scenario_id: hard_negative_benchmark_consistent_movement
+    label: synthetic_review_priority
+    target_value: 0
+    hard_negative: true
+    transformation: Unit value is aligned to same-family/year benchmark context.
+  - scenario_id: hard_negative_proportional_value_quantity_growth
+    label: synthetic_review_priority
+    target_value: 0
+    hard_negative: true
+    transformation: Trade value and quantity rise proportionally, leaving unit value broadly unchanged.

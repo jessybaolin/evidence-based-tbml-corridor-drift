@@ -1,0 +1,28 @@
+families:
+  - family_id: crude_palm_oil
+    hs6: "151110"
+    product_name: "Crude palm oil"
+    benchmark_series_id: world_bank_palm_oil
+    project_role: asia_bulk_commodity_anchor
+    expected_quantity_unit: metric_ton
+    caveats:
+      - Aggregate HS6 unit values may reflect quality, freight, insurance, and contract timing.
+      - The World Bank benchmark is market context, not invoice-level fair value.
+  - family_id: refined_copper_cathodes
+    hs6: "740311"
+    product_name: "Refined copper cathodes"
+    benchmark_series_id: world_bank_copper
+    project_role: industrial_commodity_anchor
+    expected_quantity_unit: metric_ton
+    caveats:
+      - Aggregate unit values may reflect grade, purity, stockpiling, warehousing, or re-export activity.
+      - The World Bank benchmark is market context, not invoice-level fair value.
+  - family_id: gold_unwrought
+    hs6: "710812"
+    product_name: "Non-monetary unwrought gold"
+    benchmark_series_id: world_bank_gold
+    project_role: typology_anchor
+    expected_quantity_unit: metric_ton
+    caveats:
+      - HS6 data does not expose purity, recycled content, exact form, or invoice terms.
+      - Gold benchmark values are converted from USD per troy ounce to USD per metric ton for comparison with BACI quantity.

@@ -1,0 +1,28 @@
+benchmarks:
+  - benchmark_series_id: world_bank_palm_oil
+    source_label: Palm oil
+    family_id: crude_palm_oil
+    hs6: "151110"
+    original_unit: USD per metric ton
+    workbook_unit: ($/mt)
+    normalized_unit: USD per metric ton
+    conversion_method: identity
+    caveat: Malaysia crude palm oil benchmark; not corridor-specific landed or invoice price.
+  - benchmark_series_id: world_bank_copper
+    source_label: Copper
+    family_id: refined_copper_cathodes
+    hs6: "740311"
+    original_unit: USD per metric ton
+    workbook_unit: ($/mt)
+    normalized_unit: USD per metric ton
+    conversion_method: identity
+    caveat: LME-related macro benchmark; not corridor-specific contract price.
+  - benchmark_series_id: world_bank_gold
+    source_label: Gold
+    family_id: gold_unwrought
+    hs6: "710812"
+    original_unit: USD per troy ounce
+    workbook_unit: ($/troy oz)
+    normalized_unit: USD per metric ton
+    conversion_method: gold_usd_per_troy_ounce * (1000000 / 31.1034768)
+    caveat: Spot gold benchmark; purity, form, and commercial terms are not observed in BACI.
