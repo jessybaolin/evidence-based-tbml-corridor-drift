@@ -189,8 +189,8 @@ def read_baci_raw(path: Path | None = None) -> pd.DataFrame:
     # year/exporter/importer are integer codes; value/quantity are numeric (coerce bad cells to NaN).
     for col in ["t", "i", "j"]:
         frame[col] = pd.to_numeric(frame[col], errors="raise").astype("int64")
-    frame["v"] = pd.to_numeric(frame["v"], errors="coerce")
-    frame["q"] = pd.to_numeric(frame["q"], errors="coerce")
+    frame["v"] = pd.to_numeric(frame["v"], errors="coerce") # not triggered
+    frame["q"] = pd.to_numeric(frame["q"], errors="coerce") # turn NA values into NaN
     return frame
 
 
