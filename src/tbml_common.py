@@ -121,9 +121,9 @@ def write_yaml(path: Path, payload: Any) -> None:
 #     return load_yaml(CONFIGS / "project.yml")
 
 
-# def families() -> list[dict[str, Any]]:
-#     # The three HS6 commodity families and their metadata.
-#     return load_yaml(CONFIGS / "hs_families.yml")["families"]
+def families() -> list[dict[str, Any]]:
+    # The three HS6 commodity families and their metadata.
+    return load_yaml(CONFIGS / "hs_families.yml")["families"]
 
 
 def benchmarks_config() -> list[dict[str, Any]]:
@@ -232,6 +232,8 @@ def source_notes_check(notes: dict[str, Any]) -> dict[str, Any]:
         "not_synthetic": bool(notes.get("not_synthetic")) is True,
     }
 
+
+# ===== World Bank benchmark extraction =====
 def extract_worldbank_benchmarks(workbook_path: Path | None = None) -> pd.DataFrame:
     # Parse the World Bank "Pink Sheet" annual workbook into one tidy benchmark row per
     # (commodity, year). The sheet layout is discovered (not hard-coded by cell) so it is robust.
@@ -316,5 +318,62 @@ def extract_worldbank_benchmarks(workbook_path: Path | None = None) -> pd.DataFr
     if len(result) != expected_rows:
         raise ValueError(f"Expected {expected_rows} annual benchmark rows; parsed {len(result)}")
     return result
+
+
+def load_country_codes():
+    # Load the BACI numeric -> country code for mapping
+    frame = pd.read_csv(get_raw_path(COUNTRY_FILE), dtype={"country_code": "int64", "country_iso3": "string", "country_name": "string"})
+    required = ["country_code", "country_name", "country_iso3"]
+    missing = set(required) - set(frame.columns)
+    if missing:
+        raise ValueError(f"Country code file missing columns: {sorted(missing)}")
+    if frame["country_code"].duplicated().any(): # this column is used for join key. it has to be unique
+        raise ValueError("Country code file has duplicate numeric country codes")
+    return frame[required] 
+
+
+def load_product_codes() -> pd.DataFrame:
+    # Load the HS code -> description lookup, keeping the code as a zero-padded 6-char string.
+    frame = pd.read_csv(get_raw_path(PRODUCT_FILE), dtype={"code": "string", "description": "string"})
+    frame["code"] = frame["code"].astype("string").str.zfill(6)
+    return frame 
+
+
+# ===== Stable IDs =====
+# Hash each row records for traceability
+def stable_id(prefix: str, *parts: Any, length: int = 20) -> str:
+    # Deterministic ID from the joined parts (NaNs become ""), so the same inputs always map to the
+    # same id across runs. Used for obs_id (the analytical key) and the BACI source-row id.
+    payload = "|".join("" if pd.isna(p) else str(p) for p in parts)
+    return prefix + hashlib.sha256(payload.encode("utf-8")).hexdigest()[:length]
+
+
+def baci_source_row_id(row: pd.Series) -> str:
+    # A provenance id for a raw BACI row (year, HS6, exporter, importer, value, quantity).
+    return stable_id("baci_", row["t"], row["k"], row["i"], row["j"], row["v"], row["q"], length=24)
+
+
+
+# ===== Panel construction (the canonical year+exporter+importer+HS6 table) =====
+def build_panel(raw: pd.DataFrame, benchmarks: pd.DataFrame, source_hash: str):
+    # Turn raw BACI rows + benchmarks into the clean panel + an exclusion audit. Returns
+    # (retained_panel, audit). This is the single most important table in the project.
+    country = load_country_codes()
+    product_desc = load_product_codes().rename(columns={"code": "hs6", "description": "hs6_product_code_description"})
+    family_ref = pd.DataFrame(families())[["family_id", "hs6", "product_name", "benchmark_series_id", "project_role"]] # convery .yml to df
+
+    # Rename raw columns to friendly name
+    panel = raw.copy()
+    panel["source_row_id"] = panel.apply(baci_source_row_id, axis=1) # hash each row
+    panel = panel.rename(columns={"t": "year", "k": "hs6", "i": "exporter_code", "j": "importer_code"})
+    panel["hs6"] = panel["hs6"].astype("string").str.zfill(6)
+    panel["trade_value_usd"] = panel["v"] * 1000.0 # column v is thousands of current USD
+    panel["quantity_metric_ton"] = panel["q"] # already reported in metric tons.
+    panel["quantity_unit_raw"] = "metric_ton"
+
+
+
+
+    return print(benchmarks.columns)
 
 
