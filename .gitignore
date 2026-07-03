@@ -17,3 +17,6 @@ Thumbs.db
 # data/interim/
 # data/processed/
 # data/outputs/
+
+# Local-only data profiling scratch space (never pushed)
+data-profiling/
