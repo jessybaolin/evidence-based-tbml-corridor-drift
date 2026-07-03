@@ -29,7 +29,13 @@ def main() -> None:
     # ---- Build the panel + exclusion audit ----
     # build_panel returns (retained clean panel, audit of excluded/caveated rows).
     # The third argument is the source file hash, recorded on every panel row for lineage.
-    panel = build_panel(raw, benchmark_frame, sha256_file(get_raw_path(BACI_FILE)))
+    panel, audit = build_panel(raw, benchmark_frame, sha256_file(get_raw_path(BACI_FILE)))
+
+    # ---- Persist both tables ----
+    panel.to_parquet(DATA_PROCESSED / "corridor_product_year_panel.parquet", index=False)
+    panel.to_csv(DATA_PROCESSED / "panel.csv", index=False)
+    audit.to_csv(DATA_PROCESSED / "exclusion_audit.csv", index=False)
+    print(f"panel rows={len(panel):,}; audit/caveat rows={len(audit):,}")
 
 
 

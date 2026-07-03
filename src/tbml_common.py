@@ -371,9 +371,131 @@ def build_panel(raw: pd.DataFrame, benchmarks: pd.DataFrame, source_hash: str):
     panel["quantity_metric_ton"] = panel["q"] # already reported in metric tons.
     panel["quantity_unit_raw"] = "metric_ton"
 
+    # ---- Join reference tables: family, product description, exporter/importer names, benchmark ----
+    panel = panel.merge(family_ref, on="hs6", how="left", validate="many_to_one")
+    panel = panel.merge(product_desc[["hs6", "hs6_product_code_description"]], on="hs6", how="left", validate="many_to_one")
+    panel = panel.merge(country.rename(columns={"country_code": "exporter_code", "country_iso3": "exporter_iso3", "country_name": "exporter_name"}), on="exporter_code", how="left", validate="many_to_one")
+    panel = panel.merge(country.rename(columns={"country_code": "importer_code", "country_iso3": "importer_iso3", "country_name": "importer_name"}), on="importer_code", how="left", validate="many_to_one")
+    
+    # Benchmark join is many-to-many on (family, hs6) then narrowed to the matching year.
+    panel = panel.merge(benchmarks, on=["family_id", "hs6"], how="left", validate="many_to_many", suffixes=("", "_benchmark"))
+    panel = panel[panel["year"] == panel["benchmark_year"]].copy()
+    if "benchmark_series_id_benchmark" in panel.columns:
+        panel["benchmark_series_id"] = panel["benchmark_series_id_benchmark"].combine_first(panel.get("benchmark_series_id"))
+        panel = panel.drop(columns=["benchmark_series_id_benchmark"])
+
+    # ---- Validity flags + the core derived measurements ----
+    panel["benchmark_join_status"] = np.where(panel["benchmark_price_usd_per_metric_ton"], "matched", "missing")
+    panel["value_valid_flag"] = panel["trade_value_usd"].notna() & (panel["trade_value_usd"] > 0)
+    panel["quantity_valid_flag"] = panel["quantity_metric_ton"].notna() & (panel["quantity_metric_ton"] > 0)
+    panel["unit_value_valid_flag"] = panel["value_valid_flag"] & panel["quantity_valid_flag"]
+
+    # Implied aggregate unit value = USD / metric ton (only where both value and quantity are valid).
+    panel["unit_value_usd_per_metric_ton"] = np.where(panel["unit_value_valid_flag"], panel["trade_value_usd"] / panel["quantity_metric_ton"], np.nan)
+    panel["log_unit_value"] = np.where(panel["unit_value_valid_flag"], np.log(panel["unit_value_usd_per_metric_ton"]), np.nan)
+
+    # Benchmark residual = how far the implied unit value sits from the World Bank price (log scale).
+    panel["benchmark_residual"] = np.where(
+        panel["unit_value_valid_flag"] & panel["benchmark_price_usd_per_metric_ton"].notna(),
+        panel["log_unit_value"] - np.log(panel["benchmark_price_usd_per_metric_ton"]),
+        np.nan,
+    )
+
+    # Flag "valid extremes": real values that are >5x or <0.2x the benchmark. ratio of unit_value_usd_per_metric_ton / benchmark_proce_usd_per_metric_ton
+    ratio = panel["unit_value_usd_per_metric_ton"] / panel["benchmark_price_usd_per_metric_ton"]
+    panel["valid_extreme_flag"] = panel["unit_value_valid_flag"] & ((ratio > 5.0) | (ratio < 0.20))
+
+    # Corridor id = "EXP->IMP"; obs_id = the deterministic analytical key for this year+route+HS6.
+    panel["corridor_id"] = panel["exporter_iso3"].fillna("UNK") + "->" + panel["importer_iso3"].fillna("UNK")
+    panel["obs_id"] = [stable_id("obs_", y, e, i, h) for y, e, i, h in zip(panel["year"], panel["exporter_code"], panel["importer_code"], panel["hs6"], strict=True)]
+
+    # Compute number of combination of each corridor_id and hs6
+    panel = panel.sort_values(["corridor_id", "hs6", "year"], kind="mergesort")
+    panel["history_years_available"] = panel.groupby(["corridor_id", "hs6"], sort=False).cumcount()
+
+    # ---- Assign a quality status (separates DATA QUALITY from suspiciousness) ----
+    def status_and_reason(row: pd.Series) -> tuple[str, str]:
+        # Unmapped country or non-positive value => excluded entirely.
+        if pd.isna(row["exporter_iso3"]) or pd.isna(row["importer_iso3"]):
+            return "excluded_entirely", "unmapped_country_code"
+        if not bool(row["value_valid_flag"]):
+            return "excluded_entirely", "non_positive_or_missing_trade_value"
+        
+        # Missing quantity blocks unit-value modeling but is kept for audit (not suspicious).
+        if not bool(row["quantity_valid_flag"]):
+            return "excluded_from_modeling_retained_for_audit", "missing_or_non_positive_quantity"
+        
+        # Otherwise usable; attach caveats for missing benchmark / short history / valid extreme.
+        caveats: list[str] = []
+        if row["benchmark_join_status"] != "matched":
+            caveats.append("missing_benchmark")
+        if int(row["history_years_available"]) < 2:
+            caveats.append("short_history")
+        if bool(row["valid_extreme_flag"]):
+            caveats.append("valid_extreme_retained")
+        if caveats:
+            return "usable_with_caveat", ";".join(caveats)
+        return "fully_usable", ""
+
+    # Status
+    status_pairs = panel.apply(status_and_reason, axis=1)
+    panel["quality_status"] = [s for s, _ in status_pairs]
+    panel["exclusion_reason"] = [r for _, r in status_pairs]
+
+    # ---- Additive data-quality score (a CONFIDENCE signal, not an anomaly score) ----
+    panel["quantity_score"] = panel["quantity_valid_flag"].astype(int)
+    panel["benchmark_score"] = np.where(panel["benchmark_join_status"] == "matched", 2, 0)
+    panel["history_score"] = np.select([panel["history_years_available"] >= 5, panel["history_years_available"] >= 3], [2, 1], default=0)
+    panel["completeness_score"] = panel[["source_row_id", "hs6", "year", "exporter_code", "importer_code"]].notna().all(axis=1).astype(int)
+    panel["data_quality_score"] = panel["quantity_score"] + panel["benchmark_score"] + panel["history_score"] + panel["completeness_score"]
+
+    # Data quality is a usability/confidence signal, not an anomaly score.
+    # A row is model-eligible only if it has a valid unit value and is usable (with or without caveats).
+    panel["model_eligible"] = panel["unit_value_valid_flag"] & panel["quality_status"].isin(["fully_usable", "usable_with_caveat"])
+
+    # Provenance stamps carried on every panel row.
+    panel["source_filename"] = BACI_FILE
+    panel["source_version"] = "CEPII_BACI_HS17_V202601_filtered_official_derived"
+    panel["source_file_hash"] = source_hash
+    panel["hs_revision"] = "HS17"
+
+    # ---- Enforce canonical-key uniqueness on the retained rows ----
+    # The whole project assumes one row = one (year, exporter, importer, product). just a defensive insurance although
+    # BACI dataset is already one-per-key
+    key = ["year", "exporter_iso3", "importer_iso3", "hs6"]
+    retained = panel[panel["quality_status"] != "excluded_entirely"].copy()
+    if retained.duplicated(key).any():
+        dups = retained.loc[retained.duplicated(key, keep=False), key].head(10).to_dict(orient="records")
+        raise ValueError(f"Canonical key is not unique; examples={dups}")
+    
+    # ---- Select the published panel columns + build the exclusion audit ----
+    output_cols = [
+        "obs_id", "source_row_id", "year", "exporter_code", "exporter_iso3", "exporter_name",
+        "importer_code", "importer_iso3", "importer_name", "corridor_id", "hs6", "family_id",
+        "product_name", "hs6_product_code_description", "project_role", "v", "q", "trade_value_usd",
+        "quantity_metric_ton", "quantity_unit_raw", "unit_value_usd_per_metric_ton", "log_unit_value",
+        "benchmark_series_id", "benchmark_price_original", "benchmark_unit_original", "benchmark_price_usd_per_metric_ton",
+        "benchmark_year", "benchmark_yoy_change", "benchmark_join_status", "benchmark_conversion_method",
+        "benchmark_residual", "benchmark_caveat", "source_sheet", "history_years_available", "value_valid_flag",
+        "quantity_valid_flag", "unit_value_valid_flag", "valid_extreme_flag", "quantity_score", "benchmark_score",
+        "history_score", "completeness_score", "data_quality_score", "quality_status", "exclusion_reason",
+        "model_eligible", "source_filename", "source_version", "source_file_hash", "hs_revision"
+    ]
+
+    # Include fully usable, excluded_from_modeling_retained_for_audit, and usable_with_caveat
+    retained = retained[output_cols].sort_values(key, kind="mergesort").reset_index(drop=True)
+
+    # Audit = anything that is not "fully_usable" (caveated, modeling-excluded, or fully excluded),
+    # so no row is ever silently lost.
+    audit = panel[panel["quality_status"] != "fully_usable"][[
+        "obs_id", "source_row_id", "year", "exporter_code", "importer_code", "hs6", "family_id",
+        "quality_status", "exclusion_reason", "value_valid_flag", "quantity_valid_flag", "benchmark_join_status",
+        "source_filename", "source_version"
+    ]].sort_values(["quality_status", "year", "hs6", "exporter_code", "importer_code"], kind="mergesort").reset_index(drop=True)
+    return retained, audit
 
 
 
-    return print(benchmarks.columns)
+    return panel
 
 
