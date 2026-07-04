@@ -495,7 +495,28 @@ def build_panel(raw: pd.DataFrame, benchmarks: pd.DataFrame, source_hash: str):
     return retained, audit
 
 
+# ===== Time-safe feature engineering =====
+def _log_change(current: pd.Series, previous: pd.Series) -> pd.Series:
+    # Year-over-year log ratio, defined only where both current and previous are positive.
+    out = pd.Series(np.nan, index=current.index, dtype=float)
+    valid = current.gt(0) & previous.gt(0)
+    out.loc[valid] = np.log(current.loc[valid] / previous.loc[valid])
+    return out
 
-    return panel
+
+def identity_columns() -> list[str]:
+    # Non-feature identity/key columns carried alongside the features.
+    return ["obs_id", "year", "exporter_iso3", "importer_iso3", "corridor_id", "hs6", "family_id", "product_name"]
 
 
+def feature_columns() -> list[str]:
+    # The exact list of model/rule input features (the columns the scorers consume).
+    return [
+        "log_unit_value", "shifted_corridor_history_median", "shifted_corridor_history_mad",
+        "robust_historical_z", "same_family_year_peer_percentile", "trade_value_yoy_change",
+        "quantity_yoy_change", "unit_value_yoy_change", "benchmark_residual",
+        "benchmark_adjusted_drift", "corridor_activity_history", "corridor_novelty_flag",
+        "corridor_reactivation_flag", "value_quantity_divergence", "missing_quantity_flag",
+        "missing_benchmark_flag", "missing_history_flag", "missing_country_mapping_flag",
+        "valid_extreme_flag", "benchmark_consistency_gap", "data_quality_score", "benchmark_yoy_change",
+    ]

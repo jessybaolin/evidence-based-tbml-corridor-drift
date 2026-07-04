@@ -17,3 +17,4 @@ pillow
 joblib
 markdown
 graphviz
+ipykernel
