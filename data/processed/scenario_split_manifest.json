@@ -1,0 +1,37 @@
+{
+  "clean_panel_hash": "1552233d8f26208156fe958e3be0a6d5327f51409d53accc0f22af91f4ef41b6",
+  "counts_by_split": {
+    "test": 6658,
+    "train": 12318,
+    "validation": 6868
+  },
+  "hard_negative_counts_by_split": {
+    "test": 72,
+    "train": 72,
+    "validation": 72
+  },
+  "label_hash": "7e9b871919b7cc4d0adfd07665e5d07fb148b374c7c14729819a0840b52e1521",
+  "label_separation": "scenario_id and synthetic_review_priority are stored in scenario_labels.parquet only; they are not in scenario_panel or model feature files.",
+  "positive_counts_by_split": {
+    "test": 108,
+    "train": 108,
+    "validation": 108
+  },
+  "scenario_panel_hash": "66a21af344a21df2020dd4bf28be825ab2cbc450de730ebdaaeafeef3535cc35",
+  "scenario_row_count": 540,
+  "seed": 20260117,
+  "test_years": [
+    2023,
+    2024
+  ],
+  "train_years": [
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "validation_years": [
+    2021,
+    2022
+  ]
+}

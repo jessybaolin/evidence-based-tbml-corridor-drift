@@ -76,6 +76,28 @@ def sha256_file(path: Path) -> str:
             digest.update(chunk)
     return digest.hexdigest()
 
+def stable_dataframe_hash(frame: pd.DataFrame) -> str:
+    """Return a deterministic content hash for a DataFrame.
+
+    The hash is used to freeze the clean panel before scenario injection.
+    It sorts identity columns first and then uses pandas row hashes to avoid
+    slow full CSV serialization of large mixed-type tables.
+    """
+    # Canonicalize: same columns order + same row order => same hash regardless of input ordering.
+    df = frame.copy().reindex(sorted(frame.columns), axis=1)
+    sort_cols = [c for c in ["obs_id", "year", "family_id", "corridor_id", "hs6"] if c in df.columns]
+    if sort_cols:
+        df = df.sort_values(sort_cols, kind="mergesort")
+    else:
+        df = df.sort_values(list(df.columns), kind="mergesort")
+    # Stringify (with a fixed NA token) so mixed dtypes hash consistently, then fold in column names.
+    normalized = df.astype("string").fillna("<NA>")
+    row_hash = pd.util.hash_pandas_object(normalized, index=False).to_numpy(dtype="uint64")
+    digest = hashlib.sha256()
+    digest.update("|".join(normalized.columns).encode("utf-8"))
+    digest.update(row_hash.tobytes())
+    return digest.hexdigest()
+
 def _json_default(obj: Any) -> Any:
     # Fallback for json.dumps: convert types the stdlib encoder can't handle on its own.
     if isinstance(obj, np.integer):
@@ -108,7 +130,6 @@ def read_json(path: Path) -> Any:
 def load_yaml(path: Path) -> Any:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
-
 def write_yaml(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8")
@@ -116,9 +137,9 @@ def write_yaml(path: Path, payload: Any) -> None:
 
 
 # ===== Config loaders (thin readers for configs/*.yml) =====
-# def project_config() -> dict[str, Any]:
-#     # Years, seeds, train/val/test split, top_k, the boundary sentence, etc.
-#     return load_yaml(CONFIGS / "project.yml")
+def project_config() -> dict[str, Any]:
+    # Years, seeds, train/val/test split, top_k, the boundary sentence, etc.
+    return load_yaml(CONFIGS / "project.yml")
 
 
 def families() -> list[dict[str, Any]]:
@@ -503,6 +524,23 @@ def _log_change(current: pd.Series, previous: pd.Series) -> pd.Series:
     out.loc[valid] = np.log(current.loc[valid] / previous.loc[valid])
     return out
 
+def _prior_median_mad(values: pd.Series) -> tuple[np.ndarray, np.ndarray]:
+    # For each position, compute the median + MAD of ALL PRIOR values only (the current value is
+    # appended AFTER its baseline is recorded). This is what makes "shifted history" time-safe:
+    # a row can never see its own or any future value when forming its baseline.
+    medians = np.full(len(values), np.nan)
+    mads = np.full(len(values), np.nan)
+    history: list[float] = []
+    for idx, value in enumerate(values.to_numpy(dtype=float, na_value=np.nan)):
+        if history:
+            arr = np.asarray(history, dtype=float)
+            med = float(np.median(arr))
+            medians[idx] = med
+            mads[idx] = float(np.median(np.abs(arr - med)))  # median absolute deviation
+        if np.isfinite(value):
+            history.append(float(value))
+    return medians, mads
+
 
 def identity_columns() -> list[str]:
     # Non-feature identity/key columns carried alongside the features.
@@ -520,3 +558,270 @@ def feature_columns() -> list[str]:
         "missing_benchmark_flag", "missing_history_flag", "missing_country_mapping_flag",
         "valid_extreme_flag", "benchmark_consistency_gap", "data_quality_score", "benchmark_yoy_change",
     ]
+
+def build_features(panel: pd.DataFrame) -> pd.DataFrame:
+    # Derive every time-safe features from the clean panel dataset. Time-safe means only use information that already existed at the time of analysis
+    # example: a 2020 row is judged purely on earlier facts. This is to prevent leakage
+
+    required = {
+        "obs_id", "source_row_id", "year", "exporter_iso3", "importer_iso3", "corridor_id", "hs6", "family_id",
+        "product_name", "trade_value_usd", "quantity_metric_ton", "unit_value_usd_per_metric_ton", "log_unit_value",
+        "benchmark_price_usd_per_metric_ton", "benchmark_yoy_change", "benchmark_residual", "benchmark_join_status",
+        "valid_extreme_flag", "data_quality_score", "quality_status", "model_eligible", "source_version"
+    }
+
+    missing = required - set(panel.columns) #c heck whether there are any missing requried fields
+
+    if missing:
+        raise ValueError(f"Panel missing fields required for feature engineering: {sorted(missing)}")
+    
+    # Sort by corridor + HS6 + year so "prior years" means the rows above within each group.
+    features = panel.copy().sort_values(["corridor_id", "hs6", "year"], kind="mergesort")
+    group_keys = ["corridor_id", "hs6"]
+
+    # ---- Shifted (prior-only) history median + MAD per corridor ----
+    med = pd.Series(np.nan, index=features.index, dtype=float)
+    mad = pd.Series(np.nan, index=features.index, dtype=float) #median absolute deviation
+
+    # When you iterate a pandas groupby, each item is a tuple of two things: (the group's key, the group's rows)
+    # Compute median and median absolute deviation of prior log_unit_value per route (corridor + produt)
+    for _, group in features.groupby(group_keys, sort=False, dropna=False):   # one iteration per route (corridor + hs6)
+        m, d = _prior_median_mad(group["log_unit_value"]) #one iteration per row within that route
+        med.loc[group.index] = m
+        mad.loc[group.index] = d
+    features["shifted_corridor_history_median"] = med
+    features["shifted_corridor_history_mad"] = mad
+
+    # use a small postiive fallback
+    safe_mad = features["shifted_corridor_history_mad"].where(features["shifted_corridor_history_mad"] > 1e-9, 0.05) # keep current value if > 0 else replace with 0.05
+
+    # Robust z = how many MADs the current value sits from the prior median (the core drift signal).
+    features["robust_historical_z"] = (features["log_unit_value"] - features["shifted_corridor_history_median"]) / safe_mad
+    features.loc[features["shifted_corridor_history_median"].isna(), "robust_historical_z"] = np.nan  #overwrites robust_historical_z if median is 0
+
+    # Same-year peer comparison is allowed because it does not use future years.
+    features["same_family_year_peer_percentile"] = features.groupby(["family_id", "year"], sort=False)["benchmark_residual"].rank(method="average", pct=True)
+
+    # ---- Previous-observation (lagged) values for year-over-year changes ----
+    grouped = features.groupby(group_keys, sort=False, dropna=False)
+    prev_trade = grouped["trade_value_usd"].shift(1)
+    prev_qty = grouped["quantity_metric_ton"].shift(1)
+    prev_uv = grouped["unit_value_usd_per_metric_ton"].shift(1)
+    prev_resid = grouped["benchmark_residual"].shift(1)
+    prev_year = grouped["year"].shift(1)
+    features["trade_value_yoy_change"] = _log_change(features["trade_value_usd"], prev_trade)
+    features["quantity_yoy_change"] = _log_change(features["quantity_metric_ton"], prev_qty)
+    features["unit_value_yoy_change"] = _log_change(features["unit_value_usd_per_metric_ton"], prev_uv)
+    features["benchmark_adjusted_drift"] = features["benchmark_residual"] - prev_resid
+
+    # Activity history / novelty / reactivation (new corridor, or one that reappeared after a gap).
+    features["corridor_activity_history"] = grouped.cumcount().astype(float) # how many earlier appearances did this route have before this row.
+    features["corridor_novelty_flag"] = (features["corridor_activity_history"] == 0).astype(int) # 1 when the count is 0. It is the route's first-ever appearance (brand new).
+    features["corridor_reactivation_flag"] = ((features["corridor_activity_history"] > 0) & ((features["year"] - prev_year) > 1)).astype(int) # it vanished and came back.
+
+    # Value moving faster than quantity
+    features["value_quantity_divergence"] = features["trade_value_yoy_change"] - features["quantity_yoy_change"]
+
+    # Did this route move differently from the whole market?
+    # unit_value_yoy_change = how much this route's price moved.
+    # benchmark_yoy_change = how much the world market price for that commodity moved.
+    # A near-zero gap = the price change is explained by the market; a big gap = it isn't.
+    features["benchmark_consistency_gap"] = (features["unit_value_yoy_change"] - features["benchmark_yoy_change"]).abs()
+
+    # ---- Explicit missingness flags (data limits, NOT suspiciousness) ----
+    features["missing_quantity_flag"] = features["quantity_metric_ton"].isna().astype(int)
+    features["missing_benchmark_flag"] = (features["benchmark_join_status"] != "matched").astype(int)
+    features["missing_history_flag"] = features["shifted_corridor_history_median"].isna().astype(int)
+    features["missing_country_mapping_flag"] = (features["exporter_iso3"].isna() | features["importer_iso3"].isna()).astype(int)
+    features["data_quality_flags"] = (
+        "quantity_missing=" + features["missing_quantity_flag"].astype(str)
+        + ";benchmark_missing=" + features["missing_benchmark_flag"].astype(str)
+        + ";history_missing=" + features["missing_history_flag"].astype(str)
+        + ";country_missing=" + features["missing_country_mapping_flag"].astype(str)
+    )
+
+    # ---- Safety guards: no infinities, and NO labels/scenario/crime columns may leak in ----
+    numeric_cols = feature_columns()
+    if np.isinf(features[numeric_cols].to_numpy(dtype=float, na_value=np.nan)).any():  # check for infinite values for features
+        raise ValueError("Feature construction produced infinite values")
+    forbidden = {"synthetic_review_priority", "scenario_id", "money_laundering", "fraud", "criminal", "tbml_confirmed"}
+    present = forbidden.intersection(features.columns)
+    if present:
+        raise ValueError(f"Forbidden fields entered features: {sorted(present)}")
+    
+
+    # ---- Keep identity + context + features, de-duplicated, in a stable order ----
+    # list(dict.fromkeys(["year", "hs6", "year", "value"])) -> ['year', 'hs6', 'value']
+    # dict.fromkeys(iterable) creates a dictionary key from the iterable and sets every value to None. dic key is unique!
+    keep = identity_columns() + [
+        "exporter_code", "importer_code", "exporter_name", "importer_name", "trade_value_usd", "quantity_metric_ton",
+        "unit_value_usd_per_metric_ton", "benchmark_price_usd_per_metric_ton", "benchmark_yoy_change",
+    ] + feature_columns() + [
+        "quality_status", "model_eligible", "source_version", "source_row_id", "data_quality_flags", "benchmark_caveat"
+    ]
+    return features[list(dict.fromkeys(keep))].sort_values(["year", "family_id", "corridor_id", "hs6"], kind="mergesort").reset_index(drop=True)
+
+
+# ===== Scenario injection (model-evaluation labels, kept separate from features) =====
+def split_for_year(year: int) -> str:
+    # Map a year to its time split (train/validation/test) using project.yml.
+    cfg = project_config()
+    if int(year) in set(cfg["train_years"]):
+        return "train"
+    if int(year) in set(cfg["validation_years"]):
+        return "validation"
+    if int(year) in set(cfg["test_years"]):
+        return "test"
+    raise ValueError(f"Year {year} is not in the configured split years")
+
+
+def recompute_panel_price_fields(panel: pd.DataFrame, idx: int) -> None:
+    # After a scenario transformation changes value/quantity for one row, recompute the dependent
+    # price fields (unit value, log, benchmark residual, valid-extreme flag) so the row stays consistent.
+    qty = float(panel.at[idx, "quantity_metric_ton"])
+    val = float(panel.at[idx, "trade_value_usd"])
+    uv = val / qty
+    panel.at[idx, "unit_value_usd_per_metric_ton"] = uv
+    panel.at[idx, "log_unit_value"] = math.log(uv)
+    bench = float(panel.at[idx, "benchmark_price_usd_per_metric_ton"])
+    panel.at[idx, "benchmark_residual"] = math.log(uv) - math.log(bench)
+    ratio = uv / bench
+    panel.at[idx, "valid_extreme_flag"] = bool((ratio > 5.0) or (ratio < 0.2))
+    if bool(panel.at[idx, "valid_extreme_flag"]):
+        panel.at[idx, "quality_status"] = "usable_with_caveat"
+        reason = panel.at[idx, "exclusion_reason"]
+        panel.at[idx, "exclusion_reason"] = "valid_extreme_retained" if pd.isna(reason) or str(reason) == "" else f"{reason};valid_extreme_retained"
+
+
+def inject_scenarios(panel: pd.DataFrame, seed: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    # Inject controlled synthetic scenarios into a COPY of the frozen panel for model evaluation.
+    # Returns (scenario_panel WITHOUT labels, labels table, injection audit, manifest).
+    clean_hash = stable_dataframe_hash(panel)  # freeze hash: proves which panel we injected into
+    scenario_panel = panel.copy().sort_values("obs_id", kind="mergesort").reset_index(drop=True)
+    # The incoming clean panel must not already contain label columns.
+    if {"scenario_id", "synthetic_review_priority"}.intersection(scenario_panel.columns):
+        raise ValueError("Scenario metadata must not exist in the clean panel")
+    rng = np.random.default_rng(seed)  # seeded RNG => reproducible injections
+    # 3 positive scenarios (review-priority=1) + 2 hard negatives (unusual but benign, =0).
+    scenario_ids = [
+        "synthetic_overvaluation",
+        "synthetic_undervaluation",
+        "synthetic_low_volume_high_value",
+        "hard_negative_benchmark_consistent_movement",
+        "hard_negative_proportional_value_quantity_growth",
+    ]
+    split_years = {
+        "train": project_config()["train_years"],
+        "validation": project_config()["validation_years"],
+        "test": project_config()["test_years"],
+    }
+    injection_rows: list[dict[str, Any]] = []
+    label_map: dict[str, dict[str, Any]] = {}
+    # Inject within each split x family so positives/negatives appear in train, val, and test.
+    for split_name, years in split_years.items():
+        for fam in [f["family_id"] for f in families()]:
+            # Candidate rows: in-split, this family, model-eligible, positive quantity.
+            candidates = scenario_panel[
+                scenario_panel["year"].isin(years)
+                & (scenario_panel["family_id"] == fam)
+                & scenario_panel["model_eligible"]
+                & scenario_panel["quantity_metric_ton"].gt(0)
+            ].index.to_numpy()
+            # Decide how many rows to transform per scenario (a small, balanced number).
+            per_scenario = min(12, max(3, len(candidates) // (len(scenario_ids) * 12)))
+            needed = len(scenario_ids) * per_scenario
+            if len(candidates) < needed:
+                per_scenario = max(1, len(candidates) // len(scenario_ids))
+                needed = len(scenario_ids) * per_scenario
+            if needed <= 0:
+                raise ValueError(f"Not enough scenario candidates for {fam} in {split_name}")
+            chosen = rng.choice(candidates, size=needed, replace=False)
+            pointer = 0
+            # Apply each scenario's transformation to its slice of the chosen rows.
+            for scenario_id in scenario_ids:
+                for idx in chosen[pointer:pointer + per_scenario]:
+                    pointer += 1
+                    before_value = float(scenario_panel.at[idx, "trade_value_usd"])
+                    before_quantity = float(scenario_panel.at[idx, "quantity_metric_ton"])
+                    if scenario_id == "synthetic_overvaluation":
+                        # Inflate value, hold quantity => unit value jumps up.
+                        scenario_panel.at[idx, "trade_value_usd"] = before_value * float(rng.uniform(2.2, 3.5))
+                    elif scenario_id == "synthetic_undervaluation":
+                        # Deflate value, hold quantity => unit value drops.
+                        scenario_panel.at[idx, "trade_value_usd"] = before_value * float(rng.uniform(0.25, 0.45))
+                    elif scenario_id == "synthetic_low_volume_high_value":
+                        # Value up, quantity down => high value on low volume.
+                        scenario_panel.at[idx, "trade_value_usd"] = before_value * float(rng.uniform(1.8, 2.8))
+                        scenario_panel.at[idx, "quantity_metric_ton"] = before_quantity * float(rng.uniform(0.35, 0.65))
+                    elif scenario_id == "hard_negative_benchmark_consistent_movement":
+                        # HARD NEGATIVE: move the unit value but keep it consistent with the family's
+                        # benchmark residual that year (unusual yet benign -> should NOT over-alert).
+                        fam_year = scenario_panel[(scenario_panel["family_id"] == fam) & (scenario_panel["year"] == scenario_panel.at[idx, "year"])]
+                        residual = float(fam_year["benchmark_residual"].dropna().median()) if fam_year["benchmark_residual"].notna().any() else 0.0
+                        target_uv = float(scenario_panel.at[idx, "benchmark_price_usd_per_metric_ton"]) * math.exp(residual)
+                        scenario_panel.at[idx, "trade_value_usd"] = target_uv * before_quantity
+                    elif scenario_id == "hard_negative_proportional_value_quantity_growth":
+                        # HARD NEGATIVE: scale value AND quantity together => unit value unchanged (benign).
+                        factor = float(rng.uniform(2.0, 4.0))
+                        scenario_panel.at[idx, "trade_value_usd"] = before_value * factor
+                        scenario_panel.at[idx, "quantity_metric_ton"] = before_quantity * factor
+                    else:
+                        raise ValueError(scenario_id)
+                    # Recompute the dependent price fields so the transformed row stays internally consistent.
+                    recompute_panel_price_fields(scenario_panel, int(idx))
+                    obs_id = str(scenario_panel.at[idx, "obs_id"])
+                    hard_negative = scenario_id.startswith("hard_negative_")
+                    # Record the label SEPARATELY (it never goes into scenario_panel).
+                    label_map[obs_id] = {
+                        "scenario_id": scenario_id,
+                        "synthetic_review_priority": 0 if hard_negative else 1,
+                        "hard_negative": hard_negative,
+                    }
+                    # Record the before/after audit of exactly what was changed.
+                    injection_rows.append({
+                        "seed": seed,
+                        "clean_panel_hash": clean_hash,
+                        "obs_id": obs_id,
+                        "split": split_name,
+                        "family_id": fam,
+                        "year": int(scenario_panel.at[idx, "year"]),
+                        "scenario_id": scenario_id,
+                        "synthetic_review_priority": 0 if hard_negative else 1,
+                        "hard_negative": hard_negative,
+                        "trade_value_usd_before": before_value,
+                        "quantity_metric_ton_before": before_quantity,
+                        "trade_value_usd_after": float(scenario_panel.at[idx, "trade_value_usd"]),
+                        "quantity_metric_ton_after": float(scenario_panel.at[idx, "quantity_metric_ton"]),
+                    })
+
+    # ---- Build the separate labels table (one row per obs; non-injected rows default to 0) ----
+    labels = scenario_panel[["obs_id", "year", "family_id"]].copy()
+    labels["split"] = labels["year"].map(lambda y: split_for_year(int(y)))
+    labels["synthetic_review_priority"] = labels["obs_id"].map(lambda oid: label_map.get(str(oid), {}).get("synthetic_review_priority", 0)).astype(int)
+    labels["hard_negative"] = labels["obs_id"].map(lambda oid: bool(label_map.get(str(oid), {}).get("hard_negative", False))).astype(bool)
+    labels["scenario_id"] = labels["obs_id"].map(lambda oid: label_map.get(str(oid), {}).get("scenario_id", None))
+    labels["seed"] = seed
+    injections = pd.DataFrame(injection_rows).sort_values(["split", "family_id", "scenario_id", "obs_id"], kind="mergesort").reset_index(drop=True)
+
+    # ---- Guard: train/validation/test must be disjoint sets of observations ----
+    split_sets = {name: set(labels.loc[labels["split"] == name, "obs_id"]) for name in ["train", "validation", "test"]}
+    if split_sets["train"] & split_sets["validation"] or split_sets["train"] & split_sets["test"] or split_sets["validation"] & split_sets["test"]:
+        raise AssertionError("Temporal splits overlap")
+
+    # ---- Manifest: seeds, hashes, split counts, and an explicit label-separation statement ----
+    manifest = {
+        "seed": seed,
+        "clean_panel_hash": clean_hash,
+        "scenario_panel_hash": stable_dataframe_hash(scenario_panel),
+        "label_hash": stable_dataframe_hash(labels),
+        "train_years": project_config()["train_years"],
+        "validation_years": project_config()["validation_years"],
+        "test_years": project_config()["test_years"],
+        "counts_by_split": labels["split"].value_counts().sort_index().astype(int).to_dict(),
+        "positive_counts_by_split": labels.groupby("split")["synthetic_review_priority"].sum().astype(int).to_dict(),
+        "hard_negative_counts_by_split": labels.groupby("split")["hard_negative"].sum().astype(int).to_dict(),
+        "scenario_row_count": int(len(injections)),
+        "label_separation": "scenario_id and synthetic_review_priority are stored in scenario_labels.parquet only; they are not in scenario_panel or model feature files.",
+    }
+    return scenario_panel, labels, injections, manifest
+

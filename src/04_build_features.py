@@ -28,7 +28,7 @@ import numpy as np
 
 # build_features() is the workhorse (in tbml_common.py); this script wraps it and
 # writes the documentation table.
-from tbml_common import DATA_PROCESSED, REPORTS, ensure_dirs, _log_change, feature_columns, identity_columns
+from tbml_common import DATA_PROCESSED, REPORTS, ensure_dirs, build_features
 
 # feature dictionary, with columns:
 #   (feature_name, derivation, why_created, significance_for_review,
@@ -55,127 +55,6 @@ FEATURE_EXPLANATIONS = [
     ("data_quality_flags", "Flags and additive score for quantity, benchmark, history, and provenance completeness.", "Separates confidence from anomaly strength.", "Low quality caveats a case; it should not automatically raise suspiciousness.", "Uses source/provenance and prior history only where relevant.", "How usable and well-supported the row is."),
 ]
 
-def _prior_median_mad(values: pd.Series) -> tuple[np.ndarray, np.ndarray]:
-    # For each position, compute the median + MAD of ALL PRIOR values only (the current value is
-    # appended AFTER its baseline is recorded). This is what makes "shifted history" time-safe:
-    # a row can never see its own or any future value when forming its baseline.
-    medians = np.full(len(values), np.nan)
-    mads = np.full(len(values), np.nan)
-    history: list[float] = []
-    for idx, value in enumerate(values.to_numpy(dtype=float, na_value=np.nan)):
-        if history:
-            arr = np.asarray(history, dtype=float)
-            med = float(np.median(arr))
-            medians[idx] = med
-            mads[idx] = float(np.median(np.abs(arr - med)))  # median absolute deviation
-        if np.isfinite(value):
-            history.append(float(value))
-    return medians, mads
-
-
-def build_features(panel: pd.DataFrame) -> pd.DataFrame:
-    # Derive every time-safe features from the clean panel dataset. Time-safe means only use information that already existed at the time of analysis
-    # example: a 2020 row is judged purely on earlier facts. This is to prevent leakage
-
-    required = {
-        "obs_id", "source_row_id", "year", "exporter_iso3", "importer_iso3", "corridor_id", "hs6", "family_id",
-        "product_name", "trade_value_usd", "quantity_metric_ton", "unit_value_usd_per_metric_ton", "log_unit_value",
-        "benchmark_price_usd_per_metric_ton", "benchmark_yoy_change", "benchmark_residual", "benchmark_join_status",
-        "valid_extreme_flag", "data_quality_score", "quality_status", "model_eligible", "source_version"
-    }
-
-    missing = required - set(panel.columns) #c heck whether there are any missing requried fields
-
-    if missing:
-        raise ValueError(f"Panel missing fields required for feature engineering: {sorted(missing)}")
-    
-    # Sort by corridor + HS6 + year so "prior years" means the rows above within each group.
-    features = panel.copy().sort_values(["corridor_id", "hs6", "year"], kind="mergesort")
-    group_keys = ["corridor_id", "hs6"]
-
-    # ---- Shifted (prior-only) history median + MAD per corridor ----
-    med = pd.Series(np.nan, index=features.index, dtype=float)
-    mad = pd.Series(np.nan, index=features.index, dtype=float) #median absolute deviation
-
-    # When you iterate a pandas groupby, each item is a tuple of two things: (the group's key, the group's rows)
-    # Compute median and median absolute deviation of prior log_unit_value per route (corridor + produt)
-    for _, group in features.groupby(group_keys, sort=False, dropna=False):   # one iteration per route (corridor + hs6)
-        m, d = _prior_median_mad(group["log_unit_value"]) #one iteration per row within that route
-        med.loc[group.index] = m
-        mad.loc[group.index] = d
-    features["shifted_corridor_history_median"] = med
-    features["shifted_corridor_history_mad"] = mad
-
-    # use a small postiive fallback
-    safe_mad = features["shifted_corridor_history_mad"].where(features["shifted_corridor_history_mad"] > 1e-9, 0.05) # keep current value if > 0 else replace with 0.05
-
-    # Robust z = how many MADs the current value sits from the prior median (the core drift signal).
-    features["robust_historical_z"] = (features["log_unit_value"] - features["shifted_corridor_history_median"]) / safe_mad
-    features.loc[features["shifted_corridor_history_median"].isna(), "robust_historical_z"] = np.nan  #overwrites robust_historical_z if median is 0
-
-    # Same-year peer comparison is allowed because it does not use future years.
-    features["same_family_year_peer_percentile"] = features.groupby(["family_id", "year"], sort=False)["benchmark_residual"].rank(method="average", pct=True)
-
-    # ---- Previous-observation (lagged) values for year-over-year changes ----
-    grouped = features.groupby(group_keys, sort=False, dropna=False)
-    prev_trade = grouped["trade_value_usd"].shift(1)
-    prev_qty = grouped["quantity_metric_ton"].shift(1)
-    prev_uv = grouped["unit_value_usd_per_metric_ton"].shift(1)
-    prev_resid = grouped["benchmark_residual"].shift(1)
-    prev_year = grouped["year"].shift(1)
-    features["trade_value_yoy_change"] = _log_change(features["trade_value_usd"], prev_trade)
-    features["quantity_yoy_change"] = _log_change(features["quantity_metric_ton"], prev_qty)
-    features["unit_value_yoy_change"] = _log_change(features["unit_value_usd_per_metric_ton"], prev_uv)
-    features["benchmark_adjusted_drift"] = features["benchmark_residual"] - prev_resid
-
-    # Activity history / novelty / reactivation (new corridor, or one that reappeared after a gap).
-    features["corridor_activity_history"] = grouped.cumcount().astype(float) # how many earlier appearances did this route have before this row.
-    features["corridor_novelty_flag"] = (features["corridor_activity_history"] == 0).astype(int) # 1 when the count is 0. It is the route's first-ever appearance (brand new).
-    features["corridor_reactivation_flag"] = ((features["corridor_activity_history"] > 0) & ((features["year"] - prev_year) > 1)).astype(int) # it vanished and came back.
-
-    # Value moving faster than quantity
-    features["value_quantity_divergence"] = features["trade_value_yoy_change"] - features["quantity_yoy_change"]
-
-    # Did this route move differently from the whole market?
-    # unit_value_yoy_change = how much this route's price moved.
-    # benchmark_yoy_change = how much the world market price for that commodity moved.
-    # A near-zero gap = the price change is explained by the market; a big gap = it isn't.
-    features["benchmark_consistency_gap"] = (features["unit_value_yoy_change"] - features["benchmark_yoy_change"]).abs()
-
-    # ---- Explicit missingness flags (data limits, NOT suspiciousness) ----
-    features["missing_quantity_flag"] = features["quantity_metric_ton"].isna().astype(int)
-    features["missing_benchmark_flag"] = (features["benchmark_join_status"] != "matched").astype(int)
-    features["missing_history_flag"] = features["shifted_corridor_history_median"].isna().astype(int)
-    features["missing_country_mapping_flag"] = (features["exporter_iso3"].isna() | features["importer_iso3"].isna()).astype(int)
-    features["data_quality_flags"] = (
-        "quantity_missing=" + features["missing_quantity_flag"].astype(str)
-        + ";benchmark_missing=" + features["missing_benchmark_flag"].astype(str)
-        + ";history_missing=" + features["missing_history_flag"].astype(str)
-        + ";country_missing=" + features["missing_country_mapping_flag"].astype(str)
-    )
-
-    # ---- Safety guards: no infinities, and NO labels/scenario/crime columns may leak in ----
-    numeric_cols = feature_columns()
-    if np.isinf(features[numeric_cols].to_numpy(dtype=float, na_value=np.nan)).any():  # check for infinite values for features
-        raise ValueError("Feature construction produced infinite values")
-    forbidden = {"synthetic_review_priority", "scenario_id", "money_laundering", "fraud", "criminal", "tbml_confirmed"}
-    present = forbidden.intersection(features.columns)
-    if present:
-        raise ValueError(f"Forbidden fields entered features: {sorted(present)}")
-    
-
-    # ---- Keep identity + context + features, de-duplicated, in a stable order ----
-    # list(dict.fromkeys(["year", "hs6", "year", "value"])) -> ['year', 'hs6', 'value']
-    # dict.fromkeys(iterable) creates a dictionary key from the iterable and sets every value to None. dic key is unique!
-    keep = identity_columns() + [
-        "exporter_code", "importer_code", "exporter_name", "importer_name", "trade_value_usd", "quantity_metric_ton",
-        "unit_value_usd_per_metric_ton", "benchmark_price_usd_per_metric_ton", "benchmark_yoy_change",
-    ] + feature_columns() + [
-        "quality_status", "model_eligible", "source_version", "source_row_id", "data_quality_flags", "benchmark_caveat"
-    ]
-    return features[list(dict.fromkeys(keep))].sort_values(["year", "family_id", "corridor_id", "hs6"], kind="mergesort").reset_index(drop=True)
-
-
 
 def main() -> None:
     ensure_dirs()
@@ -197,7 +76,6 @@ def main() -> None:
     features.to_parquet(DATA_PROCESSED / "corridor_features.parquet", index=False)
 
     print(f"features rows={len(features):,}; feature table written")
-
 
 
 if __name__ == "__main__":
