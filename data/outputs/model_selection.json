@@ -1,0 +1,8 @@
+{
+  "score_language": "Scores are review-priority ranking scores, not calibrated probabilities of crime.",
+  "selected_challenger": "xgboost",
+  "selected_challenger_score_column": "xgboost_score",
+  "selected_hybrid_challenger_weight": 0.75,
+  "selected_score_column": "hybrid_score",
+  "selection_split": "validation"
+}

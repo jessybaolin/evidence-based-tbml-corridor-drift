@@ -1,0 +1,32 @@
+{
+  "selected_parameters": {
+    "learning_rate": 0.06,
+    "max_depth": 2,
+    "min_child_weight": 2.0,
+    "reg_lambda": 4.0
+  },
+  "tested_parameters": [
+    {
+      "average_precision": 0.3860453591130733,
+      "learning_rate": 0.06,
+      "max_depth": 2,
+      "min_child_weight": 2.0,
+      "reg_lambda": 4.0
+    },
+    {
+      "average_precision": 0.37974591196819124,
+      "learning_rate": 0.09,
+      "max_depth": 2,
+      "min_child_weight": 6.0,
+      "reg_lambda": 8.0
+    },
+    {
+      "average_precision": 0.37061487124759235,
+      "learning_rate": 0.05,
+      "max_depth": 3,
+      "min_child_weight": 4.0,
+      "reg_lambda": 6.0
+    }
+  ],
+  "validation_average_precision": 0.3860453591130733
+}

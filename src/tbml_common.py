@@ -152,9 +152,9 @@ def benchmarks_config() -> list[dict[str, Any]]:
     return load_yaml(CONFIGS / "benchmark_series.yml")["benchmarks"]
 
 
-# def thresholds() -> dict[str, Any]:
-#     # Rule weights/reference values, model-selection settings, evidence limits.
-#     return load_yaml(CONFIGS / "thresholds.yml")
+def thresholds() -> dict[str, Any]:
+    # Rule weights/reference values, model-selection settings, evidence limits.
+    return load_yaml(CONFIGS / "thresholds.yml")
 
 
 def benchmark_lookup_by_label() -> dict[str, dict[str, Any]]:
