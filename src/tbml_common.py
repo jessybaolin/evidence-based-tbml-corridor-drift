@@ -825,3 +825,43 @@ def inject_scenarios(panel: pd.DataFrame, seed: int) -> tuple[pd.DataFrame, pd.D
     }
     return scenario_panel, labels, injections, manifest
 
+
+# ===== Formatting & rendering helpers =====
+def html_escape(value: Any) -> str:
+    # HTML-escape a value (NaN -> "") for safe insertion into the dashboard/report HTML.
+    return html.escape("" if pd.isna(value) else str(value))
+
+
+def money(value: float | int | None, digits: int = 0) -> str:
+    # Format a number as USD with thousands separators; NA-safe.
+    if value is None or pd.isna(value):
+        return "NA"
+    return f"${float(value):,.{digits}f}"
+
+
+def fmt(value: Any, digits: int = 3) -> str:
+    # General number formatter used in evidence/brief text: integers get thousands separators,
+    # floats get fixed decimals, anything non-numeric falls back to str(); NA-safe.
+    if value is None or pd.isna(value):
+        return "NA"
+    if isinstance(value, (int, np.integer)):
+        return f"{int(value):,}"
+    try:
+        return f"{float(value):,.{digits}f}"
+    except Exception:
+        return str(value)
+
+
+def render_pdf_from_html(html_path: Path, pdf_path: Path) -> None:
+    # Render an HTML file to PDF via WeasyPrint (imported lazily so the dep is only needed here).
+    from weasyprint import HTML
+    pdf_path.parent.mkdir(parents=True, exist_ok=True)
+    HTML(filename=str(html_path)).write_pdf(str(pdf_path))
+
+
+def make_markdown_table(frame: pd.DataFrame, max_rows: int = 20) -> str:
+    # Render the first max_rows of a DataFrame as a markdown table (used throughout the reports).
+    subset = frame.head(max_rows).copy()
+    return subset.to_markdown(index=False)
+
+
