@@ -320,15 +320,74 @@ def main() -> None:
     joblib.dump({"feature_columns": cols, "logistic": logistic, "xgboost": xgb, "isolation": iso, "selection": selection}, DATA_OUTPUTS / "model_bundle.joblib")
 
 
+    # ---- Apply the selected hybrid to the REAL official observations ----
+    # Score the real official observations. This ranking excludes synthetic scenario rows entirely.
+    official_features = pd.read_parquet(DATA_PROCESSED / "corridor_features.parquet")
+    official_eligible = official_features[official_features["model_eligible"]].copy()
+    official_rule = score_rules(official_eligible)
+    official_ml = add_model_scores(official_eligible, cols, logistic, xgb, iso) # Compute prediction
+    official_scores = official_eligible.merge(official_rule, on="obs_id", validate="one_to_one").merge(official_ml, on="obs_id", validate="one_to_one")
+    official_scores["selected_challenger_score"] = official_scores[selected_col] #xgb score
 
+    # The final review-priority score uses the same hybrid weight chosen on validation.
+    official_scores["selected_review_priority_score"] = (1 - selected_weight) * official_scores["rule_score"] + selected_weight * official_scores[selected_col]
+    # Take the top-k highest-scoring official rows as the review queue.
+    top = official_scores.sort_values(["selected_review_priority_score", "obs_id"], ascending=[False, True], kind="mergesort").head(top_k).copy()
+    top.insert(0, "rank", range(1, len(top) + 1))
+    top["key_evidence_count"] = 0  # placeholder; step 07 fills this in with real evidence counts
+    top_cols = [
+        "rank", "obs_id", "year", "exporter_iso3", "importer_iso3", "hs6", "family_id", "product_name",
+        "trade_value_usd", "quantity_metric_ton", "unit_value_usd_per_metric_ton", "benchmark_price_usd_per_metric_ton",
+        "selected_review_priority_score", "rule_score", "selected_challenger_score", "quality_status", "data_quality_score",
+        "valid_extreme_flag", "key_evidence_count", "source_row_id", "source_version",
+    ]
+    top[top_cols].to_csv(DATA_OUTPUTS / "top_ranked_corridors.csv", index=False)
 
+     # ---- Figures: model comparison + hard-negative guard + SHAP contributions ----
+    FIGURES.mkdir(parents=True, exist_ok=True)
+    val_plot = metrics[(metrics["split"] == "test") & (metrics["family_id"] == "all")].copy()
+    # Bar chart: average precision per model on the test split.
+    plt.figure(figsize=(8, 4.8))
+    plt.bar(val_plot["model"], val_plot["average_precision"])
+    plt.title("Scenario test average precision by model")
+    plt.ylabel("Average precision")
+    plt.xticks(rotation=30, ha="right")
+    plt.tight_layout()
+    plt.savefig(FIGURES / "model_comparison.png", dpi=180)
+    plt.close()
 
+    # Bar chart: hard-negative false-positive rate per model (lower = less over-alerting).
+    plt.figure(figsize=(8, 4.8))
+    plt.bar(val_plot["model"], val_plot["hard_negative_false_positive_rate"])
+    plt.title("Scenario test hard-negative false-positive rate")
+    plt.ylabel("Hard-negative FPR @ top-k")
+    plt.xticks(rotation=30, ha="right")
+    plt.tight_layout()
+    plt.savefig(FIGURES / "hard_negative_comparison.png", dpi=180)
+    plt.close()
 
+    # SHAP contribution summary for the XGBoost challenger. This is model contribution, not legal or factual evidence.
+    # Overall: which features mattered most across many rows?
+    # Row-level: which features pushed this specific row's score up or down?
+    sample = official_eligible.sort_values("obs_id", kind="mergesort").sample(n=min(500, len(official_eligible)), random_state=cfg["primary_seed"])
+    x_sample = sample[cols].astype(float)
+    explainer = shap.TreeExplainer(xgb)
+    shap_values = explainer.shap_values(x_sample)
+    if isinstance(shap_values, list):
+        shap_values = shap_values[0]
 
-
-
-
-
+    # Mean absolute SHAP per feature = average contribution magnitude; keep the top 15.
+    mean_abs = np.abs(shap_values).mean(axis=0)
+    shap_df = pd.DataFrame({"feature_name": cols, "mean_abs_shap": mean_abs}).sort_values("mean_abs_shap", ascending=False).head(15)
+    shap_df.to_csv(DATA_OUTPUTS / "shap_summary_values.csv", index=False)
+    plt.figure(figsize=(8, 5.5))
+    plt.barh(shap_df["feature_name"][::-1], shap_df["mean_abs_shap"][::-1])
+    plt.title("XGBoost challenger SHAP contribution summary")
+    plt.xlabel("Mean |SHAP value|")
+    plt.tight_layout()
+    plt.savefig(FIGURES / "shap_summary.png", dpi=180)
+    plt.close()
+    print(json.dumps(selection, indent=2))
 
 
 if __name__ == "__main__":

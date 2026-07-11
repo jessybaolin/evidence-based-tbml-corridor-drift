@@ -1,0 +1,16 @@
+feature_name,mean_abs_shap
+benchmark_residual,1.444034
+benchmark_consistency_gap,1.3266941
+same_family_year_peer_percentile,0.5118199
+log_unit_value,0.29359853
+quantity_yoy_change,0.16503681
+unit_value_yoy_change,0.15783209
+robust_historical_z,0.14464074
+shifted_corridor_history_median,0.13176668
+shifted_corridor_history_mad,0.12408358
+benchmark_adjusted_drift,0.08325495
+trade_value_yoy_change,0.06757285
+benchmark_yoy_change,0.05289775
+value_quantity_divergence,0.026792385
+corridor_activity_history,0.0
+corridor_reactivation_flag,0.0
