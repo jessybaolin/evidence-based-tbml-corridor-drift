@@ -1,0 +1,14 @@
+{
+  "generated_reports": [
+    "C:\\Users\\jessl\\Projects\\evidence-based-tbml-corridor-drift\\reports\\final_analysis_report.md",
+    "C:\\Users\\jessl\\Projects\\evidence-based-tbml-corridor-drift\\reports\\final_analysis_report.pdf",
+    "C:\\Users\\jessl\\Projects\\evidence-based-tbml-corridor-drift\\reports\\model_card.md",
+    "C:\\Users\\jessl\\Projects\\evidence-based-tbml-corridor-drift\\reports\\data_dictionary.md"
+  ],
+  "report_hashes": {
+    "reports\\data_dictionary.md": "61371f180c35dc0f639238cc4b06389a6811641621a6f4e61fff9621ce4e2001",
+    "reports\\final_analysis_report.md": "3316f86a27da193f9924741658f3d07d61ae0c846173b9f36603ce0ac045dbdd",
+    "reports\\final_analysis_report.pdf": "7e01f332ea34d70025200bdbf6a6e2a81f1324cf9c2de0c43427f9fddabce2d1",
+    "reports\\model_card.md": "46754b9817c1cdcb80703425208adb984714abf481f37c4ec5804384fa816467"
+  }
+}

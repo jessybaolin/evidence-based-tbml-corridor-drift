@@ -1,0 +1,6 @@
+obs_id,evidence_id_coverage,unsupported_numeric_claim_count,hallucinated_source_count,missing_caveat_flag,prohibited_language_flag,conclusion_boundary_present,typology_card_ids_present,status
+obs_c1178b54e91326a9b0f5,True,0,0,False,False,True,True,pass
+obs_31f1dbac37c15eb7186d,True,0,0,False,False,True,True,pass
+obs_8c4051f3c18beab9e68a,True,0,0,False,False,True,True,pass
+obs_c4e5ade4d38d2d3dd148,True,0,0,False,False,True,True,pass
+obs_f7e56d6a0431cdbb8c32,True,0,0,False,False,True,True,pass

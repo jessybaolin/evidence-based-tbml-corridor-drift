@@ -1,0 +1,26 @@
+digraph G { 
+      graph [fontname="DejaVu Sans", rankdir=TB, bgcolor="transparent", margin=0.1];
+      node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=18, margin="0.16,0.10", color="#cbd5e1", fillcolor="#ffffff"];
+      edge [fontname="DejaVu Sans", fontsize=14, color="#64748b", arrowsize=0.8];
+    
+      lab [label="Scenario labels
+separate", fillcolor="#fee2e2"];
+      tr [label="Train
+2017-2020", fillcolor="#e0f2fe"];
+      va [label="Validation
+2021-2022", fillcolor="#ede9fe"];
+      te [label="Test
+2023-2024", fillcolor="#dcfce7"];
+      r [label="Rules baseline"];
+      lr [label="Logistic regression"];
+      xgb [label="XGBoost challenger"];
+      iso [label="Isolation Forest
+side signal"];
+      hy [label="Hybrid validation
+selection", fillcolor="#fef3c7"];
+      once [label="Test once after
+design freeze", fillcolor="#dcfce7"];
+      real [label="Score real official
+observations", fillcolor="#e0f2fe"];
+      lab -> tr; tr -> r; tr -> lr; tr -> xgb; tr -> iso; r -> va; lr -> va; xgb -> va; iso -> va; va -> hy; hy -> once; te -> once; once -> real;
+    }

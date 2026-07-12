@@ -1,0 +1,36 @@
+digraph G { 
+      graph [fontname="DejaVu Sans", rankdir=TB, bgcolor="transparent", margin=0.1];
+      node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=18, margin="0.16,0.10", color="#cbd5e1", fillcolor="#ffffff"];
+      edge [fontname="DejaVu Sans", fontsize=14, color="#64748b", arrowsize=0.8];
+    
+      a [label="Uploaded official-derived
+BACI Parquet", fillcolor="#e0f2fe"];
+      b [label="World Bank annual
+commodity workbook", fillcolor="#dcfce7"];
+      c [label="FATF-Egmont
+context PDFs", fillcolor="#fef3c7"];
+      d [label="Source verification
+and manifest", fillcolor="#ede9fe"];
+      e [label="Raw official BACI
+extract staging"];
+      f [label="Benchmark extraction
+and unit normalization"];
+      g [label="Clean annual
+corridor-product panel"];
+      h [label="Time-safe feature
+engineering"];
+      i [label="Scenario injection
+for ML evaluation only", fillcolor="#fee2e2"];
+      j [label="Train / validation / test
+model comparison", fillcolor="#dbeafe"];
+      k [label="Final scoring of real
+official observations", fillcolor="#dcfce7"];
+      l [label="Evidence table"];
+      m [label="FATF-informed
+typology cards", fillcolor="#fef3c7"];
+      n [label="Grounded analyst
+briefs", fillcolor="#ede9fe"];
+      o [label="Final report", fillcolor="#e0f2fe"];
+      {rank=same; a; b; c}
+      a -> d; b -> d; c -> d; d -> e; d -> f; e -> g; f -> g; g -> h; h -> i; i -> j; h -> k; j -> k; k -> l; m -> n; l -> n; n -> o; l -> o; k -> o;
+    }

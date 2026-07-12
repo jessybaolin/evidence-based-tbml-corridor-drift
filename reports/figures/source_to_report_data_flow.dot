@@ -1,0 +1,21 @@
+digraph G { 
+      graph [fontname="DejaVu Sans", rankdir=TB, bgcolor="transparent", margin=0.1];
+      node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=18, margin="0.16,0.10", color="#cbd5e1", fillcolor="#ffffff"];
+      edge [fontname="DejaVu Sans", fontsize=14, color="#64748b", arrowsize=0.8];
+    
+      sm [label="source_manifest.json", fillcolor="#ede9fe"];
+      rb [label="raw_baci_selected.parquet", fillcolor="#e0f2fe"];
+      wb [label="worldbank_commodity_
+benchmarks.parquet", fillcolor="#dcfce7"];
+      cp [label="corridor_product_year_
+panel.parquet"];
+      cf [label="corridor_features.parquet"];
+      sc [label="scenario_panel +
+scenario_labels", fillcolor="#fee2e2"];
+      ms [label="model_scores.csv"];
+      top [label="top_ranked_corridors.csv", fillcolor="#dcfce7"];
+      ev [label="evidence_table.csv"];
+      br [label="analyst_briefs.md", fillcolor="#ede9fe"];
+      rep [label="final reports", fillcolor="#e0f2fe"];
+      sm -> rb; sm -> wb; rb -> cp; wb -> cp; cp -> cf; cf -> sc; sc -> ms; cf -> top; ms -> top; top -> ev; ev -> br; br -> rep; top -> rep; ev -> rep;
+    }

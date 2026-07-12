@@ -20,3 +20,9 @@ Thumbs.db
 
 # Local-only data profiling scratch space (never pushed)
 data-profiling/
+
+# Claude Code local-only agents/skills/settings (never pushed)
+.claude/agents/
+.claude/skills/
+.claude/settings.local.json
+.agents/

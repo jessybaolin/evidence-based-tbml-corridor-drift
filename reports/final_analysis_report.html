@@ -1,0 +1,1035 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Final Analytical Report</title><style>
+    body { font-family: Inter, Segoe UI, Arial, sans-serif; margin: 34px; color: #172033; line-height: 1.45; }
+    h1 { color: #14213d; font-size: 30px; border-bottom: 3px solid #1f77b4; padding-bottom: 8px; }
+    h2 { color: #1f2937; margin-top: 26px; border-bottom: 1px solid #d8dee9; padding-bottom: 4px; }
+    h3 { color: #334155; }
+    table { border-collapse: collapse; width: 100%; font-size: 10.5px; margin: 12px 0 18px; table-layout: fixed; word-wrap: break-word; }
+    th, td { border: 1px solid #d8dee9; padding: 5px 6px; vertical-align: top; }
+    th { background: #edf2f7; color: #14213d; }
+    code { background: #f1f5f9; padding: 1px 3px; border-radius: 4px; }
+    pre { background: #0f172a; color: #e5e7eb; padding: 12px; border-radius: 8px; overflow-wrap: break-word; white-space: pre-wrap; font-size: 10px; }
+    pre code { background: transparent; color: #e5e7eb; padding: 0; border-radius: 0; }
+    img { max-width: 100%; height: auto; border: 1px solid #d8dee9; border-radius: 10px; margin: 8px 0 18px; }
+    .boundary { background: #fff7ed; color: #b91c1c; border: 1px solid #fed7aa; border-radius: 10px; padding: 10px 12px; font-weight: bold; }
+    .caption { color: #5f6b7a; font-size: 11px; margin-top: -12px; }
+    @page { size: A4; margin: 18mm 14mm; }
+    </style></head><body><h1>Evidence-First TBML Corridor Drift Lab - Final analytical report</h1>
+<div class='boundary'>This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent.</div>
+
+<h2>Executive summary</h2>
+<p>Purpose: Summarize what the official-data lab built and what it found.</p>
+<p>This package implements a simplified official-data analytical lab using a filtered official-derived CEPII BACI HS17 V202601 Parquet extract, the World Bank Commodity Markets annual workbook, time-safe features, scenario-based model evaluation, evidence rows, FATF-Egmont typology cards, and grounded analyst briefs.</p>
+<p>The official BACI extract contains <strong>25,844 retained panel rows</strong> after row-quality assignment. The panel covers <strong>2017-2024</strong> and exactly three HS6 families: crude palm oil <code>151110</code>, refined copper cathodes <code>740311</code>, and non-monetary unwrought gold <code>710812</code>.</p>
+<p>The retained review-priority scoring approach is <code>hybrid_score</code> using challenger <code>xgboost</code> with validation-selected challenger weight <code>0.75</code>. Scores are ranking signals, not probabilities of crime.</p>
+<h2>Source feasibility and verification</h2>
+<p>Purpose: Show that the project ran on the uploaded official or official-derived files and did not substitute synthetic trade data.</p>
+<h3>Source file inventory</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">file_name</th>
+<th style="text-align: right;">size_bytes</th>
+<th style="text-align: left;">sha256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">baci_hs17_v202601_selected_2017_2024_151110_740311_710812.parquet</td>
+<td style="text-align: right;">340203</td>
+<td style="text-align: left;">0e493e057c8fd57902328551a9c874d22aea0e4c3437432617489c7c3571fe12</td>
+</tr>
+<tr>
+<td style="text-align: left;">data_source_notes.json</td>
+<td style="text-align: right;">4342</td>
+<td style="text-align: left;">a8a973d0797cbfcd4064b1dfd071faa441bdc7b766e719af9bbb53014365bfe6</td>
+</tr>
+<tr>
+<td style="text-align: left;">CMO-Historical-Data-Annual.xlsx</td>
+<td style="text-align: right;">3177955</td>
+<td style="text-align: left;">9fbcb348f40ecdb02eb1bcf858a2965383d2aaf3445e8920dd7d60ae7b04af51</td>
+</tr>
+<tr>
+<td style="text-align: left;">Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf</td>
+<td style="text-align: right;">3108080</td>
+<td style="text-align: left;">0969e49877a1937a7bc49ac02ab10a444adca2c2ff2c7803ee6a35adea9f6828</td>
+</tr>
+<tr>
+<td style="text-align: left;">Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf</td>
+<td style="text-align: right;">2079148</td>
+<td style="text-align: left;">670b80270b33354b17263d44393cd65386a96bdb1a171365f217048e7cca6afb</td>
+</tr>
+<tr>
+<td style="text-align: left;">country_codes_V202601.csv</td>
+<td style="text-align: right;">5346</td>
+<td style="text-align: left;">c6892f28bea23d689b29b074d299cea7f5196c708b03026fbe419fa4ecb4e820</td>
+</tr>
+<tr>
+<td style="text-align: left;">product_codes_HS17_V202601.csv</td>
+<td style="text-align: right;">598831</td>
+<td style="text-align: left;">4abb74d330c3a1969ccfc4652e6ef849963980d55e45ad768eb54a32747efd5e</td>
+</tr>
+<tr>
+<td style="text-align: left;">baci-readme.txt</td>
+<td style="text-align: right;">571</td>
+<td style="text-align: left;">156c8fe9d8582f24fdec5c43d912e3736dc515a6efd5cd04e513095a0db44c66</td>
+</tr>
+</tbody>
+</table>
+<h3>Verification summary</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">item</th>
+<th style="text-align: left;">status</th>
+<th style="text-align: left;">detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">BACI row count</td>
+<td style="text-align: left;">pass</td>
+<td style="text-align: left;">25844</td>
+</tr>
+<tr>
+<td style="text-align: left;">BACI years</td>
+<td style="text-align: left;">pass</td>
+<td style="text-align: left;">{'2017': 2783, '2018': 3094, '2019': 3279, '2020': 3162, '2021': 3358, '2022': 3510, '2023': 3445, '2024': 3213}</td>
+</tr>
+<tr>
+<td style="text-align: left;">BACI HS6</td>
+<td style="text-align: left;">pass</td>
+<td style="text-align: left;">{'151110': 6717, '710812': 12205, '740311': 6922}</td>
+</tr>
+<tr>
+<td style="text-align: left;">World Bank annual benchmarks</td>
+<td style="text-align: left;">pass</td>
+<td style="text-align: left;">{'crude_palm_oil': 'USD per metric ton', 'gold_unwrought': 'USD per troy ounce', 'refined_copper_cathodes': 'USD per metric ton'}</td>
+</tr>
+<tr>
+<td style="text-align: left;">FATF-Egmont PDFs</td>
+<td style="text-align: left;">pass</td>
+<td style="text-align: left;">[{'file_name': 'Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf', 'pages': 66, 'readable': True, 'sample_text_length_first_pages': 3461}, {'file_name': 'Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf', 'pages': 10, 'readable': True, 'sample_text_length_first_pages': 4408}]</td>
+</tr>
+<tr>
+<td style="text-align: left;">Web check</td>
+<td style="text-align: left;">pass</td>
+<td style="text-align: left;">Web search found official FATF pages for the 2020 trends report and 2021 risk indicators; no newer official TBML-specific replacement was identified during this run.</td>
+</tr>
+</tbody>
+</table>
+<p>BACI <code>v</code> is interpreted as thousands of current USD and multiplied by 1,000. BACI <code>q</code> is interpreted as metric tons. HS6 <code>k</code> is treated as a six-character string.</p>
+<h3>HS6 family coverage</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">hs6</th>
+<th style="text-align: left;">family_id</th>
+<th style="text-align: left;">product_name</th>
+<th style="text-align: right;">panel_rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">151110</td>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: left;">Crude palm oil</td>
+<td style="text-align: right;">6717</td>
+</tr>
+<tr>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">gold_unwrought</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">12205</td>
+</tr>
+<tr>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">refined_copper_cathodes</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">6922</td>
+</tr>
+</tbody>
+</table>
+<h3>Row quality status</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">quality_status</th>
+<th style="text-align: right;">rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">fully_usable</td>
+<td style="text-align: right;">11894</td>
+</tr>
+<tr>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">11762</td>
+</tr>
+<tr>
+<td style="text-align: left;">excluded_from_modeling_retained_for_audit</td>
+<td style="text-align: right;">2188</td>
+</tr>
+</tbody>
+</table>
+<h2>Official-data pipeline architecture</h2>
+<p>Purpose: Show the actual simplified architecture implemented in this package.</p>
+<p><img alt="Official-data pipeline architecture" src="figures/official_data_pipeline_architecture.png"></p>
+<p><em>Official-data pipeline architecture</em></p>
+<p><img alt="Data flow from source files to final outputs" src="figures/source_to_report_data_flow.png"></p>
+<p><em>Data flow from source files to final outputs</em></p>
+<h2>World Bank benchmark handling</h2>
+<p>Purpose: Explain benchmark extraction and unit normalization.</p>
+<p>Palm oil and copper benchmarks are preserved as USD per metric ton. Gold is preserved in its original USD per troy ounce unit and converted to USD per metric ton using <code>gold_usd_per_metric_ton = gold_usd_per_troy_ounce * (1_000_000 / 31.1034768)</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">family_id</th>
+<th style="text-align: right;">hs6</th>
+<th style="text-align: right;">benchmark_year</th>
+<th style="text-align: right;">benchmark_price_original</th>
+<th style="text-align: left;">benchmark_unit_original</th>
+<th style="text-align: right;">benchmark_price_usd_per_metric_ton</th>
+<th style="text-align: left;">benchmark_conversion_method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2017</td>
+<td style="text-align: right;">750.81</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">750.81</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: right;">638.66</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">638.66</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: right;">601.37</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">601.37</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">751.77</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">751.77</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2021</td>
+<td style="text-align: right;">1130.58</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">1130.58</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: right;">1275.99</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">1275.99</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2023</td>
+<td style="text-align: right;">886.45</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">886.45</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">crude_palm_oil</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: right;">2024</td>
+<td style="text-align: right;">963.36</td>
+<td style="text-align: left;">USD per metric ton</td>
+<td style="text-align: right;">963.36</td>
+<td style="text-align: left;">identity</td>
+</tr>
+<tr>
+<td style="text-align: left;">gold_unwrought</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: right;">2017</td>
+<td style="text-align: right;">1257.56</td>
+<td style="text-align: left;">USD per troy ounce</td>
+<td style="text-align: right;">4.04315e+07</td>
+<td style="text-align: left;">gold_usd_per_troy_ounce * (1000000 / 31.1034768)</td>
+</tr>
+<tr>
+<td style="text-align: left;">gold_unwrought</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: right;">1269.23</td>
+<td style="text-align: left;">USD per troy ounce</td>
+<td style="text-align: right;">4.08067e+07</td>
+<td style="text-align: left;">gold_usd_per_troy_ounce * (1000000 / 31.1034768)</td>
+</tr>
+<tr>
+<td style="text-align: left;">gold_unwrought</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: right;">1392.5</td>
+<td style="text-align: left;">USD per troy ounce</td>
+<td style="text-align: right;">4.47699e+07</td>
+<td style="text-align: left;">gold_usd_per_troy_ounce * (1000000 / 31.1034768)</td>
+</tr>
+<tr>
+<td style="text-align: left;">gold_unwrought</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">1770.25</td>
+<td style="text-align: left;">USD per troy ounce</td>
+<td style="text-align: right;">5.69149e+07</td>
+<td style="text-align: left;">gold_usd_per_troy_ounce * (1000000 / 31.1034768)</td>
+</tr>
+</tbody>
+</table>
+<h2>Time-safe features</h2>
+<p>Purpose: Build review signals without letting current rows define their own history or using future years.</p>
+<p><img alt="Time-safe feature construction flow" src="figures/time_safe_feature_construction_flow.png"></p>
+<p><em>Time-safe feature construction flow</em></p>
+<h1>Time-safe feature explanation table</h1>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">feature_name</th>
+<th style="text-align: left;">derivation</th>
+<th style="text-align: left;">why_created</th>
+<th style="text-align: left;">significance_for_review</th>
+<th style="text-align: left;">time_safety_rule</th>
+<th style="text-align: left;">plain_english_interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">log_unit_value</td>
+<td style="text-align: left;">log(unit_value_usd_per_metric_ton)</td>
+<td style="text-align: left;">Stabilizes skewed unit values.</td>
+<td style="text-align: left;">Shows unusually high or low implied prices within a product family.</td>
+<td style="text-align: left;">Uses only the current row's official value and quantity.</td>
+<td style="text-align: left;">The aggregate implied price on a log scale.</td>
+</tr>
+<tr>
+<td style="text-align: left;">shifted_corridor_history_median</td>
+<td style="text-align: left;">Median of prior-year log_unit_value for the same exporter-importer-HS6 corridor.</td>
+<td style="text-align: left;">Builds the corridor's own baseline.</td>
+<td style="text-align: left;">Shows whether the row differs from its own past.</td>
+<td style="text-align: left;">Prior years only; current/future years excluded.</td>
+<td style="text-align: left;">What this route-product normally looked like before this year.</td>
+</tr>
+<tr>
+<td style="text-align: left;">shifted_corridor_history_mad</td>
+<td style="text-align: left;">Median absolute deviation of prior prior-year log_unit_value.</td>
+<td style="text-align: left;">Gives robust historical spread.</td>
+<td style="text-align: left;">Large current deviations matter more when history is stable.</td>
+<td style="text-align: left;">Prior years only.</td>
+<td style="text-align: left;">How much this route-product used to vary.</td>
+</tr>
+<tr>
+<td style="text-align: left;">robust_historical_z</td>
+<td style="text-align: left;">(log_unit_value - shifted median) / shifted MAD with a safe denominator.</td>
+<td style="text-align: left;">Measures distance from prior corridor behavior.</td>
+<td style="text-align: left;">Core drift signal.</td>
+<td style="text-align: left;">Median and MAD are shifted prior-year values.</td>
+<td style="text-align: left;">How far this row is from its own historical pattern.</td>
+</tr>
+<tr>
+<td style="text-align: left;">same_family_year_peer_percentile</td>
+<td style="text-align: left;">Percentile rank of benchmark_residual within the same HS6/family and year.</td>
+<td style="text-align: left;">Compares against contemporaneous peers.</td>
+<td style="text-align: left;">Finds rows unusual relative to other corridors in the same market year.</td>
+<td style="text-align: left;">Same-year only; no future-year peer distributions.</td>
+<td style="text-align: left;">Where this row sits among same-product peers that year.</td>
+</tr>
+<tr>
+<td style="text-align: left;">trade_value_yoy_change</td>
+<td style="text-align: left;">log(current trade value / previous observed trade value) for same corridor-HS6.</td>
+<td style="text-align: left;">Captures sudden value movement.</td>
+<td style="text-align: left;">Highlights sharp trade value jumps or falls.</td>
+<td style="text-align: left;">Previous observation only.</td>
+<td style="text-align: left;">How much aggregate value changed since the previous active year.</td>
+</tr>
+<tr>
+<td style="text-align: left;">quantity_yoy_change</td>
+<td style="text-align: left;">log(current quantity / previous observed quantity) for same corridor-HS6.</td>
+<td style="text-align: left;">Separates value growth from physical quantity growth.</td>
+<td style="text-align: left;">Shows whether value changes are volume-driven.</td>
+<td style="text-align: left;">Previous observation only.</td>
+<td style="text-align: left;">How much physical quantity changed.</td>
+</tr>
+<tr>
+<td style="text-align: left;">unit_value_yoy_change</td>
+<td style="text-align: left;">log(current unit value / previous observed unit value).</td>
+<td style="text-align: left;">Captures implied price movement.</td>
+<td style="text-align: left;">Important for valuation-style review.</td>
+<td style="text-align: left;">Previous observation only.</td>
+<td style="text-align: left;">How much the implied price changed.</td>
+</tr>
+<tr>
+<td style="text-align: left;">benchmark_residual</td>
+<td style="text-align: left;">log_unit_value - log(World Bank benchmark USD per metric ton).</td>
+<td style="text-align: left;">Adds macro commodity context.</td>
+<td style="text-align: left;">Separates corridor-specific gaps from broad commodity levels.</td>
+<td style="text-align: left;">Uses benchmark for the same year only.</td>
+<td style="text-align: left;">The gap between observed aggregate unit value and broad market context.</td>
+</tr>
+<tr>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: left;">benchmark_residual - previous observed benchmark_residual.</td>
+<td style="text-align: left;">Looks at movement after broad benchmark changes.</td>
+<td style="text-align: left;">Reduces false positives when commodity markets move broadly.</td>
+<td style="text-align: left;">Previous residual only.</td>
+<td style="text-align: left;">Whether the gap to benchmark changed compared with this route's prior gap.</td>
+</tr>
+<tr>
+<td style="text-align: left;">corridor_activity_history</td>
+<td style="text-align: left;">Count of prior active years for exporter-importer-HS6.</td>
+<td style="text-align: left;">Captures history depth.</td>
+<td style="text-align: left;">Short-history rows need caveats.</td>
+<td style="text-align: left;">Prior years only.</td>
+<td style="text-align: left;">How many earlier years this route-product appeared.</td>
+</tr>
+<tr>
+<td style="text-align: left;">corridor_novelty_flag</td>
+<td style="text-align: left;">1 if no prior active year exists; else 0.</td>
+<td style="text-align: left;">Flags new corridors.</td>
+<td style="text-align: left;">New corridors can matter when paired with extreme values.</td>
+<td style="text-align: left;">Prior activity only.</td>
+<td style="text-align: left;">This route-product is new in the observed panel.</td>
+</tr>
+<tr>
+<td style="text-align: left;">corridor_reactivation_flag</td>
+<td style="text-align: left;">1 if prior activity exists and the previous active year is not the immediately preceding year.</td>
+<td style="text-align: left;">Captures reappearing routes.</td>
+<td style="text-align: left;">Reactivation can matter with large valuation changes.</td>
+<td style="text-align: left;">Prior activity pattern only.</td>
+<td style="text-align: left;">The route-product disappeared and came back.</td>
+</tr>
+<tr>
+<td style="text-align: left;">value_quantity_divergence</td>
+<td style="text-align: left;">trade_value_yoy_change - quantity_yoy_change.</td>
+<td style="text-align: left;">Identifies value moving faster than quantity.</td>
+<td style="text-align: left;">Useful for valuation-style review patterns.</td>
+<td style="text-align: left;">Based on previous-observation changes only.</td>
+<td style="text-align: left;">Value changed more than physical volume.</td>
+</tr>
+<tr>
+<td style="text-align: left;">missingness_flags</td>
+<td style="text-align: left;">Binary flags for missing quantity, benchmark, history, or country mapping.</td>
+<td style="text-align: left;">Makes data limits explicit.</td>
+<td style="text-align: left;">Prevents data-quality issues from being mistaken for suspiciousness.</td>
+<td style="text-align: left;">Missingness reflects available data at the row time.</td>
+<td style="text-align: left;">What key information is missing.</td>
+</tr>
+<tr>
+<td style="text-align: left;">data_quality_flags</td>
+<td style="text-align: left;">Flags and additive score for quantity, benchmark, history, and provenance completeness.</td>
+<td style="text-align: left;">Separates confidence from anomaly strength.</td>
+<td style="text-align: left;">Low quality caveats a case; it should not automatically raise suspiciousness.</td>
+<td style="text-align: left;">Uses source/provenance and prior history only where relevant.</td>
+<td style="text-align: left;">How usable and well-supported the row is.</td>
+</tr>
+</tbody>
+</table>
+<h2>Scenario layer and model comparison</h2>
+<p>Purpose: Evaluate ranking methods without pretending that public BACI contains confirmed TBML labels.</p>
+<p><img alt="Train / validation / test ML workflow" src="figures/train_validation_test_ml_workflow.png"></p>
+<p><em>Train / validation / test ML workflow</em></p>
+<h3>Frozen split summary</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">split</th>
+<th style="text-align: left;">years</th>
+<th style="text-align: right;">rows</th>
+<th style="text-align: right;">synthetic_positive_rows</th>
+<th style="text-align: right;">hard_negative_rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">train</td>
+<td style="text-align: left;">2017, 2018, 2019, 2020</td>
+<td style="text-align: right;">12318</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">72</td>
+</tr>
+<tr>
+<td style="text-align: left;">validation</td>
+<td style="text-align: left;">2021, 2022</td>
+<td style="text-align: right;">6868</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">72</td>
+</tr>
+<tr>
+<td style="text-align: left;">test</td>
+<td style="text-align: left;">2023, 2024</td>
+<td style="text-align: right;">6658</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">72</td>
+</tr>
+</tbody>
+</table>
+<h3>Model comparison - test split, all families</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">model</th>
+<th style="text-align: right;">precision_at_k</th>
+<th style="text-align: right;">recall_at_k</th>
+<th style="text-align: right;">lift_at_k</th>
+<th style="text-align: right;">average_precision</th>
+<th style="text-align: right;">hard_negative_false_positive_rate</th>
+<th style="text-align: right;">ordinary_false_positive_rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">xgboost</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">0.231481</td>
+<td style="text-align: right;">27.9306</td>
+<td style="text-align: right;">0.306143</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.00427131</td>
+</tr>
+<tr>
+<td style="text-align: left;">hybrid</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.222222</td>
+<td style="text-align: right;">26.8133</td>
+<td style="text-align: right;">0.297849</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.00444217</td>
+</tr>
+<tr>
+<td style="text-align: left;">rule</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.0648148</td>
+<td style="text-align: right;">7.82056</td>
+<td style="text-align: right;">0.0996167</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.00734666</td>
+</tr>
+<tr>
+<td style="text-align: left;">logistic</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.0277778</td>
+<td style="text-align: right;">3.35167</td>
+<td style="text-align: right;">0.0770069</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.00803007</td>
+</tr>
+<tr>
+<td style="text-align: left;">isolation</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.0277778</td>
+<td style="text-align: right;">3.35167</td>
+<td style="text-align: right;">0.0499403</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.00803007</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Model comparison figure" src="figures/model_comparison.png"></p>
+<p><em>Model comparison figure</em></p>
+<p><img alt="Hard-negative false-positive comparison" src="figures/hard_negative_comparison.png"></p>
+<p><em>Hard-negative false-positive comparison</em></p>
+<p><img alt="SHAP summary - model contribution only" src="figures/shap_summary.png"></p>
+<p><em>SHAP summary - model contribution only</em></p>
+<h2>Top-ranked official observations</h2>
+<p>Purpose: Apply the selected scoring approach to real official observations only. Scenario rows are not used in this review queue.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">rank</th>
+<th style="text-align: right;">year</th>
+<th style="text-align: left;">exporter_iso3</th>
+<th style="text-align: left;">importer_iso3</th>
+<th style="text-align: right;">hs6</th>
+<th style="text-align: left;">product_name</th>
+<th style="text-align: right;">selected_review_priority_score</th>
+<th style="text-align: left;">quality_status</th>
+<th style="text-align: right;">key_evidence_count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">ESP</td>
+<td style="text-align: left;">NLD</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.989129</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">KWT</td>
+<td style="text-align: left;">NPL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.985756</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">QAT</td>
+<td style="text-align: left;">NPL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.98547</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">HKG</td>
+<td style="text-align: left;">NPL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.98547</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">SAU</td>
+<td style="text-align: left;">NPL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.984675</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">ITA</td>
+<td style="text-align: left;">MKD</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: left;">Crude palm oil</td>
+<td style="text-align: right;">0.980196</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">2024</td>
+<td style="text-align: left;">GBR</td>
+<td style="text-align: left;">ITA</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.980173</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">CAF</td>
+<td style="text-align: left;">CHE</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.978825</td>
+<td style="text-align: left;">fully_usable</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: left;">USA</td>
+<td style="text-align: left;">IRL</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.978747</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: left;">ITA</td>
+<td style="text-align: left;">TUR</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.975341</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">SGP</td>
+<td style="text-align: left;">JPN</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.974686</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">2024</td>
+<td style="text-align: left;">CHN</td>
+<td style="text-align: left;">GHA</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.973245</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: left;">IND</td>
+<td style="text-align: left;">ITA</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.97265</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: left;">BEL</td>
+<td style="text-align: left;">SVK</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.972575</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: left;">NGA</td>
+<td style="text-align: left;">IRL</td>
+<td style="text-align: right;">151110</td>
+<td style="text-align: left;">Crude palm oil</td>
+<td style="text-align: right;">0.971741</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">DEU</td>
+<td style="text-align: left;">BRA</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.971565</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">MYS</td>
+<td style="text-align: left;">NPL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.971243</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">KOR</td>
+<td style="text-align: left;">NPL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.971243</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">JPN</td>
+<td style="text-align: left;">PHL</td>
+<td style="text-align: right;">710812</td>
+<td style="text-align: left;">Non-monetary unwrought gold</td>
+<td style="text-align: right;">0.970299</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">2023</td>
+<td style="text-align: left;">NLD</td>
+<td style="text-align: left;">SGP</td>
+<td style="text-align: right;">740311</td>
+<td style="text-align: left;">Refined copper cathodes</td>
+<td style="text-align: right;">0.969581</td>
+<td style="text-align: left;">usable_with_caveat</td>
+<td style="text-align: right;">4</td>
+</tr>
+</tbody>
+</table>
+<h2>Evidence and grounded briefs</h2>
+<p>Purpose: Convert scores into recomputable facts and bounded analyst-facing narratives.</p>
+<p><img alt="Evidence and grounded brief flow" src="figures/evidence_genai_grounded_brief_flow.png"></p>
+<p><em>Evidence and grounded brief flow</em></p>
+<h3>Evidence table sample</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">evidence_id</th>
+<th style="text-align: left;">obs_id</th>
+<th style="text-align: left;">evidence_type</th>
+<th style="text-align: left;">metric_name</th>
+<th style="text-align: right;">observed_value</th>
+<th style="text-align: right;">threshold</th>
+<th style="text-align: left;">severity</th>
+<th style="text-align: left;">plain_english_summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">ev_64fe9330ad36973b98</td>
+<td style="text-align: left;">obs_c1178b54e91326a9b0f5</td>
+<td style="text-align: left;">history_deviation</td>
+<td style="text-align: left;">robust_historical_z</td>
+<td style="text-align: right;">18.8267</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 ESP to NLD 710812 (Non-monetary unwrought gold) differs from its prior corridor history with robust historical z of 18.827. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_89c989e7cf036ef947</td>
+<td style="text-align: left;">obs_c1178b54e91326a9b0f5</td>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: right;">1.85827</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 ESP to NLD 710812 (Non-monetary unwrought gold) moved by 1.858 in benchmark-adjusted residual versus the previous observed corridor year. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_03b1acd36c34032643</td>
+<td style="text-align: left;">obs_c1178b54e91326a9b0f5</td>
+<td style="text-align: left;">benchmark_gap</td>
+<td style="text-align: left;">benchmark_residual</td>
+<td style="text-align: right;">1.8505</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 ESP to NLD 710812 (Non-monetary unwrought gold) has a log benchmark residual of 1.850 against the World Bank annual benchmark. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_d25e9b9a9f2e0660b3</td>
+<td style="text-align: left;">obs_c1178b54e91326a9b0f5</td>
+<td style="text-align: left;">annual_unit_value_change</td>
+<td style="text-align: left;">unit_value_yoy_change</td>
+<td style="text-align: right;">1.8588</td>
+<td style="text-align: right;">0.8</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 ESP to NLD 710812 (Non-monetary unwrought gold) has a year-over-year log unit-value change of 1.859. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_9112748c22f2de5977</td>
+<td style="text-align: left;">obs_31f1dbac37c15eb7186d</td>
+<td style="text-align: left;">history_deviation</td>
+<td style="text-align: left;">robust_historical_z</td>
+<td style="text-align: right;">12.2572</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 KWT to NPL 710812 (Non-monetary unwrought gold) differs from its prior corridor history with robust historical z of 12.257. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_451e6e42094546bc46</td>
+<td style="text-align: left;">obs_31f1dbac37c15eb7186d</td>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: right;">1.99783</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 KWT to NPL 710812 (Non-monetary unwrought gold) moved by 1.998 in benchmark-adjusted residual versus the previous observed corridor year. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_a07f9ac3f3b75c1484</td>
+<td style="text-align: left;">obs_31f1dbac37c15eb7186d</td>
+<td style="text-align: left;">annual_unit_value_change</td>
+<td style="text-align: left;">unit_value_yoy_change</td>
+<td style="text-align: right;">1.99837</td>
+<td style="text-align: right;">0.8</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 KWT to NPL 710812 (Non-monetary unwrought gold) has a year-over-year log unit-value change of 1.998. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_cb5cbcfcdc460218ad</td>
+<td style="text-align: left;">obs_31f1dbac37c15eb7186d</td>
+<td style="text-align: left;">value_quantity_divergence</td>
+<td style="text-align: left;">value_quantity_divergence</td>
+<td style="text-align: right;">1.99837</td>
+<td style="text-align: right;">0.8</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 KWT to NPL 710812 (Non-monetary unwrought gold) shows value-quantity divergence of 1.998. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_7860c8fa03d5b08d13</td>
+<td style="text-align: left;">obs_8c4051f3c18beab9e68a</td>
+<td style="text-align: left;">history_deviation</td>
+<td style="text-align: left;">robust_historical_z</td>
+<td style="text-align: right;">19.2111</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 QAT to NPL 710812 (Non-monetary unwrought gold) differs from its prior corridor history with robust historical z of 19.211. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_d6a6bd050796d6d0c2</td>
+<td style="text-align: left;">obs_8c4051f3c18beab9e68a</td>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: left;">benchmark_adjusted_drift</td>
+<td style="text-align: right;">1.77752</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 QAT to NPL 710812 (Non-monetary unwrought gold) moved by 1.778 in benchmark-adjusted residual versus the previous observed corridor year. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_80601810fc818cf4e6</td>
+<td style="text-align: left;">obs_8c4051f3c18beab9e68a</td>
+<td style="text-align: left;">benchmark_gap</td>
+<td style="text-align: left;">benchmark_residual</td>
+<td style="text-align: right;">1.72365</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 QAT to NPL 710812 (Non-monetary unwrought gold) has a log benchmark residual of 1.724 against the World Bank annual benchmark. Severity: high.</td>
+</tr>
+<tr>
+<td style="text-align: left;">ev_a600abc5ed980ad59a</td>
+<td style="text-align: left;">obs_8c4051f3c18beab9e68a</td>
+<td style="text-align: left;">annual_unit_value_change</td>
+<td style="text-align: left;">unit_value_yoy_change</td>
+<td style="text-align: right;">1.77806</td>
+<td style="text-align: right;">0.8</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">2022 QAT to NPL 710812 (Non-monetary unwrought gold) has a year-over-year log unit-value change of 1.778. Severity: high.</td>
+</tr>
+</tbody>
+</table>
+<h3>Brief validation summary</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">obs_id</th>
+<th style="text-align: left;">evidence_id_coverage</th>
+<th style="text-align: right;">unsupported_numeric_claim_count</th>
+<th style="text-align: right;">hallucinated_source_count</th>
+<th style="text-align: left;">missing_caveat_flag</th>
+<th style="text-align: left;">prohibited_language_flag</th>
+<th style="text-align: left;">conclusion_boundary_present</th>
+<th style="text-align: left;">typology_card_ids_present</th>
+<th style="text-align: left;">status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">obs_c1178b54e91326a9b0f5</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">pass</td>
+</tr>
+<tr>
+<td style="text-align: left;">obs_31f1dbac37c15eb7186d</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">pass</td>
+</tr>
+<tr>
+<td style="text-align: left;">obs_8c4051f3c18beab9e68a</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">pass</td>
+</tr>
+<tr>
+<td style="text-align: left;">obs_c4e5ade4d38d2d3dd148</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">pass</td>
+</tr>
+<tr>
+<td style="text-align: left;">obs_f7e56d6a0431cdbb8c32</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">False</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">True</td>
+<td style="text-align: left;">pass</td>
+</tr>
+</tbody>
+</table>
+<p>The GenAI layer is implemented as a GenAI-ready, evidence-grounded brief design. The verified output uses deterministic offline rendering; no live LLM call was made.</p>
+<h2>Key limitations</h2>
+<p>Purpose: Explain the project without overclaiming.</p>
+<ul>
+<li>
+<p>The public BACI panel is annual and aggregate. It is not invoice, shipment, customer, payment, vessel, customs-document, or beneficial-ownership data.</p>
+</li>
+<li>
+<p>Commodity benchmarks are macro context and not invoice-level fair value.</p>
+</li>
+<li>
+<p>Synthetic review-priority scenarios are for ML evaluation only; they are not real TBML labels.</p>
+</li>
+<li>
+<p>FATF-Egmont materials are typology and caveat context only. They are not model features, row-level evidence, labels, or proof.</p>
+</li>
+<li>
+<p>Model scores are review-priority scores, not calibrated probabilities or legal findings.</p>
+</li>
+</ul>
+<h2>Conclusion</h2>
+<p>Purpose: State exactly what the package supports.</p>
+<p>The lab produces a validated official-data review queue, evidence table, deterministic analyst briefs, and static dashboard concept for human review prioritization. It supports consistent triage and documentation of unusual corridor-product-year patterns. It does not establish money laundering, misinvoicing, or criminal intent.</p></body></html>

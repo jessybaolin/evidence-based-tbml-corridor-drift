@@ -1,0 +1,86 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Model Card</title><style>
+    body { font-family: Inter, Segoe UI, Arial, sans-serif; margin: 34px; color: #172033; line-height: 1.45; }
+    h1 { color: #14213d; font-size: 30px; border-bottom: 3px solid #1f77b4; padding-bottom: 8px; }
+    h2 { color: #1f2937; margin-top: 26px; border-bottom: 1px solid #d8dee9; padding-bottom: 4px; }
+    h3 { color: #334155; }
+    table { border-collapse: collapse; width: 100%; font-size: 10.5px; margin: 12px 0 18px; table-layout: fixed; word-wrap: break-word; }
+    th, td { border: 1px solid #d8dee9; padding: 5px 6px; vertical-align: top; }
+    th { background: #edf2f7; color: #14213d; }
+    code { background: #f1f5f9; padding: 1px 3px; border-radius: 4px; }
+    pre { background: #0f172a; color: #e5e7eb; padding: 12px; border-radius: 8px; overflow-wrap: break-word; white-space: pre-wrap; font-size: 10px; }
+    pre code { background: transparent; color: #e5e7eb; padding: 0; border-radius: 0; }
+    img { max-width: 100%; height: auto; border: 1px solid #d8dee9; border-radius: 10px; margin: 8px 0 18px; }
+    .boundary { background: #fff7ed; color: #b91c1c; border: 1px solid #fed7aa; border-radius: 10px; padding: 10px 12px; font-weight: bold; }
+    .caption { color: #5f6b7a; font-size: 11px; margin-top: -12px; }
+    @page { size: A4; margin: 18mm 14mm; }
+    </style></head><body><h1>Model card - Evidence-First TBML Corridor Drift Lab</h1>
+<p>Purpose: Document the review-priority scoring layer and its limits.</p>
+<div class='boundary'>This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent.</div>
+
+<h2>Intended use</h2>
+<p>Rank unusual exporter-importer-HS6-year patterns from official public aggregate data for human review.</p>
+<h2>Prohibited use</h2>
+<p>Do not use model scores as proof of money laundering, misinvoicing, fraud, sanctions evasion, or criminal intent. Do not use this public aggregate panel as a customer-screening decision system.</p>
+<h2>Data and labels</h2>
+<p>The training labels are controlled synthetic review-priority scenarios and hard negatives used for evaluation only. They are not confirmed TBML labels.</p>
+<h2>Model candidates</h2>
+<p>Rules baseline, logistic regression baseline, XGBoost challenger, Isolation Forest side signal, and validation-selected hybrid score.</p>
+<h2>Selection decision</h2>
+<p>Retained scoring approach: <code>hybrid_score</code> using challenger <code>xgboost</code>. Hybrid challenger weight chosen on validation only: <code>0.75</code>.</p>
+<h2>Test-set metric summary</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">model</th>
+<th style="text-align: right;">precision_at_k</th>
+<th style="text-align: right;">recall_at_k</th>
+<th style="text-align: right;">lift_at_k</th>
+<th style="text-align: right;">average_precision</th>
+<th style="text-align: right;">hard_negative_false_positive_rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">xgboost</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">0.231481</td>
+<td style="text-align: right;">27.9306</td>
+<td style="text-align: right;">0.306143</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">hybrid</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.222222</td>
+<td style="text-align: right;">26.8133</td>
+<td style="text-align: right;">0.297849</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">rule</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.0648148</td>
+<td style="text-align: right;">7.82056</td>
+<td style="text-align: right;">0.0996167</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">logistic</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.0277778</td>
+<td style="text-align: right;">3.35167</td>
+<td style="text-align: right;">0.0770069</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;">isolation</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.0277778</td>
+<td style="text-align: right;">3.35167</td>
+<td style="text-align: right;">0.0499403</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<h2>Interpretability</h2>
+<p>SHAP is used only as model-contribution context. It is not factual, causal, invoice-level, legal, or typology evidence.</p></body></html>

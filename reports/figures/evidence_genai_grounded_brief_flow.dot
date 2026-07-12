@@ -1,0 +1,21 @@
+digraph G { 
+      graph [fontname="DejaVu Sans", rankdir=TB, bgcolor="transparent", margin=0.1];
+      node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=18, margin="0.16,0.10", color="#cbd5e1", fillcolor="#ffffff"];
+      edge [fontname="DejaVu Sans", fontsize=14, color="#64748b", arrowsize=0.8];
+    
+      top [label="Top-ranked official
+observation", fillcolor="#dcfce7"];
+      ev [label="Evidence rows
+recomputable facts"];
+      ty [label="FATF-Egmont
+typology cards", fillcolor="#fef3c7"];
+      det [label="Deterministic
+brief renderer", fillcolor="#ede9fe"];
+      val [label="Brief validation
+IDs, caveats, boundary"];
+      br [label="Grounded analyst
+brief", fillcolor="#e0f2fe"];
+      bound [label="Human-review
+boundary", fillcolor="#fee2e2"];
+      top -> ev -> det; ty -> det; det -> val -> br; bound -> br;
+    }
