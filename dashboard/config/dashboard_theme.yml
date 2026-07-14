@@ -1,0 +1,50 @@
+# Visual tokens for the TBML review dashboard.
+# Change colours, chart defaults, and status styling here — pages read these
+# tokens through services.data_loader.load_theme(); nothing is hardcoded per page.
+
+palette:
+  ink: "#10243E"          # primary text (deep navy)
+  muted: "#5C6B7E"        # secondary text
+  page_bg: "#F5F7FA"      # app plane
+  panel_bg: "#FFFFFF"     # cards / chart surface
+  border: "#DCE3EC"       # hairline borders
+  accent: "#0B7A75"       # teal — links, eyebrows, selected states, emphasis series
+  accent_soft: "#E9F6F4"
+  ledger_ink: "#44546A"   # provenance ledger lines (mono-set source captions)
+
+# The boundary banner is a discipline, not an alarm: amber, never red.
+boundary:
+  bg: "#FFF7E0"
+  border: "#EBD48A"
+  ink: "#6B520F"
+
+# Categorical series colours for the three HS6 product families.
+# Slots 1–3 of the validated reference palette (worst adjacent CVD deltaE 24.2).
+# Colour follows the entity: a family keeps its hue on every page and filter.
+families:
+  crude_palm_oil: "#2A78D6"          # blue
+  refined_copper_cathodes: "#1BAF7A" # aqua
+  gold_unwrought: "#EDA100"          # yellow
+
+# Status colours are reserved for state and always rendered with a text label,
+# never as colour alone (aqua/yellow-family tones are sub-3:1 on white).
+status:
+  quality:
+    fully_usable: {color: "#0A7D0A", label: "Fully usable"}
+    usable_with_caveat: {color: "#8A6D1D", label: "Usable with caveat"}
+    excluded_from_modeling_retained_for_audit: {color: "#5C6B7E", label: "Audit only (not modelled)"}
+    excluded_entirely: {color: "#5C6B7E", label: "Excluded"}
+  severity:
+    high: {color: "#C23A3A", label: "High"}
+    medium: {color: "#C0622F", label: "Medium"}
+    low: {color: "#8A6D1D", label: "Low"}
+
+chart:
+  font_family: '"Source Sans Pro", "Source Sans 3", "Segoe UI", sans-serif'
+  grid_color: "#E5EAF1"    # hairline, solid — never dashed
+  axis_color: "#C7D0DC"
+  context_gray: "#9AA7B6"  # de-emphasised context series (e.g. benchmark line)
+  emphasis: "#2A78D6"      # the one highlighted series in emphasis charts
+  height: 360
+  height_tall: 440
+  margin: {l: 10, r: 10, t: 24, b: 10}

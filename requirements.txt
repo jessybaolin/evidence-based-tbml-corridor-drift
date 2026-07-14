@@ -18,3 +18,8 @@ joblib
 markdown
 graphviz
 ipykernel
+
+# Dashboard (dashboard/streamlit_app.py) + its tests
+streamlit
+plotly
+pytest

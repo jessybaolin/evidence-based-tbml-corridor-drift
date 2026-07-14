@@ -1,0 +1,16 @@
+# Streamlit theme + server settings for the TBML review dashboard.
+# Dashboard-specific visual tokens live in dashboard/config/dashboard_theme.yml.
+
+[theme]
+base = "light"
+primaryColor = "#0B7A75"
+backgroundColor = "#F5F7FA"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#10243E"
+font = "sans-serif"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

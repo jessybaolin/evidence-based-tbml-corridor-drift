@@ -1,0 +1,104 @@
+# Stakeholder-facing copy for the TBML review dashboard.
+# Edit wording here — page titles, subtitles, KPI labels, captions, limitation
+# bullets. Pages read this file through services.data_loader.load_content().
+#
+# The conclusion boundary itself is NOT here: it is loaded verbatim from
+# configs/project.yml (key `conclusion_boundary`) so the dashboard can never
+# drift from the pipeline's approved wording.
+
+app:
+  title: "Evidence-First TBML Corridor Drift Lab"
+  short_title: "TBML Corridor Review"
+  subtitle: "Official public-data review-priority analytics"
+  icon: "🔎"
+
+boundary_label: "Human-review boundary"
+
+# Short display names for the three HS6 product families.
+family_short_labels:
+  crude_palm_oil: "Palm oil"
+  refined_copper_cathodes: "Copper"
+  gold_unwrought: "Gold"
+
+pages:
+  executive_overview:
+    eyebrow: "Stakeholder analytics"
+    title: "Executive Overview"
+    subtitle: "What this lab does, what it analysed, and where to start reviewing."
+    explanation: >
+      This dashboard ranks unusual exporter–importer–product–year patterns in
+      official CEPII BACI trade data for human review. Annual aggregate unit
+      values are compared against each corridor's own prior history, same-year
+      peers, and World Bank commodity benchmarks. Time-safe features feed a
+      rules baseline and machine-learning challengers evaluated on controlled
+      synthetic scenarios; the selected blend then scores the real official
+      observations to produce a review queue with recomputable evidence.
+  review_queue:
+    eyebrow: "Stakeholder analytics"
+    title: "Review Queue"
+    subtitle: "The top-ranked official observations, with filters, row selection, and CSV export."
+    caveat: "A high rank means the row shows unusual analytical signals; it is not a finding of wrongdoing."
+  case_investigation:
+    eyebrow: "Stakeholder analytics"
+    title: "Case Investigation"
+    subtitle: "One selected official observation: its history, signals, evidence, and limits."
+    caveat: "Aggregate unit value is not an invoice price."
+  portfolio_analytics:
+    eyebrow: "Stakeholder analytics"
+    title: "Portfolio Analytics"
+    subtitle: "Patterns across the official review population — coverage, concentration, and score context."
+  model_and_controls:
+    eyebrow: "Governance and validation"
+    title: "Model & Controls"
+    subtitle: "How the ranking was evaluated, selected, controlled, and caveated."
+    scenario_note: >
+      Model comparison uses controlled synthetic review-priority scenarios and
+      hard negatives injected into a copy of the panel. Scenario labels are
+      evaluation constructs, not confirmed TBML labels. The selected blend is
+      then applied to the real official observations to build the review queue.
+  appendix:
+    eyebrow: "Reference"
+    title: "Appendix"
+    subtitle: "Data dictionary and official data sources."
+
+overview_kpis:
+  observations: "Official BACI observations"
+  years: "Analysis period"
+  families: "Product families"
+  model_eligible: "Model-eligible observations"
+  queue: "Review candidates"
+  models: "Scoring methods compared"
+  evidence: "Evidence rows"
+  validation: "Source verification"
+  selected_method: "Selected ranking method"
+
+navigation_steps:
+  - ["Review Queue", "Filter and sort the ranked official observations."]
+  - ["Case Investigation", "Open one case: history, signals, and evidence."]
+  - ["Portfolio Analytics", "See coverage and concentration across the queue."]
+  - ["Model & Controls", "Check evaluation, selection, and interpretation limits."]
+
+# Verbatim from reports/final_analysis_report.md — Key limitations.
+limitations:
+  - "The public BACI panel is annual and aggregate. It is not invoice, shipment, customer, payment, vessel, customs-document, or beneficial-ownership data."
+  - "Commodity benchmarks are macro context and not invoice-level fair value."
+  - "Synthetic review-priority scenarios are for ML evaluation only; they are not real TBML labels."
+  - "FATF-Egmont materials are typology and caveat context only. They are not model features, row-level evidence, labels, or proof."
+  - "Model scores are review-priority scores, not calibrated probabilities or legal findings."
+
+interpretation_language:
+  allowed:
+    - "This observation ranks highly for human review because several aggregate trade signals are unusual."
+    - "The evidence table shows which recomputable metrics supported the ranking."
+  not_allowed:
+    - "The model detected money laundering."
+    - "The World Bank benchmark proves that an invoice was mispriced."
+
+provenance_note: >
+  The dashboard uses official or official-derived public data. Source URLs
+  document dataset provenance and do not constitute evidence that any
+  individual observation reflects financial crime.
+
+empty_state: >
+  This panel is unavailable because the required project output has not been
+  generated. Run the relevant analytical pipeline stage and reload the dashboard.
