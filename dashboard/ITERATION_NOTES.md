@@ -5,10 +5,11 @@ rediscover decisions. First working version completed 2026-07-14.
 
 ## Current implementation
 
-- **Completed pages:** Executive Overview, Review Queue, Case Investigation,
-  Portfolio Analytics, Model & Controls, Appendix — all render from real
-  pipeline outputs; 41 automated tests pass (contracts, metrics, sources,
-  AppTest page renders).
+- **Completed pages (7):** Business Problem & Value, Official Review Queue,
+  Selected Case Review, Queue Patterns, From Data to Review Queue (methodology
+  story, added 2026-07-15), Model Validation & Controls, Appendix — all render
+  from real pipeline outputs; 43 automated tests pass (contracts, metrics,
+  sources, AppTest page renders).
 - **Actual data connected:** `top_ranked_corridors.csv`, `evidence_table.csv`,
   `corridor_product_year_panel.parquet`, `corridor_features.parquet`,
   `model_comparison.csv`, `model_selection.json`,
@@ -17,18 +18,101 @@ rediscover decisions. First working version completed 2026-07-14.
   `scenario_split_manifest.json`, `source_manifest.json`,
   `data_source_notes.json`, `source_file_inventory.csv`,
   `feature_explanation_table.md`, `data_dictionary.md`, `configs/*.yml`,
-  `reports/figures/{model_comparison,hard_negative_comparison,shap_summary}.png`.
+  `reports/figures/{model_comparison,hard_negative_comparison,shap_summary}.png`,
+  `reports/figures/{official_data_pipeline_architecture,source_to_report_data_flow,time_safe_feature_construction_flow,train_validation_test_ml_workflow}.png`
+  (methodology-story diagrams for the From Data to Review Queue page).
 - **Reusable components:** styles (global CSS), page_header (+ section titles
   + provenance ledger), boundary_banner, kpi_cards, status_badges, charts
   (shared Plotly layout + 9 chart builders), tables (queue + plain), filters,
   evidence_panel, empty_states, source_cards.
-- **Visual theme:** "governed calm" — ink `#10243E` on `#F5F7FA`, white
-  panels, hairline borders, teal `#0B7A75` accent, amber boundary stamp.
-  Family series colours are fixed (palm oil blue `#2A78D6`, copper aqua
-  `#1BAF7A`, gold yellow `#EDA100` — validated reference palette slots 1–3);
-  status colours are reserved and always paired with text labels.
-  Signature element: the **provenance ledger** line (mono-set file citation
-  under each panel) + teal left ledger-rule on evidence cards.
+- **Visual theme:** "deep blue" (updated 2026-07-15; superseded the earlier
+  "winter blue" cream-plane pass, which was REJECTED because the Moonlight-cream
+  plane made the whole page read as beige+white rather than blue). Now: cool
+  BLUE plane (`#CFDAE8`) under Storm-navy ink, near-white cards (`#F8FBFE`) that
+  lift off the plane, a deep-navy sidebar (`#23354D`) with frost text, one Steel
+  slate-blue accent, frost hairlines, amber boundary stamp. Blue is the dominant
+  hue by surface area (plane + navy sidebar + navy headings); white cards and the
+  single amber caveat are the only non-blue notes. Moonlight cream is retired
+  from the active palette. Family series colours are unchanged and stay a
+  distinct CVD-safe trio (palm oil blue `#2A78D6`, copper aqua `#1BAF7A`, gold
+  yellow `#EDA100`); status colours are reserved and always paired with text
+  labels. Signature element: the **provenance ledger** line (mono-set file
+  citation under each panel) + Steel left ledger-rule on evidence cards.
+
+#### APPROVED colour mapping — "deep blue" (recorded design decision, 2026-07-15)
+
+Reference palette transcribed from the brief image: Moonlight `#F0ECDD`,
+Frost Blue `#8BA3C5`, Steel `#495B7D`, Storm `#23354D`, Oxford Blue `#02122F`.
+The plane was moved from Moonlight cream to a Frost-derived cool blue so blue
+dominates by area (the previous cream plane read as "beige"); cream was demoted
+out of the active palette entirely. Change colours only in
+`dashboard/config/dashboard_theme.yml` (+ keep `.streamlit/config.toml` in
+sync; note `secondaryBackgroundColor` drives cards/widgets AND the default
+sidebar — it is the near-white card surface, and `styles.py` re-skins the
+sidebar to navy via `[data-testid="stSidebar"]`). Verified in Python (no Node):
+WCAG contrast + OKLab CVD separation (Machado 1.0) — numbers below.
+
+| Token | Hex | Role | Verified |
+|---|---|---|---|
+| `palette.ink` | `#23354D` Storm | primary text | 8.8:1 on blue plane, 12.0:1 on card |
+| `palette.muted` | `#505D76` | secondary text | 4.7:1 on plane, 6.4:1 on card |
+| `palette.page_bg` | `#CFDAE8` | app plane — the DOMINANT blue | ink 8.8:1; blue by area |
+| `palette.panel_bg` | `#F8FBFE` | cards / chart surface | lifts off plane 1.36:1 |
+| `palette.border` | `#B9C8DE` | bluer frost hairline | 1.20:1 vs plane (visible) |
+| `palette.accent` | `#495B7D` Steel | links, eyebrows, selected, ledger rule | 6.6:1 card, 4.8:1 plane |
+| `palette.accent_soft` | `#DCE5F2` | step-pill / soft wash | accent text 5.4:1 on it |
+| `palette.ledger_ink` | `#3E4E68` | mono provenance lines | 8.1:1 card, 6.0:1 plane |
+| `palette.sidebar_bg` | `#23354D` Storm navy | sidebar frame (anchors darkest blue) | frame 9.2:1 vs plane |
+| `palette.sidebar_ink` | `#EAF0F8` | sidebar brand + nav text on navy | 10.9:1 on navy |
+| `palette.sidebar_muted` | `#B7C6DE` | sidebar caption on navy | 7.2:1 on navy |
+| `boundary.bg` | `#F7E4A6` | caveat card | pops 1.12:1 vs blue plane |
+| `boundary.border` | `#E4C56A` | caveat hairline | — |
+| `boundary.accent` | `#B07D16` | 4px left rule (caveat cue) | decorative rule, not text |
+| `boundary.ink` | `#6E4E12` | caveat text | 6.0:1 on `boundary.bg` |
+| `families.crude_palm_oil` | `#2A78D6` | Palm oil series | unchanged |
+| `families.refined_copper_cathodes` | `#1BAF7A` | Copper series | unchanged |
+| `families.gold_unwrought` | `#EDA100` | Gold series | unchanged |
+| `chart.emphasis` | `#495B7D` Steel | the one highlighted series | dE 24.3 vs context |
+| `chart.context_gray` | `#97A3B4` | de-emphasised context series | recessive by design (2.5:1) |
+| `chart.grid_color` / `axis_color` | `#E5E9F0` / `#C2CBDA` | hairline grid / axis | on white card |
+
+CVD verification (OKLab dE ×100, Machado severity 1.0): family pairs —
+palm/copper 24.0 (deutan 23.1, protan 23.1); palm/gold 37.5 (39.0 / 31.6);
+copper/gold 22.9 (deutan 16.6, **protan 9.1 — worst, still ≥ 8 floor**).
+Family hues were therefore kept as the validated trio and NOT desaturated
+into the navy palette (a monochrome ramp on nominal categories fails CVD).
+`chart.emphasis` is the Steel brand accent (decoupled from palm-oil blue).
+Limitation: contrast/CVD were computed numerically; the rendered browser
+could not be visually inspected in this pass, so "blue is dominant" is argued
+from the plane/sidebar/heading hexes + surface-area reasoning, not a screenshot.
+
+#### Navigation — FINAL structure (2026-07-15, user-confirmed)
+
+Two groups, seven pages. Icons are monochrome Material Symbols
+(`icon=":material/<name>:"`) so they render in the frost sidebar colour. On-page
+H1s live in `dashboard_content.yml pages.<key>.title` and are kept aligned to
+the nav labels so nav and heading never disagree. (This SUPERSEDES the interim
+group names "Story & Review Workflow" / "Validation & Reference" and the interim
+Appendix title "Data Sources & Appendix".)
+
+| Page file | Nav group | Nav + H1 title | Material icon |
+|---|---|---|---|
+| `executive_overview.py` | Business & Review | Business Problem & Value (default) | `account_balance` |
+| `review_queue.py` | Business & Review | Official Review Queue | `checklist` |
+| `case_investigation.py` | Business & Review | Selected Case Review | `search` |
+| `portfolio_analytics.py` | Business & Review | Queue Patterns | `trending_up` |
+| `from_data_to_review_queue.py` | Trust & Methodology | From Data to Review Queue | `account_tree` |
+| `model_and_controls.py` | Trust & Methodology | Model Validation & Controls | `verified_user` |
+| `appendix.py` | Trust & Methodology | Appendix | `menu_book` |
+
+`from_data_to_review_queue.py` sits ABOVE Model Validation & Controls in the
+Trust & Methodology group (governed methodology story → validation → reference).
+
+Resolved this pass (the two label-consistency P2s from the prior pass):
+`dashboard_content.yml navigation_steps` (the "how to use this dashboard" cards)
+and the Appendix data-dictionary `pages` tags in `services/data_dictionary.py`
+now use the FINAL nav labels ("Official Review Queue", "Selected Case Review",
+"Queue Patterns", "Model Validation & Controls", "Business Problem & Value").
 - **Prototype elements retained:** st.Page/st.navigation architecture with
   grouped sidebar, page header hierarchy, boundary banner concept, queue
   filter → single-row-select → session-state → case page flow, ProgressColumn
@@ -96,6 +180,31 @@ rediscover decisions. First working version completed 2026-07-14.
 - **Known issues:** concentration charts can crowd at 3-across below ~1200px.
 - **Next refinements:** quality-status split of the queue; novelty/reactivation
   counts (fields exist in features); optional treemap of corridors.
+
+### From Data to Review Queue (methodology story, added 2026-07-15)
+- **Purpose:** a governed, read-only narrative of how official public data
+  becomes the review queue — for first-time / non-technical viewers who want the
+  pipeline story before trusting the queue.
+- **Components:** page_header + boundary_banner, an intro paragraph, a live
+  "pipeline in real numbers" KPI strip, a four-stage walkthrough (heading +
+  1–2 governed sentences + the documenting figure), a "Where the story stops"
+  section, ledger.
+- **Data:** panel (`len`, `model_eligible.sum`), review_queue (`len`),
+  evidence (`len`, `nunique obs_id`) — all derived live, nothing hardcoded.
+  Figures: `official_data_pipeline_architecture`, `source_to_report_data_flow`,
+  `time_safe_feature_construction_flow`, `train_validation_test_ml_workflow`
+  (added to `path_resolver.FIGURE_FILES`; loaded via `data_loader.figure_path`
+  so a missing PNG degrades to `empty_states.missing_figure`, not a crash).
+- **Accepted decisions:** the story STOPS at review queue + evidence — the
+  analyst-brief / GenAI step is out of scope and its figure
+  (`evidence_genai_grounded_brief_flow.png`) is deliberately NOT used; scenarios
+  are labelled controlled evaluation constructs, never confirmed TBML; numbered
+  stage markers are used because the pipeline genuinely IS an ordered sequence.
+- **Known issues:** four full-width diagrams make the page long — a first-time
+  viewer scrolls; the four stages are text+image only (no on-page interactivity
+  by design). Diagram legibility at narrow widths is a human visual check.
+- **Next refinements:** consider making the KPI strip a small horizontal funnel
+  graphic; optional expanders to collapse individual stage diagrams.
 
 ### Model & Controls
 - **Purpose:** evaluation, selection, controls, and interpretation limits.
@@ -181,7 +290,7 @@ and all are FIXED in this version:
 9. (dup of 3/5, same fix).
 
 ## Tooling notes for future AI iterations
-- Run tests with `python -m pytest tests/ -q` (41 tests, ~6s).
+- Run tests with `python -m pytest tests/ -q` (43 tests, ~8s).
 - AppTest quirk: `selectbox.options` returns FORMATTED labels; use
   `select_index()` and compare raw values from session state.
 - Streamlit ≥1.59: `st.dataframe(height=...)` accepts int | "stretch" |

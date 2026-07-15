@@ -40,16 +40,19 @@ st.set_page_config(
 
 apply_global_styles()
 
+# Material Symbol icons (icon=":material/<name>:") render as monochrome glyphs
+# in the theme colour — frost on the navy sidebar — matching the blue palette.
 pages = {
-    "Stakeholder views": [
-        st.Page("pages/executive_overview.py", title="Executive Overview", icon="🏠", default=True),
-        st.Page("pages/review_queue.py", title="Review Queue", icon="📋"),
-        st.Page("pages/case_investigation.py", title="Case Investigation", icon="🔎"),
-        st.Page("pages/portfolio_analytics.py", title="Portfolio Analytics", icon="📈"),
+    "Business & Review": [
+        st.Page("pages/executive_overview.py", title="Business Problem & Value", icon=":material/account_balance:", default=True),
+        st.Page("pages/review_queue.py", title="Official Review Queue", icon=":material/checklist:"),
+        st.Page("pages/case_investigation.py", title="Selected Case Review", icon=":material/search:"),
+        st.Page("pages/portfolio_analytics.py", title="Queue Patterns", icon=":material/trending_up:"),
     ],
-    "Governance & reference": [
-        st.Page("pages/model_and_controls.py", title="Model & Controls", icon="🛡️"),
-        st.Page("pages/appendix.py", title="Appendix", icon="📚"),
+    "Trust & Methodology": [
+        st.Page("pages/from_data_to_review_queue.py", title="From Data to Review Queue", icon=":material/account_tree:"),
+        st.Page("pages/model_and_controls.py", title="Model Validation & Controls", icon=":material/verified_user:"),
+        st.Page("pages/appendix.py", title="Appendix", icon=":material/menu_book:"),
     ],
 }
 

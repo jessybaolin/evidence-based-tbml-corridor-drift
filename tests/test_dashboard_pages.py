@@ -18,6 +18,7 @@ PAGES = [
     "review_queue.py",
     "case_investigation.py",
     "portfolio_analytics.py",
+    "from_data_to_review_queue.py",
     "model_and_controls.py",
     "appendix.py",
 ]

@@ -184,6 +184,11 @@ FIGURE_FILES: dict[str, Path] = {
     "model_comparison": FIGURES / "model_comparison.png",
     "hard_negative_comparison": FIGURES / "hard_negative_comparison.png",
     "shap_summary": FIGURES / "shap_summary.png",
+    # Methodology-story diagrams for the "From Data to Review Queue" page.
+    "official_data_pipeline_architecture": FIGURES / "official_data_pipeline_architecture.png",
+    "source_to_report_data_flow": FIGURES / "source_to_report_data_flow.png",
+    "time_safe_feature_construction_flow": FIGURES / "time_safe_feature_construction_flow.png",
+    "train_validation_test_ml_workflow": FIGURES / "train_validation_test_ml_workflow.png",
 }
 
 

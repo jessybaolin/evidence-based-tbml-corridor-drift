@@ -1,10 +1,12 @@
 """
 Global CSS derived from dashboard/config/dashboard_theme.yml.
 
-Design language: "governed calm" — ink on quiet panels, one teal accent, an
-amber boundary stamp, and a mono-set provenance ledger line under panels. CSS
-targets Streamlit's PUBLIC hooks only (data-testid attributes and our own
-classes) — never generated internal class names, which change between releases.
+Design language: "deep blue" — Storm-navy ink on a cool blue plane, near-white
+cards that lift off the plane, a deep-navy sidebar frame with frost text, one
+Steel accent, an amber boundary stamp, and a mono-set provenance ledger line
+under panels. CSS targets Streamlit's PUBLIC hooks only (data-testid attributes
+and our own classes) — never generated internal class names, which change
+between releases.
 """
 
 from __future__ import annotations
@@ -26,8 +28,42 @@ def apply_global_styles() -> None:
         padding-bottom: 3rem;
     }}
 
+    /* Deep-navy sidebar: anchors the darkest blue in the frame. The default
+       fill is secondaryBackgroundColor (near-white); we override it here and
+       force all sidebar text/nav/icons to frost so they stay legible on navy.
+       The sidebar holds only brand text + navigation (no input widgets), so a
+       broad light-text rule here is safe. */
     [data-testid="stSidebar"] {{
-        border-right: 1px solid {p["border"]};
+        background: {p["sidebar_bg"]};
+        border-right: 1px solid {p["sidebar_bg"]};
+    }}
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] a,
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebarNav"] a,
+    [data-testid="stSidebarNav"] a span,
+    [data-testid="stSidebarNav"] span[data-testid="stIconMaterial"] {{
+        color: {p["sidebar_ink"]} !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] * {{
+        color: {p["sidebar_muted"]} !important;
+    }}
+    [data-testid="stSidebar"] hr {{
+        border-color: rgba(234, 240, 248, 0.22);
+    }}
+    /* Selected / hovered nav item: a subtle frost wash so the light label
+       stays readable on navy (primaryColor tint can be too dark here). */
+    [data-testid="stSidebarNav"] a:hover {{
+        background: rgba(234, 240, 248, 0.10);
+    }}
+    [data-testid="stSidebarNav"] a[aria-current="page"] {{
+        background: rgba(234, 240, 248, 0.16);
     }}
 
     [data-testid="stMetric"] {{
@@ -74,7 +110,7 @@ def apply_global_styles() -> None:
     .boundary-banner {{
         background: {b["bg"]};
         border: 1px solid {b["border"]};
-        border-left: 4px solid {b["border"]};
+        border-left: 4px solid {b.get("accent", b["border"])};
         border-radius: 8px;
         padding: 0.7rem 1rem;
         margin: 0.35rem 0 1.1rem 0;

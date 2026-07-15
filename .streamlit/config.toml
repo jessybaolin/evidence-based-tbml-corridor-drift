@@ -1,12 +1,17 @@
 # Streamlit theme + server settings for the TBML review dashboard.
 # Dashboard-specific visual tokens live in dashboard/config/dashboard_theme.yml.
 
+# "Deep blue" identity — kept in sync with dashboard/config/dashboard_theme.yml.
+# NOTE: secondaryBackgroundColor drives widgets, metric cards, AND the default
+# sidebar fill. It is set to the near-white card surface so cards/inputs pop off
+# the blue plane; the sidebar is then re-skinned to deep navy by an explicit
+# [data-testid="stSidebar"] rule in dashboard/components/styles.py.
 [theme]
 base = "light"
-primaryColor = "#0B7A75"
-backgroundColor = "#F5F7FA"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#10243E"
+primaryColor = "#495B7D"          # Steel accent (widgets, slider, queue score bars)
+backgroundColor = "#CFDAE8"       # cool BLUE plane (the dominant hue)
+secondaryBackgroundColor = "#F8FBFE"  # near-white cards + widget/input fills
+textColor = "#23354D"             # Storm ink
 font = "sans-serif"
 
 [server]

@@ -23,7 +23,7 @@ family_short_labels:
 pages:
   executive_overview:
     eyebrow: "Stakeholder analytics"
-    title: "Executive Overview"
+    title: "Business Problem & Value"
     subtitle: "What this lab does, what it analysed, and where to start reviewing."
     explanation: >
       This dashboard ranks unusual exporter–importer–product–year patterns in
@@ -35,21 +35,25 @@ pages:
       observations to produce a review queue with recomputable evidence.
   review_queue:
     eyebrow: "Stakeholder analytics"
-    title: "Review Queue"
+    title: "Official Review Queue"
     subtitle: "The top-ranked official observations, with filters, row selection, and CSV export."
     caveat: "A high rank means the row shows unusual analytical signals; it is not a finding of wrongdoing."
   case_investigation:
     eyebrow: "Stakeholder analytics"
-    title: "Case Investigation"
+    title: "Selected Case Review"
     subtitle: "One selected official observation: its history, signals, evidence, and limits."
     caveat: "Aggregate unit value is not an invoice price."
   portfolio_analytics:
     eyebrow: "Stakeholder analytics"
-    title: "Portfolio Analytics"
+    title: "Queue Patterns"
     subtitle: "Patterns across the official review population — coverage, concentration, and score context."
+  from_data_to_review_queue:
+    eyebrow: "Trust & methodology"
+    title: "From Data to Review Queue"
+    subtitle: "How official public data becomes the human-review queue, stage by stage."
   model_and_controls:
     eyebrow: "Governance and validation"
-    title: "Model & Controls"
+    title: "Model Validation & Controls"
     subtitle: "How the ranking was evaluated, selected, controlled, and caveated."
     scenario_note: >
       Model comparison uses controlled synthetic review-priority scenarios and
@@ -73,10 +77,10 @@ overview_kpis:
   selected_method: "Selected ranking method"
 
 navigation_steps:
-  - ["Review Queue", "Filter and sort the ranked official observations."]
-  - ["Case Investigation", "Open one case: history, signals, and evidence."]
-  - ["Portfolio Analytics", "See coverage and concentration across the queue."]
-  - ["Model & Controls", "Check evaluation, selection, and interpretation limits."]
+  - ["Official Review Queue", "Filter and sort the ranked official observations."]
+  - ["Selected Case Review", "Open one case: history, signals, and evidence."]
+  - ["Queue Patterns", "See coverage and concentration across the queue."]
+  - ["Model Validation & Controls", "Check evaluation, selection, and interpretation limits."]
 
 # Verbatim from reports/final_analysis_report.md — Key limitations.
 limitations:

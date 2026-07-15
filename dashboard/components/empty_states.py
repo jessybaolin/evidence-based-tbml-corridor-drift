@@ -20,3 +20,14 @@ def missing_output(name: str) -> None:
 
 def no_rows(message: str = "No records match the current filters.") -> None:
     st.info(message, icon="🔍")
+
+
+def missing_figure(figure_relpath: str, label: str) -> None:
+    # A referenced report figure is absent: state which file and what it shows,
+    # so a missing diagram degrades to a labelled notice instead of crashing.
+    st.warning(
+        f"{label} is not available in this build.\n\n"
+        f"Missing figure: `{figure_relpath}`  \n"
+        "Regenerate the reporting figures and reload the dashboard.",
+        icon="🖼️",
+    )
