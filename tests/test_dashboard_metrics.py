@@ -48,6 +48,7 @@ def test_enrich_queue_joins_names_and_residuals(queue, features, content):
 def test_queue_filters_and_empty_result(queue, features, content):
     enriched = _enriched(queue, features, content)
     options = metrics.queue_filter_options(enriched)
+    assert options["published"] == len(enriched)
     all_rows = metrics.apply_queue_filters(enriched, {})
     assert len(all_rows) == len(enriched)
     year = options["years"][0]
@@ -55,8 +56,60 @@ def test_queue_filters_and_empty_result(queue, features, content):
     assert (by_year["year"] == year).all()
     none = metrics.apply_queue_filters(enriched, {"score_range": (0.0, 0.0)})
     assert none.empty  # empty-filter results must not error
-    searched = metrics.apply_queue_filters(enriched, {"search": enriched["obs_id"].iloc[0]})
-    assert len(searched) == 1
+    top = metrics.apply_queue_filters(enriched, {"top_n": 10})
+    assert list(top["rank"]) == sorted(enriched["rank"])[:10]
+    # top_n larger than the published queue is inert, never an error.
+    capped = metrics.apply_queue_filters(enriched, {"top_n": 500})
+    assert len(capped) == len(enriched)
+
+
+def test_queue_display_frame_columns_corridor_and_rank_stability(queue, features, content):
+    enriched = _enriched(queue, features, content)
+    display = metrics.queue_display_frame(enriched)
+    assert list(display.columns) == metrics.QUEUE_DISPLAY_COLUMNS
+    assert len(display) == len(enriched)
+    # Three-character source codes with the arrow separator. Alongside ISO3
+    # the official data uses special partner codes (e.g. S19 = Other Asia,
+    # nes), which the queue must show as published, never hide or rewrite.
+    assert display["corridor"].str.fullmatch(r"[A-Z0-9]{3} → [A-Z0-9]{3}").all()
+    # Values pass through untouched — formatting happens in column_config only.
+    assert (display["trade_value_usd"].to_numpy()
+            == enriched.reset_index(drop=True)["trade_value_usd"].to_numpy()).all()
+    # Ranks travel with their rows: re-sorting the view cannot reassign them.
+    resorted = display.sort_values("quantity_metric_ton", ascending=False)
+    assert set(zip(resorted["rank"], resorted["corridor"])) \
+        == set(zip(display["rank"], display["corridor"]))
+
+
+def test_queue_display_frame_product_is_clean_family_label(queue, features, content):
+    # The product column carries the plain family label — no caveat glyph.
+    enriched = _enriched(queue, features, content)
+    display = metrics.queue_display_frame(enriched)
+    frame = enriched.reset_index(drop=True)
+    assert display["product"].tolist() == frame["family_label"].tolist()
+    assert not display["product"].str.startswith("⚠").any()
+
+
+def test_queue_export_frame_traceability_and_rank_order(queue, features, content):
+    enriched = _enriched(queue, features, content)
+    shuffled = enriched.sample(frac=1, random_state=7)
+    export = metrics.queue_export_frame(shuffled)
+    assert list(export.columns) == metrics.QUEUE_EXPORT_COLUMNS
+    assert export["rank"].is_monotonic_increasing  # export is always rank order
+    assert not export["product"].str.startswith("⚠").any()
+    assert export["quality_status"].notna().all()
+    # Full precision: exported values equal the published artefact exactly.
+    merged = export.merge(queue[["obs_id", "trade_value_usd"]], on="obs_id", suffixes=("", "_src"))
+    assert len(merged) == len(export)
+    assert (merged["trade_value_usd"] == merged["trade_value_usd_src"]).all()
+
+
+def test_default_case_and_family_hs6_map(queue, features, content):
+    enriched = _enriched(queue, features, content)
+    assert int(metrics.default_case(enriched)["rank"]) == int(enriched["rank"].min())
+    mapping = metrics.family_hs6_map(enriched)
+    assert set(mapping) == set(enriched["family_label"].unique())
+    assert all(len(code) == 6 for code in mapping.values())
 
 
 def test_case_record_history_and_evidence(queue, features, evidence, panel):

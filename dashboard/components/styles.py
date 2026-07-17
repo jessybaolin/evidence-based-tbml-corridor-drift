@@ -1,17 +1,20 @@
 """
 Global CSS derived from dashboard/config/dashboard_theme.yml.
 
-Design language: "deep blue" — Storm-navy ink on a cool blue plane, near-white
-cards that lift off the plane, a deep-navy sidebar frame with frost text, one
-Steel accent, a Steel boundary ribbon fixed to the bottom of every page, and a
-mono-set provenance ledger line under panels. CSS targets Streamlit's PUBLIC
-hooks only (data-testid attributes and our own classes) — never generated
-internal class names, which change between releases.
+Design language: "Navy · Teal · Warm Amber" — navy ink on a bright pale
+blue-grey plane, TRULY WHITE cards that lift off the plane on a soft shadow, a
+deep-navy sidebar frame with frost text and a teal active indicator, TEAL as the
+single interactive colour (links, selection, focus, primary action, chart
+emphasis), a warm amber caveat counterpoint, a navy boundary ribbon fixed to the
+bottom of every page, and a mono-set provenance ledger line under panels. Small
+teal TEXT on light uses the deeper teal_hover for AA; brighter accent teal is for
+fills/borders/icons. CSS targets Streamlit's PUBLIC hooks only (data-testid
+attributes and our own classes) — never generated internal class names.
 
-Motion: one fade-up entrance for landing-page sections, one hover lift for
-cards/tiles/links, CSS-only tooltips — all transform/opacity, all disabled in
-the prefers-reduced-motion block at the END of the sheet (kept last plus
-!important so it always wins the cascade).
+Motion: one fade-up entrance for page sections, one hover lift for cards/tiles/
+links, button/segment hover transitions, CSS-only tooltips — all transform/
+opacity, all disabled in the prefers-reduced-motion block at the END of the
+sheet (kept last plus !important so it always wins the cascade).
 """
 
 from __future__ import annotations
@@ -25,9 +28,23 @@ def apply_global_styles() -> None:
     theme = load_theme()
     p = theme["palette"]
     b = theme["boundary"]
-    ev = theme.get("evaluation", {"tint": "#F3ECDA", "border": "#C2AA74",
+    mm = theme.get("mental_model", {"bg": p["sidebar_bg"],
+                                    "accent": b.get("accent", p["accent"]),
+                                    "ink": p["sidebar_ink"]})
+    ev = theme.get("evaluation", {"tint": "#FFF3D8", "border": "#D89A2B",
                                   "label_ink": "#6E4E12", "receded_opacity": 0.90})
     ev_op = float(ev.get("receded_opacity", 0.90))
+    # Teal has two roles: `accent` (bright) for fills/borders/icons/focus/chart
+    # emphasis; `at` (deeper teal_hover) for small teal TEXT on light, for AA.
+    at = p.get("teal_hover", p["accent"])
+    teal500 = p.get("teal_500", b.get("accent", p["accent"]))
+    sel_bg = p.get("selected_bg", "#FFF4CC")
+    sel_acc = p.get("selected_accent", "#D6A100")
+    sel = p.get("sidebar_sel_bg", p["sidebar_bg"])
+    hover_bg = p.get("sidebar_hover_bg", p["sidebar_bg"])
+    shadow = p.get("card_shadow", "rgba(29,45,70,0.08)")
+    navy7 = p.get("navy_700", p["ink"])
+    btn2b = p.get("btn_secondary_border", p["border"])
     motion = theme.get("motion", {})
     entry_ms = int(motion.get("entry_ms", 350))
     step_ms = int(motion.get("entry_step_ms", 70))
@@ -124,7 +141,9 @@ def apply_global_styles() -> None:
     [data-testid="stSidebar"] [data-testid="stPageLink"] a {{
         padding: 0.42rem 0.6rem;
         border-radius: 7px;
-        border-left: 2px solid transparent;
+        /* Fixed 3px rule that only changes COLOUR between states, so switching
+           pages never shifts the label by a pixel. */
+        border-left: 3px solid transparent;
         transition: background-color 150ms ease-out,
                     border-left-color 150ms ease-out,
                     transform 150ms ease-out;
@@ -135,20 +154,25 @@ def apply_global_styles() -> None:
         color: {p["sidebar_ink"]} !important;
     }}
     [data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {{
-        background: rgba(234, 240, 248, 0.10);
-        border-left-color: rgba(234, 240, 248, 0.55);
+        background: {hover_bg};
+        border-left-color: {teal500}66;
         transform: translateX(2px);
     }}
+    /* Selected page: navy fill + a solid teal left indicator. */
     [data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {{
-        background: rgba(234, 240, 248, 0.16);
-        border-left-color: {p["sidebar_ink"]};
+        background: {sel};
+        border-left-color: {teal500};
     }}
 
+    /* st.metric cards match the .stat-tile card language: white, bordered, a
+       soft lift shadow, and a thin teal top accent. */
     [data-testid="stMetric"] {{
         background: {p["panel_bg"]};
         border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
         border-radius: 10px;
-        padding: 0.9rem 1rem 0.75rem 1rem;
+        padding: 0.85rem 1rem 0.75rem 1rem;
+        box-shadow: 0 4px 14px {shadow};
     }}
     [data-testid="stMetricLabel"] {{ color: {p["muted"]}; }}
     [data-testid="stMetricValue"] {{
@@ -211,7 +235,7 @@ def apply_global_styles() -> None:
     }}
 
     .page-eyebrow {{
-        color: {p["accent"]};
+        color: {at};
         font-size: 0.75rem;
         font-weight: 700;
         letter-spacing: 0.14em;
@@ -266,6 +290,7 @@ def apply_global_styles() -> None:
         padding: 0.75rem 1rem;
         margin-bottom: 0.6rem;
         color: {p["ink"]};
+        box-shadow: 0 4px 14px {shadow};
     }}
     .evidence-card .evidence-meta {{
         color: {p["muted"]};
@@ -290,6 +315,7 @@ def apply_global_styles() -> None:
         padding: 1rem 1.15rem;
         margin-bottom: 0.8rem;
         color: {p["ink"]};
+        box-shadow: 0 4px 14px {shadow};
     }}
     .source-card h4 {{ margin: 0 0 0.25rem 0; }}
     .source-card .source-row {{
@@ -306,6 +332,7 @@ def apply_global_styles() -> None:
         padding: 0.85rem 1rem;
         color: {p["ink"]};
         height: 100%;
+        box-shadow: 0 4px 14px {shadow};
     }}
     .info-card h4 {{ margin: 0.25rem 0 0.3rem 0; }}
     .info-card p {{ margin: 0; color: {p["muted"]}; font-size: 0.9rem; }}
@@ -316,7 +343,7 @@ def apply_global_styles() -> None:
         font-size: 0.72rem;
         font-weight: 700;
         background: {p["accent_soft"]};
-        color: {p["accent"]};
+        color: {at};
         border: 1px solid {p["accent"]};
     }}
 
@@ -375,7 +402,7 @@ def apply_global_styles() -> None:
                     transform {hover_ms}ms ease-out;
     }}
     [data-testid="stMain"] [data-testid="stPageLink"] a p {{
-        color: {p["accent"]} !important;
+        color: {at} !important;
         font-weight: 700;
         font-size: 0.95rem;
     }}
@@ -386,6 +413,105 @@ def apply_global_styles() -> None:
         background: {p["accent_soft"]};
         box-shadow: 0 4px 12px rgba(35, 53, 77, 0.16);
         transform: translateY(-1px);
+    }}
+
+    /* ---- Buttons (main area only; the sidebar carries no st.button). Teal is
+       the primary action; secondary is a quiet white/navy-outline; Replay is a
+       pale-navy utility variant. Scoped to stMain so sidebar nav is untouched. ---- */
+    [data-testid="stMain"] [data-testid="stButton"] button {{
+        border-radius: 8px;
+        font-weight: 650;
+        transition: background-color {hover_ms}ms ease-out,
+                    border-color {hover_ms}ms ease-out,
+                    box-shadow {hover_ms}ms ease-out,
+                    transform {hover_ms}ms ease-out;
+    }}
+    [data-testid="stMain"] [data-testid="stBaseButton-primary"] {{
+        background: {p["accent"]};
+        border: 1px solid {p["accent"]};
+        color: #FFFFFF;
+    }}
+    [data-testid="stMain"] [data-testid="stBaseButton-primary"]:hover:not(:disabled) {{
+        background: {at};
+        border-color: {at};
+        box-shadow: 0 4px 12px {shadow};
+        transform: translateY(-1px);
+    }}
+    [data-testid="stMain"] [data-testid="stBaseButton-secondary"] {{
+        background: {p["panel_bg"]};
+        border: 1px solid {btn2b};
+        color: {navy7};
+    }}
+    [data-testid="stMain"] [data-testid="stBaseButton-secondary"]:hover:not(:disabled) {{
+        border-color: {p["accent"]};
+        color: {at};
+        background: {p["accent_soft"]};
+    }}
+    [data-testid="stMain"] [data-testid="stButton"] button:disabled {{ opacity: 0.5; }}
+    /* Replay = pale-navy utility. The keyed wrapper (.st-key-<key>) is a stable
+       Streamlit hook; this selector out-specifies the secondary rule above. */
+    [data-testid="stMain"] .st-key-dtrq_replay_btn [data-testid="stBaseButton-secondary"] {{
+        background: {p.get("table_stripe", "#EFF3F8")};
+        border-color: {btn2b};
+        color: {navy7};
+    }}
+    [data-testid="stMain"] .st-key-dtrq_replay_btn [data-testid="stBaseButton-secondary"]:hover:not(:disabled) {{
+        background: {p["panel_bg"]};
+        border-color: {navy7};
+        color: {navy7};
+    }}
+
+    /* ---- Segmented control (scene stage bar): ACTIVE segment = teal fill +
+       white text; inactive = white + grey border. Streamlit exposes the active
+       option via stBaseButton-segmented_controlActive. This is active-vs-inactive
+       (segmented_control has no per-segment completed/upcoming state). ---- */
+    [data-testid="stMain"] [data-testid="stBaseButton-segmented_control"] {{
+        background: {p["panel_bg"]};
+        border-color: {btn2b};
+        color: {navy7};
+    }}
+    [data-testid="stMain"] [data-testid="stBaseButton-segmented_controlActive"] {{
+        background: {p["accent"]};
+        border-color: {p["accent"]};
+        color: #FFFFFF;
+    }}
+
+    /* ---- Review Queue: current-case banner. Muted amber = the palette's
+       attention role — a "this is the case you are carrying" marker, never an
+       alarm. Ink on the wash is 11.9:1 (AA); the deep-amber border is
+       decorative (the fill + text identify the banner, never colour alone).
+       The page_link inside restyles to the teal primary pill so the single
+       interactive colour stays teal even on the amber card. ---- */
+    .st-key-queue_case_banner {{
+        background: {sel_bg};
+        border: 1px solid {sel_acc};
+        border-left: 4px solid {sel_acc};
+        border-radius: 10px;
+        padding: 0.6rem 0.95rem;
+        box-shadow: 0 2px 8px {shadow};
+    }}
+    .case-banner-text {{
+        color: {p["ink"]};
+        font-size: 0.98rem;
+        line-height: 1.45;
+        animation: rise-in 260ms ease-out both;
+    }}
+    .case-banner-text strong {{ font-weight: 750; }}
+    [data-testid="stMain"] .st-key-queue_case_banner [data-testid="stPageLink"] a {{
+        background: {p["accent"]};
+        border-color: {p["accent"]};
+        width: 100%;
+        justify-content: center;
+    }}
+    [data-testid="stMain"] .st-key-queue_case_banner [data-testid="stPageLink"] a p {{
+        color: #FFFFFF !important;
+    }}
+    [data-testid="stMain"] .st-key-queue_case_banner [data-testid="stPageLink"] a span[data-testid="stIconMaterial"] {{
+        color: #FFFFFF;
+    }}
+    [data-testid="stMain"] .st-key-queue_case_banner [data-testid="stPageLink"] a:hover {{
+        background: {at};
+        border-color: {at};
     }}
 
     /* ---- Landing page (Business Problem & Value): narrative sections ---- */
@@ -440,6 +566,7 @@ def apply_global_styles() -> None:
         border-top: 3px solid {theme["chart"]["context_gray"]};
         border-radius: 10px;
         padding: 0.95rem 1.15rem 0.85rem 1.15rem;
+        box-shadow: 0 4px 14px {shadow};
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
     .twin-card.response {{ border-top-color: {p["accent"]}; }}
@@ -455,7 +582,7 @@ def apply_global_styles() -> None:
         color: {p["muted"]};
         margin-bottom: 0.35rem;
     }}
-    .twin-card.response .twin-label {{ color: {p["accent"]}; }}
+    .twin-card.response .twin-label {{ color: {at}; }}
     .twin-card ul {{
         margin: 0.2rem 0 0 1.1rem;
         padding: 0;
@@ -504,8 +631,16 @@ def apply_global_styles() -> None:
         border-top: 3px solid {p["accent"]};
         border-radius: 10px;
         padding: 0.95rem 1.05rem 0.85rem 1.05rem;
+        box-shadow: 0 4px 14px {shadow};
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
+    /* KPI top-accent modifiers (decorative, non-text). Default is teal; pages
+       set one of these per tile to give a KPI strip a coloured through-line. */
+    .stat-tile.acc-blue {{ border-top-color: {p.get("kpi_blue", p["accent"])}; }}
+    .stat-tile.acc-teal {{ border-top-color: {p.get("kpi_teal", p["accent"])}; }}
+    .stat-tile.acc-amber {{ border-top-color: {p.get("kpi_amber", p["accent"])}; }}
+    .stat-tile.acc-green {{ border-top-color: {p.get("kpi_green", p["accent"])}; }}
+    .stat-tile.acc-violet {{ border-top-color: {p.get("kpi_violet", p["accent"])}; }}
     .stat-tile:hover {{
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(35, 53, 77, 0.16);
@@ -518,7 +653,7 @@ def apply_global_styles() -> None:
         font-variant-numeric: tabular-nums;
     }}
     .stat-label {{
-        color: {p["accent"]};
+        color: {at};
         font-size: 0.82rem;
         font-weight: 700;
         letter-spacing: 0.05em;
@@ -570,6 +705,7 @@ def apply_global_styles() -> None:
     .quote-card {{
         border-radius: 10px;
         padding: 0.95rem 1.15rem;
+        box-shadow: 0 4px 14px {shadow};
     }}
     .quote-card.before {{
         background: {p.get("table_stripe", "#EFF3FA")};
@@ -657,10 +793,10 @@ def apply_global_styles() -> None:
         z-index: 55;
     }}
     .mental-model {{
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
+        background: {mm["bg"]};
+        color: {mm["ink"]};
         border-radius: 9px;
-        border-left: 3px solid {b.get("accent", p["accent"])};
+        border-left: 3px solid {mm["accent"]};
         box-shadow: 0 4px 14px rgba(2, 18, 47, 0.24);
         padding: 0.5rem 0.95rem;
         font-size: 0.92rem;
@@ -721,6 +857,7 @@ def apply_global_styles() -> None:
         border-top: 3px solid {p["accent"]};
         border-radius: 10px;
         padding: 0.9rem 1.05rem 0.8rem 1.05rem;
+        box-shadow: 0 4px 14px {shadow};
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
     .src-card:hover {{
@@ -732,12 +869,34 @@ def apply_global_styles() -> None:
         outline-offset: 2px;
     }}
     .src-kicker {{
-        color: {p["accent"]};
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: {at};
         font-size: 0.68rem;
         font-weight: 800;
         letter-spacing: 0.12em;
         text-transform: uppercase;
     }}
+    /* Source-role icon chip: the category-label colour cue (decorative). The
+       inset ring keeps the pale FATF amber chip visible on white. */
+    .src-kicker::before {{
+        content: "";
+        flex: none;
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        background: {p["accent"]};
+        box-shadow: inset 0 0 0 1px rgba(29, 45, 70, 0.28);
+    }}
+    /* Per-source accents: top border + chip only (label text stays AA-teal,
+       the source name below is ink) — official vs benchmark vs typology. */
+    .src-card.src-baci {{ border-top-color: {p.get("src_baci", p["accent"])}; }}
+    .src-card.src-baci .src-kicker::before {{ background: {p.get("src_baci", p["accent"])}; }}
+    .src-card.src-worldbank {{ border-top-color: {p.get("src_worldbank", p["accent"])}; }}
+    .src-card.src-worldbank .src-kicker::before {{ background: {p.get("src_worldbank", p["accent"])}; }}
+    .src-card.src-fatf {{ border-top-color: {p.get("src_fatf", p["accent"])}; }}
+    .src-card.src-fatf .src-kicker::before {{ background: {p.get("src_fatf", p["accent"])}; }}
     .src-name {{
         color: {p["ink"]};
         font-size: 1.12rem;
@@ -927,6 +1086,7 @@ def apply_global_styles() -> None:
         border: 1px solid {p["border"]};
         border-radius: 10px;
         padding: 0.8rem 0.95rem;
+        box-shadow: 0 4px 14px {shadow};
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
     .fam-card:hover {{
@@ -945,7 +1105,7 @@ def apply_global_styles() -> None:
     }}
     .fam-name {{ color: {p["ink"]}; font-weight: 750; font-size: 0.98rem; }}
     .fam-role {{
-        color: {p["accent"]};
+        color: {at};
         font-size: 0.68rem;
         font-weight: 800;
         letter-spacing: 0.11em;
@@ -967,7 +1127,7 @@ def apply_global_styles() -> None:
         background: {p["panel_bg"]};
         border: 1px solid {p["border"]};
         border-radius: 999px;
-        color: {p["accent"]};
+        color: {at};
         font-size: 0.74rem;
         font-weight: 700;
         padding: 0.16rem 0.6rem;
@@ -988,6 +1148,7 @@ def apply_global_styles() -> None:
         border: 1px solid {p["border"]};
         border-radius: 10px;
         padding: 0.65rem 0.8rem;
+        box-shadow: 0 4px 14px {shadow};
     }}
     .pipe-num {{
         display: inline-flex;
@@ -1024,9 +1185,10 @@ def apply_global_styles() -> None:
         border-radius: 10px;
         padding: 0.8rem 0.95rem;
         margin-bottom: 0.15rem;
+        box-shadow: 0 4px 14px {shadow};
     }}
     .prep-kicker {{
-        color: {p["accent"]};
+        color: {at};
         font-size: 0.68rem;
         font-weight: 800;
         letter-spacing: 0.11em;
@@ -1301,7 +1463,7 @@ def apply_global_styles() -> None:
         text-transform: uppercase;
         margin-bottom: 0.1rem;
     }}
-    .lane.official .lane-kicker {{ color: {p["accent"]}; }}
+    .lane.official .lane-kicker {{ color: {at}; }}
     .lane.eval .lane-kicker {{ color: {ev["label_ink"]}; }}
     .lane-sub {{ color: {p["muted"]}; font-size: 0.8rem; margin-bottom: 0.45rem; }}
     .eval-label {{
@@ -1336,7 +1498,7 @@ def apply_global_styles() -> None:
         font-size: 0.7rem;
         font-weight: 800;
     }}
-    .lane.official .lane-step .n {{ background: {p["accent_soft"]}; color: {p["accent"]}; }}
+    .lane.official .lane-step .n {{ background: {p["accent_soft"]}; color: {at}; }}
     .lane.eval .lane-step .n {{
         background: transparent;
         border: 1px dashed {ev["border"]};
@@ -1603,12 +1765,16 @@ def apply_global_styles() -> None:
         [data-testid="stSidebar"] [data-testid="stPageLink"] a:hover,
         [data-testid="stMain"] [data-testid="stPageLink"] a,
         [data-testid="stMain"] [data-testid="stPageLink"] a:hover,
+        [data-testid="stMain"] [data-testid="stButton"] button,
+        [data-testid="stMain"] [data-testid="stBaseButton-primary"]:hover,
+        [data-testid="stMain"] [data-testid="stBaseButton-secondary"]:hover,
         .anim, .twin-card, .stat-tile, .flow-step,
         .sb, .src-card, .fam-card,
         .merge-tile.ma, .merge-tile.mb, .merge-tile.mc, .merge-row,
         .yr.lit.yl1, .yr.lit.yl2, .yr.lit.yl3, .yr.lit.yl4, .yr.lit.yl5,
         .yr.focus.ylf,
         .s3-chip, .s3-late1, .s3-late2,
+        .case-banner-text,
         .tip::after, .tip::before {{
             animation: none !important;
             transition: none !important;

@@ -157,12 +157,48 @@ def test_data_trust_scene_navigation_and_corrected_wording():
 
 def test_review_queue_filters_and_empty_state():
     at = _run_page("review_queue.py")
-    # Narrow the score slider to an impossible band -> transparent empty state.
+    # The score slider now lives inside the collapsed "Advanced filters"
+    # expander; AppTest reaches it by key regardless. Narrow it to an
+    # impossible band -> transparent empty state.
     slider = next(s for s in at.slider if s.key == "queue_score_range")
     low = slider.value[0]
     at = slider.set_value((low, low)).run()
     assert not at.exception
     assert any("No review candidates match" in str(block.value) for block in at.info)
+
+
+def test_review_queue_banner_default_and_current():
+    from dashboard.services.data_loader import load_review_queue
+
+    queue = load_review_queue().sort_values("rank")
+    at = _run_page("review_queue.py")
+    assert not at.exception
+    text = _rendered_text(at)
+    # No selection this session -> the banner names the default (top-ranked)
+    # case that Selected Case Review would open with.
+    assert f"Default case #{int(queue.iloc[0]['rank'])}:" in text
+    assert "Select another row to change it." in text
+
+    carried = queue.iloc[6]
+    at2 = _run_page("review_queue.py", tbml_selected_obs_id=carried["obs_id"])
+    assert not at2.exception
+    text2 = _rendered_text(at2)
+    assert f"Current case #{int(carried['rank'])}:" in text2
+    assert "Default case" not in text2
+
+
+def test_review_queue_export_size_control_and_score_note():
+    at = _run_page("review_queue.py")
+    assert not at.exception
+    assert len(at.download_button) == 1, "CSV export button missing"
+    assert len(at.segmented_control) == 1, "queue-size control missing"
+    assert at.segmented_control[0].value == "Top 50"
+    # The verbatim score explainer must appear on the page (column tooltip
+    # copy is the same YAML anchor, so one assertion covers both).
+    content = yaml.safe_load(
+        (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(encoding="utf-8")
+    )
+    assert content["pages"]["review_queue"]["score_note"] in _rendered_text(at)
 
 
 def test_case_investigation_selectbox_changes_case():

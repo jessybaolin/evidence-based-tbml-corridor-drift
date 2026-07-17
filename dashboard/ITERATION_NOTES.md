@@ -3,6 +3,169 @@
 Working notes so the next refinement cycle (human or AI) does not have to
 rediscover decisions. First working version completed 2026-07-14.
 
+## 2026-07-17 — Review Queue rework (filters, 9-column grid, amber current-case banner)
+
+Stakeholder-facing UI rework of `app_pages/review_queue.py`. Ranking logic and
+the queue-is-official contract untouched; every displayed number still comes
+straight from `data/outputs/top_ranked_corridors.csv` (unit value and benchmark
+price are published columns, not recomputed). Tests 47 → 53.
+
+**Filters.** Removed: data-quality status, min-evidence, search, numeric top-N.
+Kept: Year / Product family / Exporter / Importer. New `st.segmented_control`
+"Queue size" (`key="queue_size"`, default "Top 50"). Data reality: the published
+queue holds exactly **50 rows**, so "Top 500" is **inert, not fake-disabled** —
+selecting it shows the same 50 rows and a governed caption explains the pipeline
+publishes the top 50 (`queue_size_note`). A CSS-disabled segment was rejected:
+`pointer-events:none` can't target one option reliably and could trap keyboard
+focus; the Python cap (`top_n` via `nsmallest`) is honest and future-proof (if
+the pipeline ever publishes ≥500, the control works for real — the option size
+is parsed from the governed label so copy and behaviour cannot drift). Score
+slider moved into a collapsed "Advanced filters" expander, key
+`queue_score_range` unchanged (AppTest reaches it through the expander).
+
+**Grid (9 columns, exact order):** Rank · Year · Corridor (`AAA → BBB`) ·
+Product · Trade value (USD) · Quantity (metric tons) · Unit value (USD/t) ·
+Benchmark price (USD/t) · Review-priority score. HS6 / Data quality / Evidence
+count columns removed. `dashboard_metrics.queue_display_frame()` builds the
+frame as a pure function (tests assert order, corridor format, clean product
+label, rank stability under resort). Product shows the plain family label — an
+earlier per-row "⚠ " caveat glyph was DROPPED at the user's request because
+**45 of 50 published rows are `usable_with_caveat`**, so a glyph on 90 % of rows
+was noise, not signal; per-observation caveats live on Selected Case Review, and
+`quality_status` still rides the CSV export. Corridor codes include BACI
+special partners (rank 26 = `USA → S19`, "Other Asia, nes") — shown as
+published; the column help explains. Family→HS6 mapping lives in the Product
+column help + under-table caption, derived live via `family_hs6_map()`.
+Formats (glide can't do printf thousands separators): trade value + quantity
+`"localized"` (grouped digits, ≤3 dp — values are integers / 3-dp tonnages, so
+no noise), unit value + benchmark `"dollar"` (prices, cents meaningful), score
+keeps the ProgressColumn `%.3f` (bars all sit ≥0.95 — the number, not the bar,
+does the discriminating at Top-50 grain). Sorting stays numeric; full precision
+is guaranteed in the CSV, stated in the caption. Missing benchmark would render
+empty (none in the current queue).
+
+**Selection & banner.** `st.dataframe` single-row selection kept — Streamlit
+has NO row-click-anywhere; the grid's own checkbox-style selection column is
+the row-pick affordance and cannot be hidden/configured (reported deviation).
+The row pick is resolved BEFORE rendering by reading
+`st.session_state[table_key].selection` (set by the click that triggered the
+rerun), so the banner above the table never lags one interaction. Current case
+= sticky `tbml_selected_obs_id` (bounds-checked against the full queue),
+default = rank 1 (same default as Selected Case Review). Banner: amber card
+(`st.container(key="queue_case_banner")`) — new tokens `palette.selected_bg
+#FFF4CC` / `palette.selected_accent #D6A100` (amber = attention role). Ink on
+the wash 11.87:1 AA; accent border decorative (2.1:1, fill+text identify the
+banner); CTA `st.page_link` restyled as the teal primary pill (white on teal
+3.93:1 = existing primary-button UI convention). Copy templates
+`banner_default` / `banner_current` in content.yml; full country names from the
+features join. The current-case row is tinted `selected_bg` via a pandas
+Styler (per-row CSS can't reach the canvas grid; Styler backgrounds can) plus
+zebra `table_stripe` on odd rows; when the grid's own selection is active its
+translucent teal tint overlays the amber — acceptable (both mean "selected"),
+chosen over dropping either cue. Banner text has a 260 ms rise-in (replays only
+when the case changes — Streamlit only remounts changed DOM), registered in the
+reduced-motion block.
+
+**Export.** `Export current view (.csv)` sits right-aligned above the grid.
+Contents via pure `queue_export_frame()`: current filters + queue size applied,
+**always rank-ascending** — glide's client-side header sorting is not visible
+to Python, so the export cannot follow an ad-hoc view sort (reported deviation,
+disclosed in the caption). Columns: obs_id + the 9 display columns (product
+without glyph) + quality_status + source_row_id + source_version, full
+precision — keeps the old export's traceability guarantees in a stakeholder
+shape.
+
+**Score explainer** (verbatim, single YAML anchor for tooltip + note):
+"The score combines several unusual-pattern signals to determine which
+observations should be reviewed first. A higher score means higher review
+priority—it is not the probability or a finding of financial crime."
+
+## 2026-07-17 — Repalette to "Navy · Teal · Warm Amber" (supersedes "deep blue")
+
+The all-blue "deep blue" plane read dull: too many surfaces shared one blue-grey
+tone, so hierarchy was weak. New official direction keeps the institutional NAVY
+(sidebar, headings, structure, the fixed boundary ribbon) but brightens the
+canvas, makes cards TRULY WHITE so they lift on a soft shadow, uses TEAL as the
+single interactive colour (links, selection, focus, primary action, chart
+emphasis), and adds a warm AMBER caveat/attention counterpoint. Balance target
+~70% neutral · 20% navy · 8% teal · 2% amber. All colour still lives in
+`dashboard/config/dashboard_theme.yml`; `.streamlit/config.toml` kept in sync;
+no page hardcodes a hex (pages reference tokens / CSS classes). WCAG + OKLab/
+Machado CVD recomputed in Python (no Node).
+
+Old → new token map (same keys cascade to every page; new keys added):
+
+| Token | deep-blue | navy·teal·amber |
+|---|---|---|
+| `palette.ink` | `#23354D` | `#22314A` |
+| `palette.muted` | `#505D76` | `#637087` (brief #68778E was 4.20:1 on the plane → darkened to AA) |
+| `palette.page_bg` | `#CFDAE8` | `#F3F6FA` (brighter canvas) |
+| `palette.panel_bg` | `#F8FBFE` | `#FFFFFF` (truly white cards) |
+| `palette.border` | `#B9C8DE` | `#D5DFEA` |
+| `palette.accent` | `#495B7D` Steel | `#0F8F8F` TEAL (fills/borders/icons/focus/chart emphasis) |
+| `palette.accent_soft` | `#DCE5F2` | `#DDF4F1` (light teal) |
+| `palette.ledger_ink` | `#3E4E68` | `#5A6B84` |
+| `palette.sidebar_bg` | `#23354D` | `#1D2D46` (deep navy) |
+| `palette.sidebar_ink` | `#EAF0F8` | `#F8FAFD` |
+| `palette.sidebar_muted` | `#B7C6DE` | `#9FB0C8` |
+| `palette.table_stripe` | `#EFF3FA` | `#EFF3F8` |
+| **new** `palette.teal_500` | — | `#29B3AA` (accent lines: sidebar active rule, ribbon rule, mm rule) |
+| **new** `palette.teal_hover` | — | `#0B7777` (button hover AND small teal TEXT on light, for AA) |
+| **new** `palette.navy_700` | — | `#334966` (secondary/replay button text) |
+| **new** `palette.sidebar_sel_bg` / `sidebar_hover_bg` | — | `#29405E` / `#243854` |
+| **new** `palette.card_shadow` | — | `rgba(29,45,70,0.08)` (white-card lift) |
+| **new** `palette.amber` / `amber_soft` | — | `#F2B544` / `#FFF3D8` (caveat/attention; decorative) |
+| **new** `palette.btn_secondary_border` | — | `#7E8DA4` (brief #AEBBCB was 1.95:1 → darkened for a 3:1 control edge) |
+| **new** `palette.kpi_{blue,teal,amber,green,violet}` | — | `#4078C0` `#0F8F8F` `#F2B544` `#2F9B78` `#7569B5` (KPI top-accents) |
+| **new** `palette.src_{baci,worldbank,fatf}` | — | `#4078C0` `#0F8F8F` `#D89A2B` (source-role accents) |
+| `boundary.bg` / `accent` / `ink` / `label` / `border` | `#495B7D`/`#8BA3C5`/`#F8FBFE`/`#DCE7F5`/`#3E5170` | `#1D2D46`/`#29B3AA`/`#F8FAFD`/`#DDF4F1`/`#16233A` (STAYS NAVY, teal top rule) |
+| **new** `mental_model.{bg,accent,ink}` | — | `#223753` / `#29B3AA` / `#F8FAFD` |
+| `families.crude_palm_oil` | `#2A78D6` | `#4D9B70` (green) |
+| `families.refined_copper_cathodes` | `#1BAF7A` | `#B15C2E` (rust; brief #B86F3C nudged for CVD — see below) |
+| `families.gold_unwrought` | `#EDA100` | `#D4A72C` (gold) |
+| `evaluation.tint` / `border` | `#F3ECDA`/`#C2AA74` | `#FFF3D8`/`#D89A2B` (label_ink `#6E4E12` kept) |
+| `status.quality.fully_usable` / `usable_with_caveat` | `#0A7D0A`/`#8A6D1D` | `#2F9B78`/`#D89A2B` |
+| `status.severity.high` / `medium` | `#C23A3A`/`#C0622F` | `#C65D63`/`#D89A2B` (low `#8A6D1D` kept) |
+| `chart.emphasis` | `#495B7D` | `#0F8F8F` (teal; dE 15.1 vs context_gray, kept) |
+| `config.toml` primary/bg/2nd-bg/text | `#495B7D`/`#CFDAE8`/`#F8FBFE`/`#23354D` | `#0F8F8F`/`#F3F6FA`/`#FFFFFF`/`#22314A` |
+
+Two teal roles: `accent` #0F8F8F (bright) for fills/borders/icons/focus/chart
+emphasis (>=3:1 / large); `teal_hover` #0F8F8F→**#0B7777** for small teal TEXT on
+light (5.4:1, AA) — eyebrows, KPI/stat labels, kickers, tags, step-pills, links,
+CTA text. Arrows/connectors stay bright accent.
+
+**CVD (OKLab dE ×100, Machado 1.0):** the weak pair is palm-vs-copper under
+DEUTERanopia (the brief expected copper-gold, which is actually fine at 14.6).
+Brief copper #B86F3C gave palm/copper deutan 6.5 (6–8 "floor, secondary-encoding
+only"). Nudged copper #B86F3C → **#B15C2E** (redder rust, still commodity-true) →
+palm/copper deutan **8.3** (≥8 target); palm/gold 17.1, copper/gold 18.6; all
+normal-vision ≥18.8 (≥15 floor). Every family chart also pairs colour with a text
+label (axis/legend), so the redundant-encoding guarantee holds regardless.
+
+**WCAG:** every body-text pairing ≥4.5:1 (sidebar frost 6.3–13.3, teal-text
+5.4/white, muted 4.6 plane / 5.0 white, eval label 6.9). Reported-not-blocking:
+status-pill TEXT can sit below 4.5 by the project's documented "colour never
+carries state alone" contract (lowest warning #D89A2B 2.45) — flagged for a
+possible tinted-pill follow-up; src_fatf amber chip 2.45 on white carries an
+inset ring (like the family dots); primary-button white-on-teal 3.93 (AA-large/UI
+pass, below body 4.5 — hover #0B7777 is 5.4); the receded (0.90) eval lane-sub
+fades to 3.77 by design (reduced-motion users see the 4.5 full-opacity state).
+
+**Motion:** no new keyframes — recolour only, plus button/segment hover
+transitions added to the SAME `prefers-reduced-motion` kill-block (kept last).
+Sidebar active page now shows a teal `teal_500` left rule on a navy `sidebar_sel_bg`
+fill (fixed 3px border, colour-only change → no layout shift). Buttons: Next =
+teal primary, Previous = white/navy-outline secondary, Replay = pale-navy
+(keyed `.st-key-dtrq_replay_btn`). Segmented control active segment = teal fill +
+white text via `stBaseButton-segmented_controlActive` (active-vs-inactive).
+
+Verified: `pytest tests -q` = **47 passed** (unchanged; no test asserts a colour);
+all pages AppTest-render through the shell (styles applied) with no exception; live
+server re-booted on 8501 with the new config → HTTP 200, clean Uvicorn log, 0
+tracebacks. Rendered browser could not be visually inspected — the teal selection
+states, white-card lift, KPI/source accents, button hierarchy and ribbon need the
+user's eyes.
+
 ## Current implementation
 
 - **Completed pages (7):** Business Problem & Value, Official Review Queue,

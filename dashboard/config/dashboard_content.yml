@@ -111,8 +111,56 @@ pages:
   review_queue:
     eyebrow: "Stakeholder analytics"
     title: "Top 50 Review Queue"
-    subtitle: "The top-ranked official observations, with filters, row selection, and CSV export."
+    subtitle: "The top-ranked official observations — filter the queue, pick the current case, and export the view."
     caveat: "A high rank means the row shows unusual analytical signals; it is not a finding of wrongdoing."
+    filters_heading: "Filters"
+    filters_caption: "Year, product family, exporter and importer scope the queue below; empty filters mean no restriction."
+    queue_size_label: "Queue size"
+    queue_size_options: ["Top 50", "Top 500"]
+    queue_size_note: "The analytical pipeline currently publishes the top {published} ranked observations, so both queue sizes show the same {published} rows."
+    advanced_label: "Advanced filters"
+    reset_label: "Reset filters"
+    results_heading: "Ranked official observations"
+    results_caption: "{shown} of {total} review candidates match the current filters. Select a row to make it the current case."
+    empty_message: "No review candidates match the current filters. Adjust the year, product family, exporter or importer selections, or widen the score range under Advanced filters."
+    export_label: "Export current view (.csv)"
+    export_help: "Downloads the rows currently shown, ordered by rank, with full-precision values and the observation ID for traceability."
+    banner_default: "Default case #{rank}: {year} {exporter} → {importer} — {product}. Select another row to change it."
+    banner_current: "Current case #{rank}: {year} {exporter} → {importer} — {product}."
+    open_case_label: "Open case review"
+    # The score explainer is shown verbatim in the score column tooltip AND in
+    # the note under the table (single YAML anchor so the two can never drift).
+    score_note: &queue_score_note "The score combines several unusual-pattern signals to determine which observations should be reviewed first. A higher score means higher review priority—it is not the probability or a finding of financial crime."
+    table_caption_products: "Products: {mappings}."
+    table_caption_precision: "On-screen numbers are rounded for reading. The CSV export keeps full precision and is always ordered by rank — in-app column sorting reorders the view only, never the export."
+    columns:
+      rank:
+        label: "Rank"
+        help: "Queue position — 1 is the most unusual official observation. Rows keep their rank when the table is re-sorted."
+      year:
+        label: "Year"
+        help: "Calendar year of the annual official observation."
+      corridor:
+        label: "Corridor"
+        help: "Exporter → importer as the official three-letter codes (e.g. GBR → ITA); grouped partners keep their source code (e.g. S19 = Other Asia, nes). Full names appear in the case banner above and on Selected Case Review."
+      product:
+        label: "Product"
+        help: "Product family. {mappings}. Per-observation data-quality caveats appear on Selected Case Review."
+      trade_value_usd:
+        label: "Trade value (USD)"
+        help: "Annual aggregate trade value reported for this corridor-product-year, in US dollars."
+      quantity_metric_ton:
+        label: "Quantity (metric tons)"
+        help: "Annual aggregate quantity in metric tons. Gold flows can be small fractions of a ton."
+      unit_value_usd_per_metric_ton:
+        label: "Unit value (USD/t)"
+        help: "Implied aggregate unit value — trade value divided by quantity. An annual aggregate, not an invoice price."
+      benchmark_price_usd_per_metric_ton:
+        label: "Benchmark price (USD/t)"
+        help: "World Bank benchmark price for the same year — broad market context, not invoice-level fair value."
+      selected_review_priority_score:
+        label: "Review-priority score"
+        help: *queue_score_note
   case_investigation:
     eyebrow: "Stakeholder analytics"
     title: "Selected Case Review"

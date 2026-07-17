@@ -16,8 +16,7 @@ import streamlit as st
 SELECTED_OBS = "tbml_selected_obs_id"
 QUEUE_FILTER_KEYS = [
     "queue_years", "queue_families", "queue_exporters", "queue_importers",
-    "queue_statuses", "queue_score_range", "queue_min_evidence",
-    "queue_search", "queue_top_n",
+    "queue_score_range", "queue_size",
 ]
 APPENDIX_KEYS = ["dict_search", "dict_categories", "dict_datasets", "dict_sources"]
 

@@ -139,11 +139,15 @@ tiles = [
      _e(kpis["value_coverage"]["detail"].format(
          excluded_share=f"{100.0 - value_share:.1f}"))),
 ]
+# KPI top-border accents, in the approved order: official observations -> blue,
+# coverage period -> teal, product families -> amber, eligible -> green,
+# trade-value coverage -> violet. Classes map to the kpi_* theme tokens.
+KPI_ACCENTS = ["acc-blue", "acc-teal", "acc-amber", "acc-green", "acc-violet"]
 tiles_html = "".join(
-    f'<div class="stat-tile"><div class="stat-value">{value}</div>'
+    f'<div class="stat-tile {acc}"><div class="stat-value">{value}</div>'
     f'<div class="stat-label">{label}</div>'
     f'<div class="stat-detail">{detail}</div></div>'
-    for value, label, detail in tiles
+    for (value, label, detail), acc in zip(tiles, KPI_ACCENTS)
 )
 st.markdown(f'<div class="stat-band five anim">{tiles_html}</div>', unsafe_allow_html=True)
 ledger("panel", "review_queue", "evidence")
@@ -203,13 +207,17 @@ with ind_col:
     )
 with prev_col:
     st.button(copy["prev_label"], key="dtrq_prev", on_click=_go, args=(-1,),
-              disabled=scene_idx == 0, width="stretch")
+              type="secondary", disabled=scene_idx == 0, width="stretch")
 with next_col:
+    # Primary action = teal fill (styles.py stBaseButton-primary).
     st.button(copy["next_label"], key="dtrq_next", on_click=_go, args=(1,),
-              disabled=scene_idx == len(SCENE_LABELS) - 1, width="stretch")
-with replay_col:
-    st.button(copy["replay_label"], key="dtrq_replay_btn", on_click=_replay,
+              type="primary", disabled=scene_idx == len(SCENE_LABELS) - 1,
               width="stretch")
+with replay_col:
+    # Secondary type; the keyed wrapper (.st-key-dtrq_replay_btn) restyles it as
+    # the pale-navy Replay utility variant.
+    st.button(copy["replay_label"], key="dtrq_replay_btn", on_click=_replay,
+              type="secondary", width="stretch")
 
 _replay_stamp = int(st.session_state[_REPLAY])
 
@@ -252,7 +260,7 @@ def _scene_sources() -> None:
         + f'<div class="pv-cap">{_e(baci["preview_caption"])}</div></div>'
     )
     card_1 = (
-        f'<div class="src-card sb b2" tabindex="0">'
+        f'<div class="src-card src-baci sb b2" tabindex="0">'
         f'<div class="src-kicker">{_e(baci["kicker"])}</div>'
         f'<div class="src-name">{_e(baci["name"])}</div>'
         f'<span class="src-lab">{_e(s1["supplies_label"])}</span>'
@@ -286,7 +294,7 @@ def _scene_sources() -> None:
         + "</div>"
     )
     card_2 = (
-        f'<div class="src-card sb b3" tabindex="0">'
+        f'<div class="src-card src-worldbank sb b3" tabindex="0">'
         f'<div class="src-kicker">{_e(bench["kicker"])}</div>'
         f'<div class="src-name">{_e(bench["name"])}</div>'
         f'<span class="src-lab">{_e(s1["supplies_label"])}</span>'
@@ -301,7 +309,7 @@ def _scene_sources() -> None:
     fatf = cards["fatf"]
     never_items = "".join(f"<li>{_e(item)}</li>" for item in fatf["never"])
     card_3 = (
-        f'<div class="src-card sb b4">'
+        f'<div class="src-card src-fatf sb b4">'
         f'<div class="src-kicker">{_e(fatf["kicker"])}</div>'
         f'<div class="src-name">{_e(fatf["name"])}</div>'
         f'<span class="src-lab">{_e(s1["supplies_label"])}</span>'

@@ -133,12 +133,11 @@ def queue_filter_options(queue: pd.DataFrame) -> dict:
     return {
         "years": sorted(int(y) for y in queue["year"].unique()),
         "families": sorted(queue["family_label"].unique()),
-        "hs6": sorted(queue["hs6"].unique()),
         "exporters": sorted(queue["exporter_iso3"].unique()),
         "importers": sorted(queue["importer_iso3"].unique()),
-        "statuses": sorted(queue["quality_status"].unique()),
         "score_min": float(scores.min()),
         "score_max": float(scores.max()),
+        "published": len(queue),
     }
 
 
@@ -152,27 +151,64 @@ def apply_queue_filters(queue: pd.DataFrame, filters: dict) -> pd.DataFrame:
         result = result[result["exporter_iso3"].isin(filters["exporters"])]
     if filters.get("importers"):
         result = result[result["importer_iso3"].isin(filters["importers"])]
-    if filters.get("statuses"):
-        result = result[result["quality_status"].isin(filters["statuses"])]
     if filters.get("score_range"):
         low, high = filters["score_range"]
         scores = result["selected_review_priority_score"]
         result = result[(scores >= low) & (scores <= high)]
-    if filters.get("min_evidence") is not None:
-        result = result[result["key_evidence_count"] >= filters["min_evidence"]]
-    if filters.get("search"):
-        needle = str(filters["search"]).strip().lower()
-        haystack = (
-            result["obs_id"].astype(str).str.lower()
-            + " " + result["corridor"].astype(str).str.lower()
-            + " " + result["exporter_name"].fillna("").astype(str).str.lower()
-            + " " + result["importer_name"].fillna("").astype(str).str.lower()
-            + " " + result["hs6"].astype(str)
-        )
-        result = result[haystack.str.contains(needle, regex=False)]
     if filters.get("top_n"):
         result = result.nsmallest(int(filters["top_n"]), "rank")
     return result.sort_values("rank").reset_index(drop=True)
+
+
+# The Review Queue grid, exactly as displayed: nine columns in this order.
+# Values come straight from the published queue; the only presentation-derived
+# field is the corridor string.
+QUEUE_DISPLAY_COLUMNS = [
+    "rank", "year", "corridor", "product", "trade_value_usd",
+    "quantity_metric_ton", "unit_value_usd_per_metric_ton",
+    "benchmark_price_usd_per_metric_ton", "selected_review_priority_score",
+]
+
+# The CSV export: the displayed view plus the traceability fields the old
+# export guaranteed (obs_id joins evidence/features; quality_status carries the
+# data-quality caveat; source_* pin the exact pipeline inputs).
+QUEUE_EXPORT_COLUMNS = [
+    "obs_id", *QUEUE_DISPLAY_COLUMNS,
+    "quality_status", "source_row_id", "source_version",
+]
+
+
+def queue_display_frame(enriched: pd.DataFrame) -> pd.DataFrame:
+    # Pure display projection: row order is preserved (positional selection in
+    # the grid maps back to the input frame), numbers keep full precision —
+    # rounding happens in st.column_config, never here. Ranks travel with their
+    # rows, so user re-sorting in the grid can never reassign a rank.
+    frame = enriched.reset_index(drop=True)
+    display = frame.reindex(columns=[c for c in QUEUE_DISPLAY_COLUMNS if c != "product"])
+    display["product"] = frame["family_label"]
+    return display[QUEUE_DISPLAY_COLUMNS]
+
+
+def queue_export_frame(enriched: pd.DataFrame) -> pd.DataFrame:
+    # Full-precision export of the current view, always rank-ascending.
+    # quality_status carries the data-quality caveat for each row.
+    frame = enriched.reset_index(drop=True).sort_values("rank")
+    export = frame.reindex(columns=[c for c in QUEUE_EXPORT_COLUMNS if c != "product"])
+    export["product"] = frame["family_label"]
+    return export[QUEUE_EXPORT_COLUMNS].reset_index(drop=True)
+
+
+def family_hs6_map(queue: pd.DataFrame) -> dict[str, str]:
+    # Family display name -> HS6 code, derived live from the queue rows (the
+    # HS6 column left the grid; this feeds the Product column help + caption).
+    pairs = queue[["family_label", "hs6"]].drop_duplicates().sort_values("family_label")
+    return {str(label): str(code) for label, code in zip(pairs["family_label"], pairs["hs6"])}
+
+
+def default_case(enriched: pd.DataFrame) -> pd.Series:
+    # The case Selected Case Review opens when nothing was picked yet: the
+    # top-ranked row of the full queue.
+    return enriched.loc[enriched["rank"].idxmin()]
 
 
 # ---- Case investigation ----------------------------------------------------------

@@ -1,17 +1,19 @@
 # Streamlit theme + server settings for the TBML review dashboard.
 # Dashboard-specific visual tokens live in dashboard/config/dashboard_theme.yml.
 
-# "Deep blue" identity — kept in sync with dashboard/config/dashboard_theme.yml.
-# NOTE: secondaryBackgroundColor drives widgets, metric cards, AND the default
-# sidebar fill. It is set to the near-white card surface so cards/inputs pop off
-# the blue plane; the sidebar is then re-skinned to deep navy by an explicit
-# [data-testid="stSidebar"] rule in dashboard/components/styles.py.
+# "Navy · Teal · Warm Amber" identity — kept in sync with
+# dashboard/config/dashboard_theme.yml. NOTE: secondaryBackgroundColor drives
+# widgets, metric cards, AND the default sidebar fill. It is set to the white
+# card surface so cards/inputs pop off the bright plane; the sidebar is then
+# re-skinned to deep navy by an explicit [data-testid="stSidebar"] rule in
+# dashboard/components/styles.py. primaryColor = teal is the one interactive
+# colour (widgets, slider, segmented-control selection, queue score bars).
 [theme]
 base = "light"
-primaryColor = "#495B7D"          # Steel accent (widgets, slider, queue score bars)
-backgroundColor = "#CFDAE8"       # cool BLUE plane (the dominant hue)
-secondaryBackgroundColor = "#F8FBFE"  # near-white cards + widget/input fills
-textColor = "#23354D"             # Storm ink
+primaryColor = "#0F8F8F"          # teal accent (widgets, slider, queue score bars)
+backgroundColor = "#F3F6FA"       # bright pale blue-grey plane
+secondaryBackgroundColor = "#FFFFFF"  # white cards + widget/input fills
+textColor = "#22314A"             # navy ink
 font = "sans-serif"
 
 [server]
