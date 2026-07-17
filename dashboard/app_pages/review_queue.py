@@ -5,7 +5,6 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from dashboard.components.boundary_banner import boundary_banner
 from dashboard.components.empty_states import no_rows
 from dashboard.components.filters import queue_filters
 from dashboard.components.page_header import ledger, page_header, section_title
@@ -18,7 +17,6 @@ from dashboard.services import session_state as state
 content = load.load_content()
 copy = content["pages"]["review_queue"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-boundary_banner()
 st.caption(copy["caveat"])
 
 queue = load.load_review_queue()

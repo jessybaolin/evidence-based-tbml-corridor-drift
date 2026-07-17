@@ -5,7 +5,6 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from dashboard.components.boundary_banner import boundary_banner
 from dashboard.components.charts import model_metric_bar, show
 from dashboard.components.empty_states import missing_output
 from dashboard.components.page_header import ledger, page_header, section_title
@@ -18,7 +17,6 @@ from dashboard.services import formatting as fm
 content = load.load_content()
 copy = content["pages"]["model_and_controls"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-boundary_banner()
 
 comparison = load.load_model_comparison()
 selection = load.load_model_selection()

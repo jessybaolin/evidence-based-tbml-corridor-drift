@@ -117,6 +117,13 @@ DATA_FILES: dict[str, dict] = {
         "official": False,
         "purpose": "Selected XGBoost parameters and tuning trials",
     },
+    "analyst_briefs": {
+        "path": DATA_OUTPUTS / "analyst_briefs.json",
+        "required": False,
+        "official": False,  # deterministic renderings over official evidence
+        "purpose": "Deterministic caveated analyst briefs for the top-ranked cases "
+                   "(the dashboard cites their existence/count only, never the text)",
+    },
     "source_manifest": {
         "path": DATA_OUTPUTS / "source_manifest.json",
         "required": False,

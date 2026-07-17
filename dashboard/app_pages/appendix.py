@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from dashboard.components.boundary_banner import boundary_banner
 from dashboard.components.empty_states import missing_output
 from dashboard.components.page_header import ledger, page_header, section_title
 from dashboard.components.source_cards import source_card
@@ -16,7 +15,6 @@ from dashboard.services.source_registry import build_source_cards
 content = load.load_content()
 copy = content["pages"]["appendix"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-boundary_banner()
 
 dictionary_tab, sources_tab = st.tabs(["Data Dictionary", "Official Data Sources"])
 

@@ -4,7 +4,8 @@ Evidence-First TBML Corridor Drift Lab — multipage Streamlit dashboard entry p
 WHAT IT DOES:
     Boots the app: puts the repository root on sys.path (so `dashboard.*`
     imports work no matter where the terminal was opened), applies the global
-    theme, and registers the six pages with st.navigation.
+    theme, registers the pages with st.navigation, and renders the fixed
+    human-review boundary ribbon that rides on every page.
 
 RUN (from the repository root):
     python -m streamlit run dashboard/streamlit_app.py
@@ -26,6 +27,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
+from dashboard.components.boundary_banner import boundary_ribbon
 from dashboard.components.styles import apply_global_styles
 from dashboard.services.data_loader import MissingOutputError, load_content
 
@@ -40,28 +42,63 @@ st.set_page_config(
 
 apply_global_styles()
 
-# Material Symbol icons (icon=":material/<name>:") render as monochrome glyphs
-# in the theme colour — frost on the navy sidebar — matching the blue palette.
-pages = {
+# Page metadata in one place. Material Symbol icons (":material/<name>:") render
+# as monochrome glyphs in the theme colour — frost on the navy sidebar.
+# NOTE: page files live in app_pages/ (NOT pages/) on purpose: a directory
+# literally named "pages" next to the entry point triggers Streamlit's MPA-v1
+# compatibility path, under which a cold-session deep link executes the page
+# file alone — without the global styles, sidebar, or boundary ribbon.
+PAGE_GROUPS = {
     "Business & Review": [
-        st.Page("pages/executive_overview.py", title="Business Problem & Value", icon=":material/account_balance:", default=True),
-        st.Page("pages/review_queue.py", title="Official Review Queue", icon=":material/checklist:"),
-        st.Page("pages/case_investigation.py", title="Selected Case Review", icon=":material/search:"),
-        st.Page("pages/portfolio_analytics.py", title="Queue Patterns", icon=":material/trending_up:"),
+        {"path": "app_pages/executive_overview.py", "title": "Business Problem & Value",
+         "icon": ":material/account_balance:", "default": True},
+        {"path": "app_pages/from_data_to_review_queue.py", "title": "From Data to Review Queue",
+         "icon": ":material/account_tree:"},
+        {"path": "app_pages/portfolio_analytics.py", "title": "Trade Landscape and Patterns",
+         "icon": ":material/trending_up:"},
+        {"path": "app_pages/review_queue.py", "title": "Top 50 Review Queue",
+         "icon": ":material/checklist:"},
+        {"path": "app_pages/case_investigation.py", "title": "Selected Case Review",
+         "icon": ":material/search:"},
     ],
     "Trust & Methodology": [
-        st.Page("pages/from_data_to_review_queue.py", title="From Data to Review Queue", icon=":material/account_tree:"),
-        st.Page("pages/model_and_controls.py", title="Model Validation & Controls", icon=":material/verified_user:"),
-        st.Page("pages/appendix.py", title="Appendix", icon=":material/menu_book:"),
+        {"path": "app_pages/model_and_controls.py", "title": "Model Validation & Controls",
+         "icon": ":material/verified_user:"},
+        {"path": "app_pages/appendix.py", "title": "Appendix",
+         "icon": ":material/menu_book:"},
     ],
 }
 
-with st.sidebar:
-    st.markdown(f"## {content['app']['title']}")
-    st.caption(content["app"]["subtitle"])
-    st.markdown("---")
+# Build the st.Page objects and register them for routing, but HIDE Streamlit's
+# built-in sidebar menu (position="hidden"). Its auto-nav injects fixed vertical
+# spacing we cannot fully override; instead we render our own navigation with
+# st.page_link below, so the whole sidebar is one container we style top-to-bottom.
+nav_groups: dict[str, list] = {}
+page_by_path: dict[str, "st.Page"] = {}
+for group_name, entries in PAGE_GROUPS.items():
+    built = []
+    for entry in entries:
+        page = st.Page(entry["path"], title=entry["title"], icon=entry["icon"],
+                       default=entry.get("default", False))
+        built.append(page)
+        page_by_path[entry["path"]] = page
+    nav_groups[group_name] = built
 
-navigation = st.navigation(pages, expanded=True)
+navigation = st.navigation(nav_groups, position="hidden")
+
+with st.sidebar:
+    st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="brand-sub">{content["app"]["subtitle"]}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
+    for group_name, entries in PAGE_GROUPS.items():
+        st.markdown(f'<div class="nav-group">{group_name}</div>', unsafe_allow_html=True)
+        for entry in entries:
+            st.page_link(page_by_path[entry["path"]], label=entry["title"], icon=entry["icon"])
+
+# The human-review boundary rides on EVERY page as a fixed footer ribbon,
+# rendered once here so no page can drop it. Text comes verbatim from
+# configs/project.yml via data_loader.conclusion_boundary().
+boundary_ribbon()
 
 try:
     navigation.run()

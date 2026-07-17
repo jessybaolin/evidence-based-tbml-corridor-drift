@@ -36,8 +36,11 @@ def overview_kpis(
             "source": "panel",
         },
         "model_eligible": {
+            # Eligibility hinges on the reported QUANTITY: without a valid
+            # quantity no implied unit value exists (value ÷ quantity). Rows
+            # missing it are retained for audit, never silently removed.
             "value": f"{int(panel['model_eligible'].sum()):,}",
-            "detail": "valid unit value and usable quality status",
+            "detail": "rows with the valid reported quantity that unit-value signals require",
             "source": "panel",
         },
         "families": {

@@ -246,6 +246,189 @@ now use the FINAL nav labels ("Official Review Queue", "Selected Case Review",
 4. A more distinctive sidebar brand block (currently text-only).
 5. Dark-theme variant of dashboard_theme.yml (charts already read tokens).
 
+## Polish iteration (2026-07-15) — motion, tables, brand, chart chrome
+
+Centralised-only changes; no page files edited, all data/metric logic and the
+conclusion boundary untouched. 43 tests stay green.
+
+1. **Sidebar nav hover motion** (`components/styles.py`) — the ONLY animation in
+   the app. `[data-testid="stSidebarNav"] a` gets a 150ms ease-out transition on
+   background / a constant-width transparent left rule (fades to frost) / a 2px
+   translateX indent on hover; `aria-current` keeps a solid frost rule. A scoped
+   `@media (prefers-reduced-motion: reduce)` disables the transition + transform.
+   No JS, no reflow (border width is constant; only colour + transform animate).
+2. **Brand block above the nav + rename** (`styles.py` + `dashboard_content.yml`).
+   Reorder via flexbox: a double-`:has()` selector self-selects the exact sidebar
+   container holding BOTH `stSidebarNav` and `stSidebarUserContent` as direct
+   children, sets it `flex-direction:column`, and `order`s user content (1) before
+   nav (2); collapse control (`stSidebarHeader`) stays on top. Degrades to a no-op
+   if the DOM changes. Renamed: `app.title` = "Evidence-First TBML Triage System",
+   `app.short_title` = "TBML Triage System" (browser tab), `app.subtitle` =
+   "Turns official public trade data into a ranked queue of unusual
+   corridor–product–year patterns for human review." Boundary wording unchanged.
+3. **Table readability** (`components/tables.py` + new `palette.table_stripe`
+   token). st.dataframe is a canvas grid — per-cell CSS won't stick, so readability
+   is tuned via the levers that DO reach it: `row_height` (queue 38 / plain 36),
+   header `help` tooltips + pinned Rank on the queue, and a pandas Styler that
+   paints a faint cool zebra (`#EFF3FA`) on odd rows of every `plain_table`
+   (st.dataframe honours a Styler's `background-color`). Numerics stay
+   right-aligned/tabular by column type; NO values reformatted (meaning intact).
+   `plain_table(..., zebra=False)` disables striping per call.
+4. **Chart chrome harmony** (`components/charts.py` `_layout`). Transparent
+   paper/plot retained (sits on card or plane); axis tick labels dropped to
+   `muted` (cool, recessive) while titles keep Storm ink; tooltips themed to the
+   card surface (Storm ink on near-white `#F8FBFE`, frost border) instead of
+   Plotly's default. NO series hue touched — family trio and emphasis/context are
+   byte-for-byte unchanged. Re-verified numerically (OKLab dE ×100, Machado 1.0):
+   family worst pair copper–gold protanopia = 9.1 (≥8 floor), normal min 22.9;
+   emphasis-vs-context dE 23.9–24.6. New text pairs clear WCAG: axis ticks muted
+   on plane 4.69:1 / on card 6.38:1, tooltip/title ink 12:1, zebra text ≥5.96:1.
+   Static pipeline PNGs on "From Data to Review Queue" were left as-is (already on
+   the white card, well sized) — a true in-theme recolour needs a pipeline-figure
+   regeneration (`reports/figures/*.png`), which is out of scope for the dashboard.
+   Optional future: render them via `st.graphviz_chart` from `reports/figures/*.dot`
+   with themed nodes.
+
+Cannot see the rendered browser in this environment — the hover motion, the
+title-above-nav order, table legibility, and chart harmony are human visual
+checks. AppTest (exception-free + boundary present) and computed WCAG/CVD numbers
+are the available evidence.
+
+## Data Coverage & Trust rebuild (2026-07-17, latest)
+
+47 tests green (was 45; +2 scene-page tests). `app_pages/from_data_to_review_queue.py`
+fully rebuilt as the interactive "Data Coverage & Trust" story:
+
+1. **Page frame**: H1 "From Trusted Public Data to Review-Ready Evidence";
+   sticky mental-model strip (`.mental-model`, position: sticky) keeps the one
+   takeaway visible while scrolling; 5-tile trust KPI strip — observations
+   (25,844) · period (2017–2024) · families (3) · eligible for scoring (91.5%,
+   23,656 rows) · trade-value coverage (99.9%) — ALL derived live from the
+   panel's `model_eligible` + `trade_value_usd`; KPI hover definitions reuse
+   the `.tip` CSS tooltips. Trade value framed as public trade coverage, never
+   bank exposure.
+2. **Scene mechanics**: three scenes (Sources & scope / Prepare the data /
+   Test, rank & explain) behind a persistent st.segmented_control stage bar +
+   Previous/Next/Replay st.buttons (keys `dtrq_prev`/`dtrq_next`/
+   `dtrq_replay_btn`) + "Scene N of 3". Replay/scene-switch works by embedding
+   a counter in the scene wrapper's data attribute → markdown changes → DOM
+   remounts → the CSS entrance storyboard replays. No auto-advance, no loops.
+3. **Scene 1**: three source cards (CEPII BACI / World Bank CMO / FATF–Egmont)
+   each with supplies/credible/use/boundary + CSS hover-reveal previews built
+   from REAL rows (largest non-queue flow as the BACI sample; latest gold
+   benchmark year); raw BACI field names kept off the canvas. Unit-of-analysis
+   block (equation + real corridor visual + It is / It is not). Product-family
+   cards (stress / benchmark / scale-and-stability) with hover HS6 + benchmark
+   unit + what-it-tests, four selection tags.
+4. **Scene 2**: five-stage pipeline; provenance expander holds the SHA-256s;
+   three standardisation examples; record-merge micro-animation with lineage
+   icon; usability funnel (total → eligible → value share) with the CORRECTED
+   exclusion wording — missing/invalid QUANTITY (not value) blocks implied
+   unit-value analysis; rows retained for audit; "a missing quantity is a data
+   limitation, not a suspicion signal". Time-safe panel: definition + five
+   signal chips, each verified against real feature families
+   (robust_historical_z / same_family_year_peer_percentile /
+   benchmark_residual+drift / value_quantity_divergence /
+   corridor_novelty+reactivation flags) + the year strip (history lit, focus
+   year highlighted, later years ✕ hidden).
+5. **Scene 3**: HTML/CSS forked pipeline — blue official lane vs dashed
+   evaluation lane (new `evaluation:` theme tokens; label "Controlled
+   evaluation copy—not official findings", colour never alone); only the
+   selected-model chip animates back across (travel_ms 600, natural state =
+   end position for reduced-motion); eval lane recedes to 0.90 opacity after.
+   Output flow (case → evidence rows → caveated brief → human review) with
+   real evidence-check tags; FATF two-input separation diagram + brief
+   structure + layer-role table; brief text never rendered (no-LLM rule).
+6. **Closing**: bottom-line statement + "Annual public aggregates—not
+   invoices, customers or bank exposure." Technical companion expander now
+   holds the four pipeline PNGs (moved off the canvas), the raw BACI field
+   table from data_source_notes, and the checksum records.
+7. **Tests**: +2 — mental model + derived KPI values on default render;
+   scene walk via the Prev/Next buttons asserting the corrected quantity
+   wording (scene 2), the evaluation-wall labels and real check names
+   (scene 3), and back-navigation.
+
+## Nav cleanup: drop copy page, reorder (2026-07-17, later)
+
+45 tests green (was 48; −3 copy-page tests). Changes in this pass:
+
+1. **Removed the frozen comparison page** `business_problem_value_copy.py` (the
+   before/after was done). Deleted: the page file, its PAGE_GROUPS entry, the
+   `pages.business_problem_value_copy` content block, the legacy
+   `boundary_banner()` helper, and its `.boundary-banner` CSS — all had that page
+   as their only consumer. The boundary now lives ONLY in the fixed footer ribbon.
+2. **Reordered navigation.** `From Data to Review Queue` moved out of "Trust &
+   Methodology" into "Business & Review" as item 2, directly under "Business
+   Problem & Value" — so the group reads intro → how the queue is built → queue →
+   case → patterns. "Trust & Methodology" now holds Model Validation & Controls +
+   Appendix. `st.page_link` targets unaffected (paths still registered).
+3. **Tests**: dropped `business_problem_value_copy.py` from PAGES and removed
+   `test_copy_page_keeps_previous_content`. Every remaining page still asserts the
+   verbatim boundary via the ribbon.
+
+## Landing-page redesign + boundary ribbon (2026-07-17)
+
+48 tests green (was 43). Changes in this pass:
+
+1. **Narrative landing page** (`app_pages/executive_overview.py`, full rewrite;
+   nav label unchanged). Answers, in order: problem → what the project does →
+   what it produces → why it matters → what it does not claim. H1 "Evidence-
+   Backed Trade Pattern Triage". Sections: hero · business problem +
+   challenge/response twin cards · what-it-does prose + commodity chips (family
+   colour dot + official product name) · stakeholder stat band (25,844 obs /
+   Top 50 queue / 4 evidence points per case / 5 caveated analyst briefs — ALL
+   derived live from panel/queue/evidence/analyst_briefs.json) · pipeline flow
+   strip · before/after question reframe · navy bottom-line strip + value chips.
+   No queue table, no charts (they live on their pages). All copy in
+   `dashboard_content.yml` (`pages.executive_overview`), numbers via
+   `str.format` placeholders. New loader `load_analyst_briefs()` +
+   `analyst_briefs` registry entry (count/existence only — brief TEXT is never
+   rendered; no-LLM rule intact).
+2. **Boundary ribbon replaces per-page banners** (`boundary_banner.py`
+   `boundary_ribbon()`, rendered ONCE in `streamlit_app.py` before
+   `navigation.run()`). Slim fixed footer on EVERY page: Steel fill, frost
+   text, uppercase stamp label, 3px Frost-Blue top rule, z-index 60 (below the
+   sidebar's 100 — navy sidebar intentionally covers its left end; text is
+   inset 21rem at ≥993px so it clears the sidebar). `.block-container`
+   padding-bottom 6.5rem so content never hides beneath it. The old
+   `.boundary-banner` CSS + `boundary_banner()` stay ONLY for the frozen copy
+   page. Verbatim text still from `configs/project.yml`.
+3. **pages/ → app_pages/ rename** (all 8 page files). A directory literally
+   named "pages" next to the entry point flips Streamlit onto its MPA-v1
+   compatibility path (`PagesManager.uses_pages_directory`), under which a
+   cold-session deep link (and AppTest.switch_page) executes the page file
+   ALONE — no styles, no sidebar, no ribbon. Renaming removes the hazard for
+   public hosting and lets tests run pages through the real shell.
+4. **CSS-only tooltips** (`.tip` span + `data-tip` attr, hover AND
+   keyboard-focus via tabindex): corridor-term definition in the prose, and
+   the evidence tile listing the 5 real evidence checks from
+   `evidence_table.csv` (history deviation, annual unit-value change,
+   benchmark-adjusted drift, benchmark gap, value–quantity divergence; display
+   names in `content.evidence_type_labels`). Navy bubble, frost text.
+5. **Motion** (new `motion:` tokens in dashboard_theme.yml): one `rise-in`
+   fade-up (350ms ease-out, both) staggered 70ms across landing sections —
+   replays on page switch, not on widget reruns; hover lift on twin cards,
+   stat tiles + main-area page-link CTAs; flow-step hover brighten. ALL of it
+   (plus the older sidebar-nav hover) disabled in one consolidated
+   `prefers-reduced-motion` block kept LAST in the sheet with !important.
+6. **Tests** (`test_dashboard_pages.py`): pages now run through
+   `streamlit_app.py` + `AppTest.switch_page` (real shell), boundary asserted
+   VERBATIM (read from configs/project.yml) on every page run incl. the copy
+   page; new landing tests (derived numbers, evidence-check names, tooltip
+   presence) + copy-page freeze test (old content + banner AND ribbon).
+7. **Frozen comparison page**: `business_problem_value_copy.py` retargeted to
+   duplicated content block `pages.business_problem_value_copy`; otherwise
+   byte-identical, still uses the in-page banner. Delete page + content block
+   + banner helper together when comparison is done.
+
+Contrast (computed, WCAG): ribbon text 6.57:1 / label 5.46:1 on Steel; tooltip
+frost on navy 10.85:1; bottom-line frost on navy 10.85:1; quote-after frost on
+Steel 6.57:1; flow-step ink on accent_soft 9.80:1; before-quote ink on stripe
+11.18:1. Chip dots are sub-3:1 non-text marks (copper 2.71, gold 2.08) —
+mitigated with an inset ink ring + the product NAME in the chip (colour never
+alone). Rendered-browser look (ribbon overlap at odd widths, animation feel,
+tooltip position) still needs a human pass — AppTest can't see pixels.
+
 ## Recommended next content refinements
 1. Signals table: add stakeholder display names next to raw feature names.
 2. Executive explanation paragraph could shrink by a third.

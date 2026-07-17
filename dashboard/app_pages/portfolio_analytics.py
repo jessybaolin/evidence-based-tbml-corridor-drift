@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from dashboard.components.boundary_banner import boundary_banner
 from dashboard.components.charts import (
     bar_by_family, bar_single, histogram_emphasis, severity_stack, score_strip, show,
 )
@@ -15,7 +14,6 @@ from dashboard.services import data_loader as load
 content = load.load_content()
 copy = content["pages"]["portfolio_analytics"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-boundary_banner()
 
 queue = load.load_review_queue()
 features = load.load_features(columns=(

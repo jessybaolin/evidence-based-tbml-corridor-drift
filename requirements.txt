@@ -6,6 +6,7 @@ scikit-learn
 xgboost
 shap
 matplotlib
+seaborn
 PyYAML
 tabulate
 jinja2

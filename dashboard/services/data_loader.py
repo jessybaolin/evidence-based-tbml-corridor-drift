@@ -39,6 +39,7 @@ _REGENERATE_HINTS = {
     "shap_summary_values": "python src/06_train_evaluate_models.py",
     "logistic_coefficients": "python src/06_train_evaluate_models.py",
     "xgboost_parameters": "python src/06_train_evaluate_models.py",
+    "analyst_briefs": "python src/08_build_briefs.py",
     "source_manifest": "python src/01_verify_sources.py",
     "source_file_inventory": "python src/01_verify_sources.py",
     "exclusion_audit": "python src/03_build_panel.py",
@@ -162,6 +163,14 @@ def load_model_selection() -> dict:
 @st.cache_data(show_spinner=False)
 def load_scenario_split_manifest() -> dict | None:
     path = _resolve("scenario_split_manifest")
+    return json.loads(path.read_text(encoding="utf-8")) if path else None
+
+
+@st.cache_data(show_spinner=False)
+def load_analyst_briefs() -> list | None:
+    # The landing page cites the briefs' existence and COUNT as a pipeline
+    # deliverable; brief text itself is never rendered in the dashboard.
+    path = _resolve("analyst_briefs")
     return json.loads(path.read_text(encoding="utf-8")) if path else None
 
 

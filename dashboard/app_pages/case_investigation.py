@@ -5,7 +5,6 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from dashboard.components.boundary_banner import boundary_banner
 from dashboard.components.charts import (
     history_line, residual_line, show, unit_value_vs_benchmark,
 )
@@ -22,7 +21,6 @@ from dashboard.services import session_state as state
 content = load.load_content()
 copy = content["pages"]["case_investigation"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-boundary_banner()
 
 queue = load.load_review_queue().sort_values("rank")
 features = load.load_features()

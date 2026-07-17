@@ -23,6 +23,8 @@ palette:
   sidebar_bg: "#23354D"   # deep Storm navy — anchors the darkest blue in the frame
   sidebar_ink: "#EAF0F8"  # frost near-white — sidebar brand + nav text on navy
   sidebar_muted: "#B7C6DE" # frost caption on navy (7.2:1)
+  table_stripe: "#EFF3FA"  # faint cool zebra tint for st.dataframe odd rows
+                           # (sits between panel_bg #F8FBFE and the plane; via Styler)
 
 # Steel is the single brand accent: links, eyebrows, selected states, the
 # provenance ledger rule, and the emphasis series. Frost Blue (#8BA3C5) is too
@@ -31,14 +33,16 @@ palette:
 # Oxford) live in the sidebar and headings so the darkest blues are present,
 # not implied only by the ink colour.
 
-# The boundary banner is a discipline, not an alarm: amber, never red. Deepened
-# so the warm caveat card stays distinct from the warm cream plane, with a bold
-# ochre left rule as the caveat cue.
+# The boundary banner is a discipline, not an alarm — but it must catch the
+# reader's eye on every page. A FILLED Steel card with near-white text and a
+# bright Frost-Blue edge: prominent like a real callout, on-theme (blue, never
+# yellow). Verified: body text #F8FBFE on Steel #495B7D = 6.8:1 (AA).
 boundary:
-  bg: "#F7E4A6"
-  border: "#E4C56A"
-  accent: "#B07D16"       # 4px left rule + caveat marker (amber discipline cue)
-  ink: "#6E4E12"
+  bg: "#495B7D"           # Steel fill — prominent, on-theme
+  border: "#3E5170"       # slightly darker steel edge
+  accent: "#8BA3C5"       # Frost Blue left rule (bright edge on the fill)
+  ink: "#F8FBFE"          # near-white body text (6.8:1 on the fill)
+  label: "#DCE7F5"        # frost uppercase label
 
 # Categorical series colours for the three HS6 product families.
 # Kept as the validated reference trio — a nominal (identity) scale must stay
@@ -49,6 +53,18 @@ families:
   crude_palm_oil: "#2A78D6"          # blue
   refined_copper_cathodes: "#1BAF7A" # aqua
   gold_unwrought: "#EDA100"          # yellow
+
+# Evaluation-lane state: the ONLY warm surface in the app, reserved for the
+# "controlled evaluation copy" (synthetic-scenario) lane on the methodology
+# page. Semantic non-production state — always paired with an explicit text
+# label, never colour alone. Verified WCAG (Python): label 6.45:1 and ink
+# 10.56:1 on the tint; at the receded state (element opacity 0.90 composited
+# over the blue plane) label 5.20:1 / ink 8.02:1 / muted 4.54:1 — all AA.
+evaluation:
+  tint: "#F3ECDA"        # desaturated amber wash — quiet, clearly non-blue
+  border: "#C2AA74"      # dashed lane boundary
+  label_ink: "#6E4E12"   # ochre label text (matches status ochre family)
+  receded_opacity: 0.90  # end-state emphasis after the selected model returns
 
 # Status colours are reserved for state and always rendered with a text label,
 # never as colour alone (aqua/yellow-family tones are sub-3:1 on white).
@@ -62,6 +78,16 @@ status:
     high: {color: "#C23A3A", label: "High"}
     medium: {color: "#C0622F", label: "Medium"}
     low: {color: "#8A6D1D", label: "Low"}
+
+# Motion: restrained and compositor-friendly (opacity/transform only). One
+# fade-up entrance for page sections, one hover lift for cards/tiles/links.
+# components/styles.py disables ALL of it under prefers-reduced-motion.
+motion:
+  entry_ms: 350        # section fade-up duration on page entry
+  entry_step_ms: 70    # stagger between successive sections
+  hover_ms: 180        # card/tile/link hover transition
+  scene_step_ms: 120   # storyboard-beat stagger inside a methodology scene
+  travel_ms: 600       # the one "selected model returns" chip travel (scene 3)
 
 chart:
   font_family: '"Source Sans Pro", "Source Sans 3", "Segoe UI", sans-serif'

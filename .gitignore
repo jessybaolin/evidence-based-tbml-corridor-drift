@@ -24,6 +24,7 @@ data-profiling/
 # Claude Code local-only agents/skills/settings (never pushed)
 .claude/agents/
 .claude/skills/
+.claude/agent-memory/
 .claude/settings.local.json
 .agents/
 

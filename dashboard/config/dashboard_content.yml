@@ -7,9 +7,9 @@
 # drift from the pipeline's approved wording.
 
 app:
-  title: "Evidence-First TBML Corridor Drift Lab"
-  short_title: "TBML Corridor Review"
-  subtitle: "Official public-data review-priority analytics"
+  title: "Evidence-First TBML Triage System"
+  short_title: "TBML Triage System"
+  subtitle: "Turns official public trade data into a ranked queue of unusual corridor–product–year patterns for human review."
   icon: "🔎"
 
 boundary_label: "Human-review boundary"
@@ -20,22 +20,97 @@ family_short_labels:
   refined_copper_cathodes: "Copper"
   gold_unwrought: "Gold"
 
+# Display names for the evidence checks in data/outputs/evidence_table.csv
+# (evidence_type values). The set shown is always derived from the file itself;
+# unknown types fall back to a humanised key.
+evidence_type_labels:
+  history_deviation: "History deviation"
+  annual_unit_value_change: "Annual unit-value change"
+  benchmark_adjusted_drift: "Benchmark-adjusted drift"
+  benchmark_gap: "Benchmark gap"
+  value_quantity_divergence: "Value–quantity divergence"
+
 pages:
   executive_overview:
-    eyebrow: "Stakeholder analytics"
-    title: "Business Problem & Value"
-    subtitle: "What this lab does, what it analysed, and where to start reviewing."
-    explanation: >
-      This dashboard ranks unusual exporter–importer–product–year patterns in
-      official CEPII BACI trade data for human review. Annual aggregate unit
-      values are compared against each corridor's own prior history, same-year
-      peers, and World Bank commodity benchmarks. Time-safe features feed a
-      rules baseline and machine-learning challengers evaluated on controlled
-      synthetic scenarios; the selected blend then scores the real official
-      observations to produce a review queue with recomputable evidence.
+    eyebrow: "Business Problem & Value"
+    title: "Evidence-Backed Trade Pattern Triage"
+    subtitle: "Helping AFC analysts decide which unusual trade patterns to review first—and why."
+    problem_heading: "The business problem"
+    problem_body: >
+      Trade-based money laundering can exploit the price, quantity, or
+      description of traded goods. However, trade volumes are large, market
+      prices are difficult to assess, and no single institution sees the
+      complete transaction chain.
+    problem_body_2: >
+      For AFC teams, the immediate challenge is therefore prioritisation:
+      which patterns deserve limited analyst time? An unexplained anomaly
+      score is not enough because the analyst must first reconstruct why the
+      alert exists before reviewing it.
+    challenge_card:
+      label: "The challenge"
+      bullets:
+        - "Far too many trade flows to review manually."
+        - "Analyst capacity is limited and expensive."
+        - "Opaque alerts create more work before review can even begin."
+    response_card:
+      label: "The project response"
+      bullets:
+        - "Rank unusual patterns so review starts where signals are strongest."
+        - "Explain every ranking with recomputable evidence."
+        - "Attach caveats and the next review questions to each case."
+    what_heading: "What this project does"
+    # {observations}, {year_start}, {year_end}, {n_commodities} are derived
+    # live from the pipeline outputs on the page — never typed in here.
+    what_body: >
+      This public-data prototype analyses {observations} annual trade
+      observations from {year_start}–{year_end} across {n_commodities}
+      deliberately different commodities:
+    what_body_2: >
+      It ranks {corridor_term} patterns using a combination of transparent
+      rules and machine learning, then attaches the evidence, caveats, and
+      possible benign explanations behind each ranking.
+    corridor_term: "exporter–importer–product–year"
+    tooltip_corridor: "One exporter, one importer, one product and one calendar year, aggregated from public trade records."
+    deliverables_heading: "What stakeholders receive"
+    deliverables:
+      observations:
+        label: "observations"
+        detail: "Screened systematically rather than reviewed manually."
+      queue:
+        label: "review queue"
+        detail: "The most unusual patterns are brought to the front."
+      evidence:
+        label: "evidence points per case"
+        detail: "Each ranking is supported by recomputable facts."
+      briefs:
+        label: "caveated analyst briefs"
+        detail: "The highest-ranked cases explain what changed, what may be benign, what information is missing, and what to verify next."
+    # {evidence_per_case}, {n_types} and {evidence_types} are derived from
+    # data/outputs/evidence_table.csv on the page.
+    tooltip_evidence: "Each case carries {evidence_per_case} recomputable evidence rows, drawn from {n_types} checks: {evidence_types}."
+    queue_cta: "Open the Top 50 Review Queue"
+    pipeline_heading: "How the queue is built"
+    pipeline_steps: ["Public data", "Unusual-pattern scoring", "Evidence", "Human review"]
+    pipeline_cta: "Full methodology story"
+    why_heading: "Why it matters"
+    quote_before_label: "The analyst's starting question — today"
+    quote_before: "Why does this alert exist?"
+    quote_after_label: "With this project"
+    quote_after: "Which of these clearly stated facts should I verify first?"
+    why_body: >
+      For a wholesale bank, it demonstrates how public trade information could
+      act as an external intelligence layer—adding corridor and commodity
+      context to trade-finance reviews while preserving human judgement and
+      existing AFC controls.
+    bottom_line: >
+      This project converts {observations} public trade observations into an
+      explainable queue of {queue_size} unusual patterns, helping AFC analysts
+      focus their review effort without treating an anomaly as evidence of
+      financial crime.
+    value_chips: ["Faster triage", "Consistent review", "Defensible evidence"]
   review_queue:
     eyebrow: "Stakeholder analytics"
-    title: "Official Review Queue"
+    title: "Top 50 Review Queue"
     subtitle: "The top-ranked official observations, with filters, row selection, and CSV export."
     caveat: "A high rank means the row shows unusual analytical signals; it is not a finding of wrongdoing."
   case_investigation:
@@ -45,12 +120,240 @@ pages:
     caveat: "Aggregate unit value is not an invoice price."
   portfolio_analytics:
     eyebrow: "Stakeholder analytics"
-    title: "Queue Patterns"
+    title: "Trade Landscape and Patterns"
     subtitle: "Patterns across the official review population — coverage, concentration, and score context."
   from_data_to_review_queue:
-    eyebrow: "Trust & methodology"
-    title: "From Data to Review Queue"
-    subtitle: "How official public data becomes the human-review queue, stage by stage."
+    eyebrow: "Data coverage & trust"
+    title: "From Trusted Public Data to Review-Ready Evidence"
+    subtitle: "Three institutional sources, one clearly defined unit of analysis, and a controlled separation between model evaluation and official findings."
+    mental_model_stamp: "Mental model"
+    mental_model: >-
+      Official trade data is verified, standardised and converted into
+      time-safe analytical signals. Synthetic scenarios are used only to test
+      and select the model; only real official observations enter the review
+      queue.
+    # KPI strip — every number is derived live on the page; the {placeholders}
+    # are filled from the loaded panel, never typed in here.
+    kpis:
+      observations:
+        label: "Official observations"
+        detail: "Verified CEPII BACI rows — annual aggregates, not invoices."
+        tip: "Official observation: An annual exporter–importer–product aggregate."
+      period:
+        label: "Coverage period"
+        detail: "{n_years} consecutive annual snapshots."
+      families:
+        label: "Product families"
+        detail: "{family_names}"
+      eligible:
+        label: "Eligible for scoring"
+        detail: "{eligible_count} rows carry the valid reported quantity that unit-value signals require."
+        tip: "Eligible for scoring: Sufficient information exists to calculate the required unit-value signals."
+      value_coverage:
+        label: "Trade-value coverage"
+        detail: "Rows without a usable quantity carry {excluded_share}% of covered public trade value."
+        tip: "Trade-value coverage: Share of total covered trade value represented by model-eligible rows."
+    # Scene mechanics
+    scene_labels:
+      - "1 · Sources & scope"
+      - "2 · Prepare the data"
+      - "3 · Test, rank & explain"
+    scene_indicator: "Scene {n} of {total}"
+    prev_label: "← Previous"
+    next_label: "Next →"
+    replay_label: "Replay scene"
+    scene1:
+      heading: "Three sources, each with one clearly separated role"
+      hover_hint: "Hover or focus for a real sample"
+      supplies_label: "What it supplies"
+      credible_label: "Why it is credible"
+      use_label: "How it is used"
+      boundary_label: "Boundary"
+      cards:
+        baci:
+          kicker: "Official trade data"
+          name: "CEPII BACI"
+          supplies: "Annual bilateral trade value and quantity by exporter, importer and HS6 product."
+          credible: "CEPII constructs harmonised bilateral flows from national trade statistics reported through UN Comtrade."
+          boundary: "Annual public aggregates only—no invoices, customers, shipments or payments."
+          preview_title: "One real official observation"
+          preview_caption: "The panel's largest single flow — a real official observation shown for illustration. It is not a review-queue case."
+        benchmark:
+          kicker: "Market benchmark"
+          name: "World Bank Commodity Markets"
+          supplies: "Annual benchmark prices for palm oil, copper and gold."
+          use: "Provides broad market context for comparing aggregate unit values."
+          boundary: "A difference from the benchmark is a reason to review—not proof of mispricing or fair value."
+          preview_title: "One real benchmark row"
+          preview_role: "Broad market comparison"
+        fatf:
+          kicker: "Typology context"
+          name: "FATF–Egmont TBML publications"
+          supplies: "Typology context, caveats and suggested human-review questions."
+          use: "They help frame possible interpretations, benign explanations and missing information in the analyst brief."
+          never_intro: "They are never"
+          never:
+            - "model inputs"
+            - "labels"
+            - "row-level evidence"
+            - "proof of suspicious activity"
+      unit:
+        heading: "What does one row represent?"
+        equation: "1 calendar year × 1 exporter × 1 importer × 1 HS6 product = 1 corridor-product-year observation"
+        year_label: "Calendar year {year}"
+        row_label: "One annual aggregated row"
+        exporter_label: "Exporter"
+        importer_label: "Importer"
+        is_label: "It is"
+        is_text: "An annual public trade pattern containing aggregate value and quantity."
+        is_not_label: "It is not"
+        is_not_text: "An invoice, shipment, customer, payment, bank transaction or confirmed TBML case."
+        closing: "A row can reveal an unusual pattern. It cannot identify a suspicious party or transaction."
+      families:
+        heading: "Why these three product families"
+        note: "The commodity itself is never treated as suspicious."
+        hs6_label: "HS6 code"
+        unit_label: "Benchmark quoted in"
+        tests_label: "What it tests"
+        roles:
+          gold_unwrought:
+            role: "Stress case"
+            body: "High value, compact and fungible. Strong relevance to established TBML typologies. Tests whether pronounced valuation patterns are ranked highly."
+            tests: "Sensitivity — pronounced valuation patterns should reach the top of the queue."
+          refined_copper_cathodes:
+            role: "Benchmark case"
+            body: "Standardised industrial commodity. Strong international market pricing. Tests whether the method works on conventional global commodity trade."
+            tests: "Transferability — the method should hold on conventional, well-priced industrial trade."
+          crude_palm_oil:
+            role: "Scale and stability case"
+            body: "High-volume Southeast Asian commodity. Credible public benchmark. Tests whether the method avoids over-alerting on large, ordinary flows."
+            tests: "Discipline — large, ordinary flows should not flood the queue."
+        tags:
+          - "Typology relevance"
+          - "Regional and market relevance"
+          - "Public benchmark availability"
+          - "Analytical feasibility"
+        statement: "The product mix is intentionally diverse: gold tests sensitivity, while copper and palm oil test whether the method remains disciplined on more routine trade."
+    scene2:
+      heading: "How official records become comparable analytical observations"
+      stages:
+        - title: "Verify sources"
+          body: "Confirm source version, file integrity, coverage period, expected fields and product codes."
+        - title: "Standardise units and codes"
+          body: "Convert reported values into consistent units and map country and product codes to readable names."
+        - title: "Build one clean annual row"
+          body: "Combine records into one traceable exporter–importer–product observation for each year."
+        - title: "Apply usability controls"
+          body: "Keep every row; mark which rows can support implied unit-value analysis."
+        - title: "Create time-safe analytical signals"
+          body: "Describe each observation using only information available at that point in time."
+      verify_panel:
+        file_label: "CEPII BACI extract · release {release}"
+        badge: "Verified"
+        body: "Version, integrity hash, row counts, coverage period, expected fields and product codes are all checked before any analysis runs."
+        provenance_cta: "View provenance"
+        provenance_note: "Recorded by the source-verification stage. Hashes let anyone confirm the exact files behind every number on this dashboard."
+      standardise_panel:
+        examples:
+          - "Trade value: thousand USD → USD"
+          - "Quantity: metric tons"
+          - "Gold benchmark: troy ounce → metric ton"
+      row_panel:
+        raw_labels:
+          - "BACI trade record"
+          - "Country & product names"
+          - "Same-year benchmark"
+        clean_label: "One clean annual row"
+        caption: "Source identity and data version remain linked to every observation."
+      controls_panel:
+        body: "Rows without a valid reported quantity cannot support implied unit-value analysis — an implied price needs both value and quantity. They are excluded from modelling but retained for audit, never silently removed."
+        note: "A missing quantity is a data limitation, not a suspicion signal."
+        funnel_total: "{total} official observations"
+        funnel_eligible: "{eligible} eligible for scoring"
+        funnel_value: "Eligible rows represent {value_share}% of covered trade value."
+        eligibility_term: "Eligibility"
+        tip: "Eligibility means suitable for this analytical comparison—not guaranteed correctness at source."
+      timesafe_panel:
+        definition: "Time-safe features compare each observation only with information that would have been available at that point in time. Future years are never used to define what was normal in an earlier year."
+        chips:
+          - name: "Own history"
+            question: "Is this route different from how it behaved before?"
+          - name: "Same-year peers"
+            question: "Is it unusual relative to other corridors trading the same product that year?"
+          - name: "Market benchmark"
+            question: "Did it move differently from the wider commodity market?"
+          - name: "Value versus quantity"
+            question: "Did reported value change faster than physical volume?"
+          - name: "Corridor status"
+            question: "Is the route new or returning after a gap?"
+        year_heading: "Scoring the {focus_year} observation"
+        year_compare_label: "compare"
+        year_hidden_label: "hidden"
+        year_caption: "Years {history_span} inform what was normal; {focus_year} is the observation under comparison; {hidden_span} remain hidden."
+    scene3:
+      heading: "Two data paths—with a strict wall between them"
+      top_node: "Clean official panel"
+      wall_label: "Evaluation boundary"
+      official:
+        kicker: "Official analysis lane"
+        sub: "Real official observations"
+        steps:
+          - "Clean official panel"
+          - "Time-safe features"
+          - "Selected model"
+          - "Top-{queue_size} review queue"
+      evaluation:
+        kicker: "Model evaluation copy"
+        label: "Controlled evaluation copy—not official findings"
+        steps:
+          - "Copy of the clean panel"
+          - "Inject controlled review patterns and benign look-alikes"
+          - "Chronological train ({train_span}) / validation ({validation_span}) / test ({test_span})"
+          - "Compare and select the ranking method"
+        return_note: "Only the selected method returns. Synthetic rows never cross."
+      supporting: "Public trade data contains no confirmed TBML labels. Controlled scenarios are therefore used to test whether a model recognises intended patterns and avoids unusual-but-benign examples. They are never presented as real cases."
+      resolution:
+        model_chip: "Selected model"
+        model_detail: "{selected_method}"
+        applied: "Applied to official observations only"
+        queue: "Official top-{queue_size} queue"
+      output:
+        heading: "From ranking to reviewable case"
+        step_case: "Top-ranked official observation"
+        step_evidence: "{evidence_per_case} recomputable evidence rows"
+        evidence_tip: "A recomputable evidence row records the observed metric, comparison, threshold, source reference and caveat."
+        step_brief: "Caveated analyst brief"
+        step_review: "Human review"
+        examples_intro: "Evidence checks drawn from"
+      fatf:
+        heading: "Two inputs, one brief — kept separate"
+        input_evidence: "Recomputable data evidence"
+        input_context: "FATF–Egmont context cards"
+        output_node: "Analyst brief"
+        note: "Typology context is never one of the evidence rows."
+        brief_structure_intro: "Each brief covers"
+        brief_structure:
+          - "Why this pattern ranked highly"
+          - "Possible benign explanations"
+          - "Information unavailable in public data"
+          - "Recommended human-review questions"
+          - "Conclusion boundary"
+        layers:
+          - ["Evidence rows", "Explain the quantitative ranking"]
+          - ["FATF–Egmont context", "Supports caveats and review framing"]
+          - ["Analyst brief", "Organises the evidence and identifies next checks"]
+          - ["Human analyst", "Investigates and decides"]
+        render_note: "Brief text lives in the pipeline outputs; the dashboard describes this structure and never renders brief text."
+    closing:
+      statement: "The analysis is built from verified public trade and benchmark data at a clearly defined annual grain. The data is standardised, filtered for analytical usability and transformed using time-safe comparisons. Controlled synthetic scenarios are kept separate and used only to test the model; the final queue contains real official observations supported by recomputable evidence and caveated human-review guidance."
+      reminder: "Annual public aggregates—not invoices, customers or bank exposure."
+    companion:
+      cta: "Open technical companion"
+      intro: "Detailed pipeline diagrams, raw source field names and cryptographic provenance — everything needed to verify the story above."
+      figures_heading: "Pipeline diagrams"
+      fields_heading: "Raw BACI field names"
+      fields_note: "The dashboard shows readable names; these are the underlying source fields."
+      provenance_heading: "Source checksums (SHA-256)"
   model_and_controls:
     eyebrow: "Governance and validation"
     title: "Model Validation & Controls"
@@ -77,9 +380,9 @@ overview_kpis:
   selected_method: "Selected ranking method"
 
 navigation_steps:
-  - ["Official Review Queue", "Filter and sort the ranked official observations."]
+  - ["Top 50 Review Queue", "Filter and sort the ranked official observations."]
   - ["Selected Case Review", "Open one case: history, signals, and evidence."]
-  - ["Queue Patterns", "See coverage and concentration across the queue."]
+  - ["Trade Landscape and Patterns", "See coverage and concentration across the queue."]
   - ["Model Validation & Controls", "Check evaluation, selection, and interpretation limits."]
 
 # Verbatim from reports/final_analysis_report.md — Key limitations.

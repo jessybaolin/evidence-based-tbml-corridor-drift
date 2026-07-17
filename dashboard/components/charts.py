@@ -19,18 +19,37 @@ import streamlit as st
 from dashboard.services.data_loader import load_content, load_theme
 
 def _layout(height: int | None = None) -> dict:
-    theme = load_theme()["chart"]
+    full = load_theme()
+    theme = full["chart"]
+    p = full["palette"]
+    # Transparent paper/plot so a chart harmonises with whatever cool surface it
+    # sits on (near-white card or the blue plane). Axis titles keep Storm ink;
+    # tick labels drop to muted so the grid/axis chrome stays recessive and cool.
+    # Tooltips are themed to the card surface (Storm ink on near-white, frost
+    # border) instead of Plotly's default white/near-black.
+    axis = dict(
+        gridcolor=theme["grid_color"],
+        linecolor=theme["axis_color"],
+        zeroline=False,
+        tickfont=dict(color=p["muted"]),
+        title=dict(font=dict(color=p["ink"])),
+    )
     return dict(
         template="plotly_white",
-        font=dict(family=theme["font_family"], color=load_theme()["palette"]["ink"], size=13),
+        font=dict(family=theme["font_family"], color=p["ink"], size=13),
         height=height or theme["height"],
         margin=theme["margin"],
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(gridcolor=theme["grid_color"], linecolor=theme["axis_color"], zeroline=False),
-        yaxis=dict(gridcolor=theme["grid_color"], linecolor=theme["axis_color"], zeroline=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
-        hoverlabel=dict(font=dict(family=theme["font_family"], size=12)),
+        xaxis=dict(**axis),
+        yaxis=dict(**axis),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0,
+                    font=dict(color=p["ink"])),
+        hoverlabel=dict(
+            font=dict(family=theme["font_family"], size=12, color=p["ink"]),
+            bgcolor=p["panel_bg"],
+            bordercolor=p["border"],
+        ),
     )
 
 
