@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from dashboard.components.charts import model_metric_bar, show
+from dashboard.components.charts import model_metric_bar, shap_importance_bar, show
 from dashboard.components.empty_states import missing_output
 from dashboard.components.page_header import ledger, page_header, section_title
 from dashboard.components.tables import plain_table
@@ -131,16 +131,7 @@ with selection_tab:
     if shap_values is not None:
         section_title("Global model-contribution summary (SHAP)",
                       "Global model contribution context; not a row-specific explanation and not evidence.")
-        ranked = shap_values.sort_values("mean_abs_shap", ascending=True)
-        import plotly.graph_objects as go
-        from dashboard.services.data_loader import load_theme
-        fig = go.Figure(go.Bar(
-            x=ranked["mean_abs_shap"], y=ranked["feature_name"], orientation="h",
-            marker_color=load_theme()["chart"]["emphasis"], marker_line_width=0, width=0.55,
-            hovertemplate="%{y}: %{x:.3f}<extra></extra>",
-        ))
-        fig.update_layout(xaxis_title="Mean |SHAP| (challenger model)", yaxis_title="")
-        show(fig, height=420, key="mc_shap")
+        show(shap_importance_bar(shap_values), height=420, key="mc_shap")
     else:
         missing_output("shap_summary_values")
     ledger("model_selection", "hybrid_candidates", "shap_summary_values")

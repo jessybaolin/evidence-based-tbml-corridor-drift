@@ -28,18 +28,20 @@ def apply_global_styles() -> None:
     theme = load_theme()
     p = theme["palette"]
     b = theme["boundary"]
-    mm = theme.get("mental_model", {"bg": p["sidebar_bg"],
-                                    "accent": b.get("accent", p["accent"]),
-                                    "ink": p["sidebar_ink"]})
-    ev = theme.get("evaluation", {"tint": "#FFF3D8", "border": "#D89A2B",
-                                  "label_ink": "#6E4E12", "receded_opacity": 0.90})
+    mm = theme["mental_model"]
+    ev = theme["evaluation"]
+    layout = theme["layout"]
+    surfaces = theme["surfaces"]
+    kpi = theme["components"]["kpi"]
+    source_roles = theme["source_roles"]
+    selection = theme["selection"]
     ev_op = float(ev.get("receded_opacity", 0.90))
     # Teal has two roles: `accent` (bright) for fills/borders/icons/focus/chart
     # emphasis; `at` (deeper teal_hover) for small teal TEXT on light, for AA.
     at = p.get("teal_hover", p["accent"])
     teal500 = p.get("teal_500", b.get("accent", p["accent"]))
-    sel_bg = p.get("selected_bg", "#FFF4CC")
-    sel_acc = p.get("selected_accent", "#D6A100")
+    sel_bg = selection["background"]
+    sel_acc = selection["border"]
     sel = p.get("sidebar_sel_bg", p["sidebar_bg"])
     hover_bg = p.get("sidebar_hover_bg", p["sidebar_bg"])
     shadow = p.get("card_shadow", "rgba(29,45,70,0.08)")
@@ -53,12 +55,28 @@ def apply_global_styles() -> None:
     travel_ms = int(motion.get("travel_ms", 600))
     css = f"""
     <style>
+    html,
+    body,
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stHeader"] {{
+        background: {p["page_bg"]};
+    }}
     .block-container {{
-        max-width: 1440px;
+        max-width: {int(layout["max_width_px"])}px;
+        padding-left: {int(layout["desktop_padding_px"])}px;
+        padding-right: {int(layout["desktop_padding_px"])}px;
         padding-top: 1.4rem;
         /* Clearance for the fixed boundary ribbon: content can never hide
            beneath it, even with the ribbon text wrapped onto two lines. */
-        padding-bottom: 6.5rem;
+        padding-bottom: {int(layout["footer_clearance_px"])}px;
+    }}
+    @media (max-width: {int(theme["breakpoints"]["narrow_px"])}px) {{
+        .block-container {{
+            padding-left: {int(layout["narrow_padding_px"])}px;
+            padding-right: {int(layout["narrow_padding_px"])}px;
+        }}
     }}
 
     /* Deep-navy sidebar: anchors the darkest blue in the frame. The default
@@ -69,6 +87,11 @@ def apply_global_styles() -> None:
     [data-testid="stSidebar"] {{
         background: {p["sidebar_bg"]};
         border-right: 1px solid {p["sidebar_bg"]};
+    }}
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebarHeader"],
+    [data-testid="stSidebarUserContent"] {{
+        background: {p["sidebar_bg"]};
     }}
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
@@ -149,8 +172,9 @@ def apply_global_styles() -> None:
                     transform 150ms ease-out;
     }}
     [data-testid="stSidebar"] [data-testid="stPageLink"] a p {{
-        font-size: 1.0rem;
+        font-size: 0.9rem;
         font-weight: 600;
+        line-height: 1.25;
         color: {p["sidebar_ink"]} !important;
     }}
     [data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {{
@@ -256,6 +280,22 @@ def apply_global_styles() -> None:
         margin-bottom: 1.1rem;
     }}
 
+    .page-header {{ margin-bottom: 0.2rem; }}
+
+    .section-heading {{
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        margin-top: 0.7rem;
+    }}
+    .section-heading .section-icon {{
+        color: {p["accent"]};
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.76rem;
+        flex: none;
+    }}
+
     .section-label {{
         color: {p["ink"]};
         font-size: 1.12rem;
@@ -277,9 +317,20 @@ def apply_global_styles() -> None:
         font-size: 0.72rem;
         letter-spacing: 0.01em;
         margin: 0.25rem 0 0.9rem 0;
-        opacity: 0.85;
+        opacity: 0.9;
     }}
-    .ledger::before {{ content: "⌂ "; }}
+    .dataset-strip {{
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: {int(surfaces["radius_px"])}px;
+        padding: 0.55rem 0.75rem;
+        box-shadow: {surfaces["shadow"]};
+    }}
+    .dataset-strip svg {{ color: {p["ledger_ink"]}; flex: none; }}
+    .dataset-strip span {{ overflow-wrap: anywhere; }}
 
     /* Evidence cards carry a teal ledger-rule on the left. */
     .evidence-card {{
@@ -324,6 +375,18 @@ def apply_global_styles() -> None:
         color: {p["ink"]};
     }}
     .source-card .source-row b {{ color: {p["muted"]}; font-weight: 600; }}
+    .source-origin {{ opacity: 0.72; }}
+
+    .icon-badge {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: {int(theme["components"]["icon"]["badge_size_px"])}px;
+        height: {int(theme["components"]["icon"]["badge_size_px"])}px;
+        border-radius: 50%;
+        flex: none;
+    }}
+    .icon-badge svg {{ width: 1.45rem; height: 1.45rem; }}
 
     .info-card {{
         background: {p["panel_bg"]};
@@ -364,12 +427,23 @@ def apply_global_styles() -> None:
         padding: 0.55rem 1.2rem;
         font-size: 0.88rem;
         line-height: 1.4;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        text-align: left;
     }}
     @media (min-width: 993px) {{
         /* Keep the text clear of the expanded sidebar; the steel FILL still
            runs edge-to-edge underneath it. */
         .boundary-ribbon {{ padding-left: 21rem; }}
+    }}
+    @media (min-width: 993px) and (max-width: 1100px) {{
+        .boundary-ribbon {{
+            padding-left: 19.5rem;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }}
     }}
     .boundary-ribbon .stamp {{
         display: inline-block;
@@ -381,6 +455,7 @@ def apply_global_styles() -> None:
         margin-right: 0.6rem;
         white-space: nowrap;
     }}
+    .boundary-icon {{ width: 1.2rem; height: 1.2rem; color: {b["accent"]}; flex: none; }}
     /* The ribbon's own element wrapper must not add flex-gap spacing to the
        page flow (its only child is position:fixed). :has() degrades to a
        harmless no-op gap on very old browsers. */
@@ -414,6 +489,16 @@ def apply_global_styles() -> None:
         box-shadow: 0 4px 12px rgba(35, 53, 77, 0.16);
         transform: translateY(-1px);
     }}
+
+    .st-key-dashboard_filter_panel {{
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: {int(surfaces["radius_large_px"])}px;
+        padding: {int(theme["components"]["filters"]["padding_px"])}px;
+        box-shadow: {surfaces["shadow"]};
+        margin: 0.35rem 0 0.8rem 0;
+    }}
+    .st-key-dashboard_filter_panel .section-heading {{ margin-top: 0; }}
 
     /* ---- Buttons (main area only; the sidebar carries no st.button). Teal is
        the primary action; secondary is a quiet white/navy-outline; Replay is a
@@ -611,6 +696,7 @@ def apply_global_styles() -> None:
         font-weight: 600;
     }}
     .chip-dot {{
+        background: {p["accent"]};
         width: 12px;
         height: 12px;
         border-radius: 50%;
@@ -634,13 +720,11 @@ def apply_global_styles() -> None:
         box-shadow: 0 4px 14px {shadow};
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
-    /* KPI top-accent modifiers (decorative, non-text). Default is teal; pages
-       set one of these per tile to give a KPI strip a coloured through-line. */
-    .stat-tile.acc-blue {{ border-top-color: {p.get("kpi_blue", p["accent"])}; }}
-    .stat-tile.acc-teal {{ border-top-color: {p.get("kpi_teal", p["accent"])}; }}
-    .stat-tile.acc-amber {{ border-top-color: {p.get("kpi_amber", p["accent"])}; }}
-    .stat-tile.acc-green {{ border-top-color: {p.get("kpi_green", p["accent"])}; }}
-    .stat-tile.acc-violet {{ border-top-color: {p.get("kpi_violet", p["accent"])}; }}
+    .stat-tile.acc-blue,
+    .stat-tile.acc-teal,
+    .stat-tile.acc-amber,
+    .stat-tile.acc-green,
+    .stat-tile.acc-violet {{ border-top-color: {kpi["accent"]}; }}
     .stat-tile:hover {{
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(35, 53, 77, 0.16);
@@ -666,6 +750,13 @@ def apply_global_styles() -> None:
         line-height: 1.45;
         margin-top: 0.35rem;
     }}
+    .kpi-card {{
+        display: flex;
+        gap: 0.85rem;
+        min-height: {int(kpi["min_height_px"])}px;
+    }}
+    .kpi-icon {{ background: {kpi["icon_bg"]}; color: {kpi["icon_color"]}; }}
+    .kpi-copy {{ min-width: 0; }}
 
     /* Pipeline flow strip. */
     .flow-strip {{
@@ -795,10 +886,14 @@ def apply_global_styles() -> None:
     .mental-model {{
         background: {mm["bg"]};
         color: {mm["ink"]};
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        min-height: {int(theme["components"]["banner"]["min_height_px"])}px;
         border-radius: 9px;
         border-left: 3px solid {mm["accent"]};
         box-shadow: 0 4px 14px rgba(2, 18, 47, 0.24);
-        padding: 0.5rem 0.95rem;
+        padding: {int(theme["components"]["banner"]["padding_y_px"])}px {int(theme["components"]["banner"]["padding_x_px"])}px;
         font-size: 0.92rem;
         line-height: 1.45;
     }}
@@ -811,6 +906,7 @@ def apply_global_styles() -> None:
         margin-right: 0.6rem;
         white-space: nowrap;
     }}
+    .banner-icon {{ background: {mm["icon_bg"]}; color: {mm["accent"]}; }}
 
     /* Five-tile trust band (extends the landing stat-band). */
     .stat-band.five {{ grid-template-columns: repeat(5, 1fr); }}
@@ -868,6 +964,12 @@ def apply_global_styles() -> None:
         outline: 2px solid {p["accent"]};
         outline-offset: 2px;
     }}
+    .source-card-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.55rem;
+    }}
     .src-kicker {{
         display: flex;
         align-items: center;
@@ -878,25 +980,39 @@ def apply_global_styles() -> None:
         letter-spacing: 0.12em;
         text-transform: uppercase;
     }}
-    /* Source-role icon chip: the category-label colour cue (decorative). The
-       inset ring keeps the pale FATF amber chip visible on white. */
-    .src-kicker::before {{
-        content: "";
-        flex: none;
-        width: 11px;
-        height: 11px;
-        border-radius: 3px;
-        background: {p["accent"]};
-        box-shadow: inset 0 0 0 1px rgba(29, 45, 70, 0.28);
+    .src-card.src-baci,
+    .src-card.source-role-official {{ border-top-color: {source_roles["official"]["accent"]}; }}
+    .src-card.src-worldbank,
+    .src-card.source-role-benchmark {{ border-top-color: {source_roles["benchmark"]["accent"]}; }}
+    .src-card.src-fatf,
+    .src-card.source-role-typology {{ border-top-color: {source_roles["typology"]["accent"]}; }}
+    .src-card.src-baci .src-kicker,
+    .src-card.src-baci .src-lab,
+    .source-role-official .src-kicker,
+    .source-role-official .src-lab,
+    .source-role-official .src-hint {{ color: {source_roles["official"]["text"]}; }}
+    .src-card.src-worldbank .src-kicker,
+    .src-card.src-worldbank .src-lab,
+    .source-role-benchmark .src-kicker,
+    .source-role-benchmark .src-lab,
+    .source-role-benchmark .src-hint {{ color: {source_roles["benchmark"]["text"]}; }}
+    .src-card.src-fatf .src-kicker,
+    .src-card.src-fatf .src-lab,
+    .source-role-typology .src-kicker,
+    .source-role-typology .src-lab,
+    .source-role-typology .src-hint {{ color: {source_roles["typology"]["text"]}; }}
+    .source-role-official .source-icon {{
+        color: {source_roles["official"]["accent"]};
+        background: {source_roles["official"]["soft"]};
     }}
-    /* Per-source accents: top border + chip only (label text stays AA-teal,
-       the source name below is ink) — official vs benchmark vs typology. */
-    .src-card.src-baci {{ border-top-color: {p.get("src_baci", p["accent"])}; }}
-    .src-card.src-baci .src-kicker::before {{ background: {p.get("src_baci", p["accent"])}; }}
-    .src-card.src-worldbank {{ border-top-color: {p.get("src_worldbank", p["accent"])}; }}
-    .src-card.src-worldbank .src-kicker::before {{ background: {p.get("src_worldbank", p["accent"])}; }}
-    .src-card.src-fatf {{ border-top-color: {p.get("src_fatf", p["accent"])}; }}
-    .src-card.src-fatf .src-kicker::before {{ background: {p.get("src_fatf", p["accent"])}; }}
+    .source-role-benchmark .source-icon {{
+        color: {source_roles["benchmark"]["accent"]};
+        background: {source_roles["benchmark"]["soft"]};
+    }}
+    .source-role-typology .source-icon {{
+        color: {source_roles["typology"]["accent"]};
+        background: {source_roles["typology"]["soft"]};
+    }}
     .src-name {{
         color: {p["ink"]};
         font-size: 1.12rem;
@@ -928,6 +1044,18 @@ def apply_global_styles() -> None:
         padding: 0;
     }}
     .src-never li {{ margin: 0.12rem 0; }}
+    .appendix-source-card {{ margin-bottom: 0.85rem; }}
+    .appendix-source-card .source-row {{
+        color: {p["ink"]};
+        font-size: 0.86rem;
+        line-height: 1.45;
+        padding: 0.3rem 0;
+        border-top: 1px dashed {p["border"]};
+    }}
+    .appendix-source-card .source-row b {{
+        color: inherit;
+        font-weight: 750;
+    }}
     .src-hint {{
         color: {p["muted"]};
         font-size: 0.72rem;

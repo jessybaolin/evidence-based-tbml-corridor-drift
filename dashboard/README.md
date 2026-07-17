@@ -151,7 +151,7 @@ from the prototype was replaced.
 | Dashboard colours / status styling | `dashboard/config/dashboard_theme.yml` (+ `.streamlit/config.toml` for the Streamlit base theme) |
 | Page navigation (order, icons, groups) | `dashboard/streamlit_app.py` |
 | Adding a queue filter | `components/filters.py` + `apply_queue_filters` in `services/dashboard_metrics.py` |
-| Adding a stakeholder page | new file in `dashboard/pages/` + one `st.Page` entry in `streamlit_app.py` |
+| Adding a stakeholder page | new file in `dashboard/app_pages/` + one `st.Page` entry in `streamlit_app.py` |
 | Data-source paths | `services/path_resolver.py` (`DATA_FILES`) |
 | Data contracts | `services/data_contracts.py` |
 | Data dictionary metadata | `services/data_dictionary.py` (`CURATED`) — definitions come from `reports/` |

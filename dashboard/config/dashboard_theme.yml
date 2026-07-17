@@ -1,113 +1,146 @@
-# Visual tokens for the TBML review dashboard.
-# Change colours, chart defaults, and status styling here — pages read these
-# tokens through services.data_loader.load_theme(); nothing is hardcoded per page.
-#
-# Identity: "Navy · Teal · Warm Amber" (adopted 2026-07-17, superseding the
-# earlier all-blue "deep blue" pass, which read dull because too many surfaces
-# shared one blue-grey tone and hierarchy was weak). The institutional NAVY is
-# kept (sidebar, headings, structure, the fixed boundary ribbon), but the canvas
-# is BRIGHTER, cards are TRULY WHITE so they lift, TEAL is the single consistent
-# interactive colour (links, selection, focus, primary action, chart emphasis),
-# and a warm AMBER is the caveat / attention counterpoint. Balance target:
-# ~70% neutral (white + pale blue-grey) · ~20% navy · ~8% teal · ~2% amber/red.
-# WCAG (body >= 4.5:1, large/UI >= 3:1) and OKLab/Machado CVD verified in Python.
+# Canonical runtime visual tokens for the TBML review dashboard.
+# Pages supply content and data only; shared components own presentation.
 
 palette:
-  ink: "#22314A"          # primary text — navy ink (12.1:1 on plane, 13.1:1 on white)
-  muted: "#637087"        # secondary text — cool blue-grey (4.6:1 plane / 5.0:1 white)
-                          # (brief value #68778E was 4.20 on the plane; darkened to AA)
-  page_bg: "#F3F6FA"      # app canvas — bright pale blue-grey (lets white cards lift)
-  panel_bg: "#FFFFFF"     # cards / chart surface — truly white
-  border: "#D5DFEA"       # hairline card/container edge (decorative; lift comes from
-                          # white fill + soft shadow, so this need not hit 3:1 on plane)
-  accent: "#0F8F8F"       # TEAL — the one interactive colour: fills, borders, icons,
-                          # focus rings, selection, chart emphasis (3.9:1 on white = UI/large)
-  accent_soft: "#DDF4F1"  # light teal — hover / selected-card wash, step-pills, soft fills
-  teal_500: "#29B3AA"     # brighter teal — accent LINES / selected borders (sidebar active
-                          # indicator, boundary top rule, mental-model rule) on navy
-  teal_hover: "#0B7777"   # deep teal — button hover AND teal-as-TEXT on light surfaces
-                          # (5.4:1 on white; used wherever teal is a small text label, for AA)
-  ledger_ink: "#5A6B84"   # provenance ledger lines (mono-set source captions; 5.0:1 plane)
-  navy_700: "#334966"     # mid navy — secondary/replay button text, quiet structure ink
-  sidebar_bg: "#1D2D46"   # deep navy sidebar frame (anchors the institutional identity)
-  sidebar_ink: "#F8FAFD"  # near-white sidebar brand + nav text (13.3:1 on navy)
-  sidebar_muted: "#9FB0C8" # frost caption on navy (6.3:1 on #1D2D46)
-  sidebar_sel_bg: "#29405E" # selected nav-link fill (10.1:1 for frost text)
-  sidebar_hover_bg: "#243854" # nav-link hover fill
-  table_stripe: "#EFF3F8"  # faint cool zebra tint for st.dataframe odd rows (via Styler)
-  amber: "#F2B544"        # warm amber — attention/caveat KPI accent (DECORATIVE only)
-  amber_soft: "#FFF3D8"   # pale amber wash — evaluation lane / soft caveat backgrounds
-  selected_bg: "#FFF4CC"  # muted amber wash — the CURRENT case (queue banner card + selected
-                          # queue-row tint via Styler). Ink on it = 11.9:1 (AA).
-  selected_accent: "#D6A100" # deep amber banner accent/left rule (decorative, non-text —
-                          # the amber FILL + text identify the banner, never the border alone)
-  card_shadow: "rgba(29,45,70,0.08)"  # soft navy shadow so white cards lift off the plane
-  btn_secondary_border: "#7E8DA4"     # secondary-button outline (3.4:1 white / 3.1:1 plane;
-                          # brief #AEBBCB was 1.95:1, too weak for a control boundary)
-  # KPI card top-border accents (DECORATIVE, non-text; the tile's own text is neutral).
-  kpi_blue: "#4078C0"
-  kpi_teal: "#0F8F8F"
-  kpi_amber: "#F2B544"
-  kpi_green: "#2F9B78"
-  kpi_violet: "#7569B5"
-  # Source-role accents — reinforce official-observation vs benchmark-context vs
-  # typology-context separation (top border + icon chip; the readable label stays ink/teal).
-  src_baci: "#4078C0"       # CEPII BACI — official observations (blue)
-  src_worldbank: "#0F8F8F"  # World Bank — benchmark context (teal)
-  src_fatf: "#D89A2B"       # FATF — typology context (amber; chip carries an inset ring)
+  ink: "#22314A"
+  muted: "#637087"
+  page_bg: "#F3F6FA"
+  panel_bg: "#FFFFFF"
+  border: "#D5DFEA"
+  accent: "#0F8F8F"
+  accent_soft: "#DDF4F1"
+  teal_500: "#29B3AA"
+  teal_hover: "#0B7777"
+  ledger_ink: "#5A6B84"
+  navy_700: "#334966"
+  sidebar_bg: "#1D2D46"
+  sidebar_ink: "#F8FAFD"
+  sidebar_muted: "#9FB0C8"
+  sidebar_sel_bg: "#29405E"
+  sidebar_hover_bg: "#243854"
+  table_stripe: "#EFF3F8"
+  amber: "#F2B544"
+  amber_soft: "#FFF3D8"
+  selected_bg: "#FFF3D8"
+  selected_accent: "#F2B544"
+  card_shadow: "rgba(29,45,70,0.08)"
+  btn_secondary_border: "#7E8DA4"
 
-# Teal is the ONE interactive colour. On light surfaces small teal TEXT uses the
-# deeper teal_hover #0B7777 (5.4:1) for AA; brighter accent #0F8F8F is reserved
-# for fills, borders, icons, focus rings and chart emphasis (>= 3:1 / large text).
+typography:
+  family: '"Source Sans Pro", "Source Sans 3", "Segoe UI", sans-serif'
+  mono_family: '"SFMono-Regular", Consolas, "Liberation Mono", monospace'
+  page_title_px: 38
+  section_title_px: 20
+  body_px: 15
+  small_px: 13
+  line_height: 1.5
 
-# The human-review boundary ribbon STAYS NAVY (explicit footer rule) — a slim
-# fixed navy bar with a teal top rule and near-white text; prominent but calm,
-# never an amber alarm. Verified: ink #F8FAFD on navy #1D2D46 = 13.3:1.
+spacing:
+  xs: 4
+  sm: 8
+  md: 12
+  lg: 16
+  xl: 24
+  xxl: 32
+  section: 28
+
+layout:
+  max_width_px: 1280
+  desktop_padding_px: 32
+  narrow_padding_px: 18
+  footer_clearance_px: 104
+
+surfaces:
+  border_width_px: 1
+  radius_px: 8
+  radius_large_px: 10
+  shadow: "0 8px 22px rgba(29,45,70,0.08)"
+  shadow_hover: "0 10px 26px rgba(29,45,70,0.12)"
+
+components:
+  page:
+    max_width_px: 1280
+    desktop_padding_px: 32
+    narrow_padding_px: 18
+  card:
+    padding_px: 18
+    min_height_px: 0
+  kpi:
+    accent: "#0F8F8F"
+    icon_bg: "#DDF4F1"
+    icon_color: "#0F8F8F"
+    icon_size_px: 46
+    min_height_px: 152
+  banner:
+    min_height_px: 74
+    padding_y_px: 16
+    padding_x_px: 18
+  icon:
+    size_px: 20
+    badge_size_px: 46
+    stroke_width: 1.8
+  button:
+    height_px: 40
+    radius_px: 7
+    secondary_border: "#7E8DA4"
+  filters:
+    padding_px: 16
+    gap_px: 12
+  table:
+    row_height_px: 38
+    header_bg: "#F3F6FA"
+    stripe_bg: "#EFF3F8"
+  footer:
+    min_height_px: 58
+
+source_roles:
+  official:
+    accent: "#4078C0"
+    text: "#2C5F9E"
+    soft: "#EAF2FB"
+    icon: "landmark"
+  benchmark:
+    accent: "#0F8F8F"
+    text: "#0B7777"
+    soft: "#DDF4F1"
+    icon: "line-chart"
+  typology:
+    accent: "#D89A2B"
+    text: "#6E4E12"
+    soft: "#FFF3D8"
+    icon: "file-search"
+
+selection:
+  background: "#FFF3D8"
+  border: "#F2B544"
+  text: "#22314A"
+
 boundary:
-  bg: "#1D2D46"           # deep navy fill (matches the sidebar frame)
-  border: "#16233A"       # darker navy edge
-  accent: "#29B3AA"       # teal top rule (replaces the old frost rule)
-  ink: "#F8FAFD"          # near-white body text (13.3:1 on the fill)
-  label: "#DDF4F1"        # light-teal uppercase stamp label (12.1:1 on the fill)
+  bg: "#1D2D46"
+  border: "#16233A"
+  accent: "#29B3AA"
+  ink: "#F8FAFD"
+  label: "#DDF4F1"
 
-# Dark banners / the Data Coverage sticky "mental model" strip: navy, never fully
-# teal — a teal accent LINE on a navy field keeps teal as an accent, not a plane.
 mental_model:
-  bg: "#223753"           # navy field (slightly lighter than the sidebar)
-  accent: "#29B3AA"       # teal left rule
-  ink: "#F8FAFD"          # near-white text (11.6:1)
+  bg: "#223753"
+  accent: "#29B3AA"
+  ink: "#F8FAFD"
+  icon_bg: "rgba(41,179,170,0.16)"
 
-# Categorical series colours for the three HS6 product families — CHART SERIES
-# ONLY (never used in UI chrome). Intuitive commodity hues; a nominal scale must
-# stay clearly separable, never a monochrome ramp. Verified (OKLab dE x100,
-# Machado 1.0): worst pair palm-vs-copper deuteranopia = 8.3 (>= 8 target), min
-# normal-vision dE = 18.8. Copper nudged #B86F3C -> #B15C2E (redder rust) to lift
-# the palm/copper deuteranopia floor from 6.5 to 8.3. Colour follows the entity on
-# every page/filter, and every family chart also carries a text label (axis/legend).
-families:
-  crude_palm_oil: "#4D9B70"          # green
-  refined_copper_cathodes: "#B15C2E" # copper / rust
-  gold_unwrought: "#D4A72C"          # gold / amber
-
-# Evaluation-lane state: the controlled-evaluation (synthetic-scenario) lane on
-# the methodology page — a warm amber wash, clearly non-official, always paired
-# with an explicit text label. Verified: label_ink 6.9:1 and ink 11.9:1 on the
-# tint; at the receded end-state (element opacity 0.90 over the plane) label 5.4:1
-# and ink 8.8:1 stay AA (muted lane-sub fades to 3.8:1 by design — reduced-motion
-# users see the full-opacity 4.5:1 state, and this lane is meant to recede).
 evaluation:
-  tint: "#FFF3D8"        # pale amber wash (== amber_soft) — quiet, clearly non-navy
-  border: "#D89A2B"      # dashed amber lane boundary
-  label_ink: "#6E4E12"   # dark ochre label text (AA on the tint)
-  receded_opacity: 0.90  # end-state emphasis after the selected model returns
+  tint: "#FFF3D8"
+  border: "#D89A2B"
+  label_ink: "#6E4E12"
+  receded_opacity: 0.90
 
-# Status colours are reserved for state and ALWAYS rendered with a text label,
-# never colour alone. Hues aligned to success #2F9B78 / warning #D89A2B /
-# critical #C65D63. As small pill TEXT some sit below 4.5:1 on white — this is the
-# project's pre-existing, documented status-pill contract (the label names the
-# state; colour is a secondary cue). Chart fills (severity_stack) use these as
-# large areas with white separators + legend labels.
+families:
+  crude_palm_oil: "#4D9B70"
+  refined_copper_cathodes: "#B15C2E"
+  gold_unwrought: "#D4A72C"
+
 status:
+  fallback: {color: "#5C6B7E", label: "Unknown"}
   quality:
     fully_usable: {color: "#2F9B78", label: "Fully usable"}
     usable_with_caveat: {color: "#D89A2B", label: "Usable with caveat"}
@@ -118,22 +151,26 @@ status:
     medium: {color: "#D89A2B", label: "Medium"}
     low: {color: "#8A6D1D", label: "Low"}
 
-# Motion: restrained and compositor-friendly (opacity/transform only). One
-# fade-up entrance for page sections, one hover lift for cards/tiles/links.
-# components/styles.py disables ALL of it under prefers-reduced-motion.
-motion:
-  entry_ms: 350        # section fade-up duration on page entry
-  entry_step_ms: 70    # stagger between successive sections
-  hover_ms: 180        # card/tile/link hover transition
-  scene_step_ms: 120   # storyboard-beat stagger inside a methodology scene
-  travel_ms: 600       # the one "selected model returns" chip travel (scene 3)
-
 chart:
   font_family: '"Source Sans Pro", "Source Sans 3", "Segoe UI", sans-serif'
-  grid_color: "#E5E9F0"    # hairline, solid — never dashed (recessive on white)
+  grid_color: "#E5E9F0"
   axis_color: "#C2CBDA"
-  context_gray: "#97A3B4"  # de-emphasised context series (e.g. benchmark line)
-  emphasis: "#0F8F8F"      # the one highlighted series — TEAL accent (dE 15.1 vs context)
+  context_gray: "#97A3B4"
+  emphasis: "#0F8F8F"
+  marker_outline: "#FFFFFF"
+  transparent: "rgba(0,0,0,0)"
   height: 360
   height_tall: 440
   margin: {l: 10, r: 10, t: 24, b: 10}
+
+motion:
+  entry_ms: 350
+  entry_step_ms: 70
+  hover_ms: 180
+  scene_step_ms: 120
+  travel_ms: 600
+  hover_lift_px: 2
+
+breakpoints:
+  narrow_px: 768
+  sidebar_px: 992

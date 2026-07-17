@@ -9,6 +9,7 @@ import streamlit as st
 
 from dashboard.components.empty_states import no_rows
 from dashboard.components.filters import queue_filters
+from dashboard.components.controls import render_filter_panel
 from dashboard.components.page_header import ledger, page_header, section_title
 from dashboard.components.tables import queue_table
 from dashboard.services import dashboard_metrics as metrics
@@ -48,8 +49,9 @@ features = load.load_features(columns=(
 ))
 enriched = metrics.enrich_queue(queue, features, content["family_short_labels"])
 
-section_title(copy["filters_heading"], copy["filters_caption"])
-filters = queue_filters(metrics.queue_filter_options(enriched), copy)
+with render_filter_panel():
+    section_title(copy["filters_heading"], copy["filters_caption"])
+    filters = queue_filters(metrics.queue_filter_options(enriched), copy)
 filtered = metrics.apply_queue_filters(enriched, filters)
 
 section_title(copy["results_heading"])

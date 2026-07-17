@@ -13,15 +13,22 @@ import html
 
 import streamlit as st
 
+from dashboard.components.icons import render_icon
 from dashboard.services.data_loader import conclusion_boundary, load_content
 
 
-def boundary_ribbon() -> None:
+def render_boundary_footer() -> None:
     # Fixed to the viewport bottom via .boundary-ribbon in components/styles.py;
     # its DOM position inside the main block does not matter visually.
     label = load_content().get("boundary_label", "Human-review boundary")
     st.markdown(
-        f'<div class="boundary-ribbon"><span class="stamp">{html.escape(label)}</span>'
+        f'<div class="boundary-ribbon">{render_icon("shield-check", class_name="boundary-icon")}'
+        f'<span class="stamp">{html.escape(label)}</span>'
         f"<span>{html.escape(conclusion_boundary())}</span></div>",
         unsafe_allow_html=True,
     )
+
+
+def boundary_ribbon() -> None:
+    """Compatibility alias for the application entry point."""
+    render_boundary_footer()

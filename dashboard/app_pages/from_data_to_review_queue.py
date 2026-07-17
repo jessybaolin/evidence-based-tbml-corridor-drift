@@ -25,6 +25,8 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.components.empty_states import missing_figure
+from dashboard.components.banners import render_info_banner
+from dashboard.components.cards import kpi_card_markup, source_card_markup
 from dashboard.components.page_header import ledger, page_header
 from dashboard.components.tables import plain_table
 from dashboard.services import data_loader as load
@@ -33,7 +35,6 @@ from dashboard.services.dashboard_metrics import selected_method_label
 
 content = load.load_content()
 copy = content["pages"]["from_data_to_review_queue"]
-theme = load.load_theme()
 
 # ---- Derived facts (never typed in; the ledger names the backing files) ------
 panel = load.load_panel(columns=(
@@ -113,41 +114,31 @@ def _tip(term: str, tip: str) -> str:
 # ---- Page frame: header · sticky mental model · trust KPI strip --------------
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 
-st.markdown(
-    f'<div class="mental-model" role="note">'
-    f'<span class="mm-stamp">{_e(copy["mental_model_stamp"])}</span>'
-    f'{_e(copy["mental_model"])}</div>',
-    unsafe_allow_html=True,
-)
+render_info_banner(copy["mental_model_stamp"], copy["mental_model"])
 
 kpis = copy["kpis"]
 tiles = [
     (f"{total_rows:,}",
      _tip(kpis["observations"]["label"], kpis["observations"]["tip"]),
-     _e(kpis["observations"]["detail"])),
+     kpis["observations"]["detail"]),
     (year_span,
      _e(kpis["period"]["label"]),
-     _e(kpis["period"]["detail"].format(n_years=n_years))),
+     kpis["period"]["detail"].format(n_years=n_years)),
     (f"{n_families}",
      _e(kpis["families"]["label"]),
-     _e(kpis["families"]["detail"].format(family_names=family_names))),
+     kpis["families"]["detail"].format(family_names=family_names)),
     (f"{eligible_pct:.1f}%",
      _tip(kpis["eligible"]["label"], kpis["eligible"]["tip"]),
-     _e(kpis["eligible"]["detail"].format(eligible_count=f"{eligible_rows:,}"))),
+     kpis["eligible"]["detail"].format(eligible_count=f"{eligible_rows:,}")),
     (f"{value_share:.1f}%",
      _tip(kpis["value_coverage"]["label"], kpis["value_coverage"]["tip"]),
-     _e(kpis["value_coverage"]["detail"].format(
-         excluded_share=f"{100.0 - value_share:.1f}"))),
+     kpis["value_coverage"]["detail"].format(
+         excluded_share=f"{100.0 - value_share:.1f}")),
 ]
-# KPI top-border accents, in the approved order: official observations -> blue,
-# coverage period -> teal, product families -> amber, eligible -> green,
-# trade-value coverage -> violet. Classes map to the kpi_* theme tokens.
-KPI_ACCENTS = ["acc-blue", "acc-teal", "acc-amber", "acc-green", "acc-violet"]
+KPI_ICONS = ["database", "calendar", "package", "shield-check", "chart-pie"]
 tiles_html = "".join(
-    f'<div class="stat-tile {acc}"><div class="stat-value">{value}</div>'
-    f'<div class="stat-label">{label}</div>'
-    f'<div class="stat-detail">{detail}</div></div>'
-    for (value, label, detail), acc in zip(tiles, KPI_ACCENTS)
+    kpi_card_markup(value, label, detail, icon)
+    for (value, label, detail), icon in zip(tiles, KPI_ICONS)
 )
 st.markdown(f'<div class="stat-band five anim">{tiles_html}</div>', unsafe_allow_html=True)
 ledger("panel", "review_queue", "evidence")
@@ -259,17 +250,18 @@ def _scene_sources() -> None:
         ])
         + f'<div class="pv-cap">{_e(baci["preview_caption"])}</div></div>'
     )
-    card_1 = (
-        f'<div class="src-card src-baci sb b2" tabindex="0">'
-        f'<div class="src-kicker">{_e(baci["kicker"])}</div>'
-        f'<div class="src-name">{_e(baci["name"])}</div>'
+    card_1_body = (
         f'<span class="src-lab">{_e(s1["supplies_label"])}</span>'
         f'<div class="src-row">{_e(baci["supplies"])}</div>'
         f'<span class="src-lab">{_e(s1["credible_label"])}</span>'
         f'<div class="src-row">{_e(baci["credible"])}</div>'
         f'<div class="src-row src-boundary"><span class="src-lab">'
         f'{_e(s1["boundary_label"])}</span>{_e(baci["boundary"])}</div>'
-        f"{hint}{baci_preview}</div>"
+        f"{hint}{baci_preview}"
+    )
+    card_1 = source_card_markup(
+        role="official", icon="landmark", eyebrow=baci["kicker"], title=baci["name"],
+        sections_html=card_1_body, extra_classes="src-baci sb b2", tabindex=True,
     )
 
     bench = cards["benchmark"]
@@ -293,32 +285,33 @@ def _scene_sources() -> None:
         + (f'<div class="pv-cap">{_e(bench_cap)}</div>' if bench_cap else "")
         + "</div>"
     )
-    card_2 = (
-        f'<div class="src-card src-worldbank sb b3" tabindex="0">'
-        f'<div class="src-kicker">{_e(bench["kicker"])}</div>'
-        f'<div class="src-name">{_e(bench["name"])}</div>'
+    card_2_body = (
         f'<span class="src-lab">{_e(s1["supplies_label"])}</span>'
         f'<div class="src-row">{_e(bench["supplies"])}</div>'
         f'<span class="src-lab">{_e(s1["use_label"])}</span>'
         f'<div class="src-row">{_e(bench["use"])}</div>'
         f'<div class="src-row src-boundary"><span class="src-lab">'
         f'{_e(s1["boundary_label"])}</span>{_e(bench["boundary"])}</div>'
-        f"{hint}{bench_preview}</div>"
+        f"{hint}{bench_preview}"
+    )
+    card_2 = source_card_markup(
+        role="benchmark", icon="line-chart", eyebrow=bench["kicker"], title=bench["name"],
+        sections_html=card_2_body, extra_classes="src-worldbank sb b3", tabindex=True,
     )
 
     fatf = cards["fatf"]
     never_items = "".join(f"<li>{_e(item)}</li>" for item in fatf["never"])
-    card_3 = (
-        f'<div class="src-card src-fatf sb b4">'
-        f'<div class="src-kicker">{_e(fatf["kicker"])}</div>'
-        f'<div class="src-name">{_e(fatf["name"])}</div>'
+    card_3_body = (
         f'<span class="src-lab">{_e(s1["supplies_label"])}</span>'
         f'<div class="src-row">{_e(fatf["supplies"])}</div>'
         f'<span class="src-lab">{_e(s1["use_label"])}</span>'
         f'<div class="src-row">{_e(fatf["use"])}</div>'
         f'<div class="src-row src-boundary src-never"><span class="src-lab">'
         f'{_e(fatf["never_intro"])}</span><ul>{never_items}</ul></div>'
-        f"</div>"
+    )
+    card_3 = source_card_markup(
+        role="typology", icon="file-search", eyebrow=fatf["kicker"], title=fatf["name"],
+        sections_html=card_3_body, extra_classes="src-fatf sb b4",
     )
 
     _block(
@@ -382,8 +375,7 @@ def _scene_sources() -> None:
         )
         fam_cards.append(
             f'<div class="fam-card sb {beat}" tabindex="0">'
-            f'<div class="fam-head"><span class="chip-dot" '
-            f'style="background:{theme["families"].get(fid, "#97A3B4")};"></span>'
+            f'<div class="fam-head"><span class="chip-dot"></span>'
             f'<span class="fam-name">{_e(short_labels.get(fid, fid))}</span></div>'
             f'<div class="fam-role">{_e(role["role"])}</div>'
             f'<div class="fam-body">{_e(role["body"])}</div>'

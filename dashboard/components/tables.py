@@ -27,10 +27,11 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     # case row is tinted amber through a pandas Styler (per-row CSS cannot
     # reach st.dataframe's canvas grid, but Styler backgrounds can). Numbers
     # are rounded by st.column_config only — the underlying values stay exact.
-    palette = load_theme()["palette"]
+    theme = load_theme()
+    palette = theme["palette"]
     columns_copy = load_content()["pages"]["review_queue"]["columns"]
-    stripe = palette.get("table_stripe", "#EFF3F8")
-    selected_bg = palette.get("selected_bg", "#FFF4CC")
+    stripe = theme["components"]["table"]["stripe_bg"]
+    selected_bg = theme["selection"]["background"]
 
     frame = display.reset_index(drop=True)
 

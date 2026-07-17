@@ -18,7 +18,7 @@ import streamlit as st
 
 from dashboard.services.data_loader import load_content, load_theme
 
-def _layout(height: int | None = None) -> dict:
+def chart_layout(height: int | None = None) -> dict:
     full = load_theme()
     theme = full["chart"]
     p = full["palette"]
@@ -39,8 +39,8 @@ def _layout(height: int | None = None) -> dict:
         font=dict(family=theme["font_family"], color=p["ink"], size=13),
         height=height or theme["height"],
         margin=theme["margin"],
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor=theme["transparent"],
+        plot_bgcolor=theme["transparent"],
         xaxis=dict(**axis),
         yaxis=dict(**axis),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0,
@@ -64,9 +64,15 @@ def family_color_map() -> dict[str, str]:
 def show(fig: go.Figure, height: int | None = None, key: str | None = None) -> None:
     # Keys must be STABLE across reruns (a changing key remounts the chart and
     # discards zoom/pan state) and unique per page — callers pass a literal.
-    fig.update_layout(**_layout(height))
+    apply_chart_theme(fig, height)
     st.plotly_chart(fig, width="stretch", key=key,
                     config={"displayModeBar": False})
+
+
+def apply_chart_theme(fig: go.Figure, height: int | None = None) -> go.Figure:
+    """Apply the canonical Plotly layout and return the same figure."""
+    fig.update_layout(**chart_layout(height))
+    return fig
 
 
 # ---- Simple aggregates -------------------------------------------------------
@@ -139,7 +145,8 @@ def severity_stack(frame: pd.DataFrame) -> go.Figure:
         color_discrete_map=color_map, text_auto=True,
         category_orders={"severity": ["high", "medium", "low"]},
     )
-    fig.update_traces(marker_line_color="#FFFFFF", marker_line_width=2, width=0.55)
+    fig.update_traces(marker_line_color=load_theme()["chart"]["marker_outline"],
+                      marker_line_width=2, width=0.55)
     fig.update_layout(xaxis_title="", yaxis_title="Evidence rows", legend_title_text="Severity")
     return fig
 
@@ -162,6 +169,18 @@ def model_metric_bar(view: pd.DataFrame, metric: str, metric_label: str,
         hovertemplate="%{y}: %{x:.4f}<extra></extra>",
     ))
     fig.update_layout(xaxis_title=metric_label, yaxis_title="")
+    return fig
+
+
+def shap_importance_bar(values: pd.DataFrame) -> go.Figure:
+    """Global challenger contribution ranking using the shared emphasis colour."""
+    ranked = values.sort_values("mean_abs_shap", ascending=True)
+    fig = go.Figure(go.Bar(
+        x=ranked["mean_abs_shap"], y=ranked["feature_name"], orientation="h",
+        marker_color=load_theme()["chart"]["emphasis"], marker_line_width=0, width=0.55,
+        hovertemplate="%{y}: %{x:.3f}<extra></extra>",
+    ))
+    fig.update_layout(xaxis_title="Mean |SHAP| (challenger model)", yaxis_title="")
     return fig
 
 
@@ -194,7 +213,7 @@ def unit_value_vs_benchmark(history: pd.DataFrame, case_year: int,
             x=focus["year"], y=focus["unit_value_usd_per_metric_ton"],
             mode="markers+text", showlegend=False,
             marker=dict(size=13, color=theme["emphasis"],
-                        line=dict(color="#FFFFFF", width=2)),
+                        line=dict(color=theme["marker_outline"], width=2)),
             text=[f"{int(case_year)}"], textposition="top center",
             hoverinfo="skip",
         )
@@ -219,7 +238,7 @@ def history_line(history: pd.DataFrame, column: str, y_title: str,
         fig.add_scatter(
             x=focus["year"], y=focus[column], mode="markers", showlegend=False,
             marker=dict(size=12, color=theme["emphasis"],
-                        line=dict(color="#FFFFFF", width=2)),
+                        line=dict(color=theme["marker_outline"], width=2)),
             hoverinfo="skip",
         )
     fig.update_layout(yaxis_title=y_title, xaxis_title="")

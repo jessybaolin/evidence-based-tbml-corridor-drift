@@ -12,16 +12,17 @@ from dashboard.services.data_loader import load_theme
 
 
 def quality_pill(status: str) -> str:
-    spec = load_theme()["status"]["quality"].get(
-        str(status), {"color": "#5C6B7E", "label": str(status).replace("_", " ").capitalize()}
-    )
+    status_theme = load_theme()["status"]
+    fallback = {**status_theme["fallback"],
+                "label": str(status).replace("_", " ").capitalize()}
+    spec = status_theme["quality"].get(str(status), fallback)
     return _pill(spec["label"], spec["color"])
 
 
 def severity_pill(severity: str) -> str:
-    spec = load_theme()["status"]["severity"].get(
-        str(severity).lower(), {"color": "#5C6B7E", "label": str(severity).capitalize()}
-    )
+    status_theme = load_theme()["status"]
+    fallback = {**status_theme["fallback"], "label": str(severity).capitalize()}
+    spec = status_theme["severity"].get(str(severity).lower(), fallback)
     return _pill(f"{spec['label']} severity", spec["color"])
 
 

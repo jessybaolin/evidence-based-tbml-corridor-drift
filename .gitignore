@@ -21,6 +21,10 @@ Thumbs.db
 # Local-only data profiling scratch space (never pushed)
 data-profiling/
 
+# Dashboard visual-refactor QA scratch (screenshots + a browser profile) —
+# process artefacts, never committed; the durable record is the code + tests.
+reports/dashboard_visual_refactor/
+
 # Claude Code local-only agents/skills/settings (never pushed)
 .claude/agents/
 .claude/skills/

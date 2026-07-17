@@ -27,7 +27,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
-from dashboard.components.boundary_banner import boundary_ribbon
+from dashboard.components.boundary_banner import render_boundary_footer
 from dashboard.components.styles import apply_global_styles
 from dashboard.services.data_loader import MissingOutputError, load_content
 
@@ -98,11 +98,11 @@ with st.sidebar:
 # The human-review boundary rides on EVERY page as a fixed footer ribbon,
 # rendered once here so no page can drop it. Text comes verbatim from
 # configs/project.yml via data_loader.conclusion_boundary().
-boundary_ribbon()
+render_boundary_footer()
 
 try:
     navigation.run()
 except MissingOutputError as error:
     # A required pipeline output is absent: state it plainly, never substitute.
-    st.error(str(error), icon="🗂️")
+    st.error(str(error), icon=":material/folder_off:")
     st.stop()

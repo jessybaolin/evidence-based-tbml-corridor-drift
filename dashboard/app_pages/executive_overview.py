@@ -14,13 +14,14 @@ import html
 
 import streamlit as st
 
+from dashboard.components.cards import kpi_card_markup
 from dashboard.components.page_header import ledger
+from dashboard.components.page_shell import render_page_header
 from dashboard.services import data_loader as load
 from dashboard.services.formatting import label_from_key
 
 content = load.load_content()
 copy = content["pages"]["executive_overview"]
-theme = load.load_theme()
 
 # ---- Derived facts (never typed in; the ledger names the backing files) ----
 panel = load.load_panel(columns=("obs_id", "year", "family_id", "product_name"))
@@ -63,14 +64,7 @@ def _tip(term: str, tip: str) -> str:
 
 
 # ---- 1 · Hero ---------------------------------------------------------------
-st.markdown(
-    f'<div class="hero-block anim">'
-    f'<div class="page-eyebrow">{_e(copy["eyebrow"])}</div>'
-    f'<h1 class="page-title">{_e(copy["title"])}</h1>'
-    f'<div class="page-subtitle">{_e(copy["subtitle"])}</div>'
-    f"</div>",
-    unsafe_allow_html=True,
-)
+render_page_header(copy["title"], copy["subtitle"], copy["eyebrow"], "hero-block anim")
 
 
 # ---- 2 · The business problem + challenge/response twin cards ----------------
@@ -104,9 +98,9 @@ what_1 = _e(copy["what_body"].format(
 term_html = _tip(copy["corridor_term"], copy["tooltip_corridor"])
 what_2 = term_html.join(_e(part) for part in copy["what_body_2"].split("{corridor_term}"))
 chips = "".join(
-    f'<span class="chip"><span class="chip-dot" style="background:{theme["families"][fid]};">'
+    f'<span class="chip"><span class="chip-dot">'
     f"</span>{_e(family_names[fid])}</span>"
-    for fid in theme["families"] if fid in family_names
+    for fid in content["family_short_labels"] if fid in family_names
 )
 st.markdown(
     f'<div class="landing-section anim d2">'
@@ -126,20 +120,19 @@ tip_evidence = copy["tooltip_evidence"].format(
     evidence_types=" · ".join(evidence_types),
 )
 tiles = [
-    (_e(observations), _e(deliverables["observations"]["label"]),
-     _e(deliverables["observations"]["detail"])),
-    (_e(f"Top {queue_size}"), _e(deliverables["queue"]["label"]),
-     _e(deliverables["queue"]["detail"])),
-    (_e(evidence_per_case), _tip(deliverables["evidence"]["label"], tip_evidence),
-     _e(deliverables["evidence"]["detail"])),
-    (_e(f"{len(briefs)}") if briefs else "—", _e(deliverables["briefs"]["label"]),
-     _e(deliverables["briefs"]["detail"])),
+    (observations, _e(deliverables["observations"]["label"]),
+     deliverables["observations"]["detail"]),
+    (f"Top {queue_size}", _e(deliverables["queue"]["label"]),
+     deliverables["queue"]["detail"]),
+    (evidence_per_case, _tip(deliverables["evidence"]["label"], tip_evidence),
+     deliverables["evidence"]["detail"]),
+    (f"{len(briefs)}" if briefs else "—", _e(deliverables["briefs"]["label"]),
+     deliverables["briefs"]["detail"]),
 ]
+KPI_ICONS = ["database", "checklist", "shield-check", "file-text"]
 tiles_html = "".join(
-    f'<div class="stat-tile"><div class="stat-value">{value}</div>'
-    f'<div class="stat-label">{label}</div>'
-    f'<div class="stat-detail">{detail}</div></div>'
-    for value, label, detail in tiles
+    kpi_card_markup(value, label, detail, icon)
+    for (value, label, detail), icon in zip(tiles, KPI_ICONS)
 )
 st.markdown(
     f'<div class="landing-section anim d3">'
