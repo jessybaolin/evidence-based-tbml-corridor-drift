@@ -599,6 +599,168 @@ def apply_global_styles() -> None:
         border-color: {at};
     }}
 
+    /* ---- Selected Case Review: compact selected-case strip. Same muted-amber
+       selection role as the Review Queue banner — "the case you are carrying",
+       never an alarm. Facts + score + quality + the change-case control sit on
+       one wash; ink text carries the identity, amber only marks selection. ---- */
+    .st-key-case_strip {{
+        background: {sel_bg};
+        border: 1px solid {sel_acc};
+        border-left: 4px solid {sel_acc};
+        border-radius: 10px;
+        padding: 0.55rem 0.95rem 0.65rem 0.95rem;
+        box-shadow: 0 2px 8px {shadow};
+    }}
+    .case-strip-facts {{
+        color: {p["ink"]};
+        font-size: 1.02rem;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+    }}
+    .case-strip-facts strong {{ font-weight: 800; }}
+    .case-strip-metric {{
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+    }}
+    .case-strip-label {{
+        color: {navy7};
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        line-height: 1.35;
+    }}
+    .case-strip-label svg {{ vertical-align: -3px; }}
+    .case-strip-value {{
+        color: {p["ink"]};
+        font-size: 1.12rem;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+    }}
+
+    /* Case facts panel: quiet label/value rows on the white card surface. */
+    .fact-list {{
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: {int(surfaces["radius_px"])}px;
+        padding: 0.2rem 0.9rem;
+    }}
+    .fact-row {{
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        padding: 0.44rem 0;
+        border-bottom: 1px solid {p["table_stripe"]};
+    }}
+    .fact-row:last-child {{ border-bottom: none; }}
+    .fact-k {{
+        color: {p["muted"]};
+        font-size: 0.88rem;
+        flex: 0 0 auto;
+    }}
+    .fact-k svg {{ vertical-align: -3px; }}
+    .fact-v {{
+        color: {p["ink"]};
+        font-weight: 650;
+        font-size: 0.92rem;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+    }}
+
+    /* Carousel prev/next: keep the short arrow labels on one line — the
+       columns stack to full width below Streamlit's narrow breakpoint, so
+       nowrap can never clip there. */
+    [data-testid="stMain"] .st-key-case_view_prev button p,
+    [data-testid="stMain"] .st-key-case_view_next button p {{
+        white-space: nowrap;
+    }}
+
+    /* One-line dynamic takeaway above each comparison view. */
+    .case-takeaway {{
+        color: {p["ink"]};
+        font-size: 1.0rem;
+        font-weight: 650;
+        line-height: 1.45;
+        margin: 0.1rem 0 0.3rem 0;
+    }}
+
+    /* ---- Why It Ranked High: summary · comparison cards · signals table ---- */
+    .why-summary {{
+        background: {p["accent_soft"]};
+        border-left: 4px solid {p["accent"]};
+        border-radius: 10px;
+        padding: 0.8rem 1.1rem;
+        color: {p["ink"]};
+        font-size: 1.1rem;
+        line-height: 1.5;
+        margin: 0.1rem 0 0.35rem 0;
+    }}
+    .compare-card {{
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 10px;
+        padding: 0.9rem 1.05rem 0.95rem 1.05rem;
+        box-shadow: 0 4px 14px {shadow};
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }}
+    .compare-card-muted {{
+        border-top-color: {p["border"]};
+        background: {p["page_bg"]};
+    }}
+    .compare-head {{
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }}
+    .compare-title {{
+        color: {p["muted"]};
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }}
+    .compare-head .tip {{ color: {p["muted"]}; line-height: 1; }}
+    .compare-head svg {{ vertical-align: middle; }}
+    .compare-value {{
+        color: {p["ink"]};
+        font-size: 1.15rem;
+        font-weight: 750;
+        line-height: 1.34;
+        margin: 0.4rem 0 0.2rem 0;
+    }}
+    .compare-card-muted .compare-value {{
+        color: {p["muted"]};
+        font-weight: 650;
+        font-size: 1.0rem;
+    }}
+    .compare-secondary {{
+        color: {at};
+        font-size: 0.86rem;
+        font-weight: 650;
+        margin-bottom: 0.25rem;
+    }}
+    .compare-support {{
+        color: {p["muted"]};
+        font-size: 0.9rem;
+        line-height: 1.45;
+        margin-top: auto;
+    }}
+    .signals-scroll {{ max-height: 460px; overflow-y: auto; }}
+    table.data-table td.mono {{
+        font-family: "Consolas", "SFMono-Regular", monospace;
+        font-size: 0.83rem;
+        white-space: nowrap;
+        color: {p["ink"]};
+    }}
+    table.data-table td[title] {{ cursor: help; }}
+
     /* ---- Landing page (Business Problem & Value): narrative sections ---- */
     .hero-block {{ padding: 0.3rem 0 0.4rem 0; }}
     .hero-block .page-title {{
@@ -864,6 +1026,266 @@ def apply_global_styles() -> None:
         .stat-band {{ grid-template-columns: 1fr; }}
     }}
 
+    /* ---- Bank Implementation Pathway: future-state operating model. ---- */
+    .bank-section-heading {{ margin-bottom: 0.7rem; max-width: 82ch; }}
+    .bank-section-title {{
+        color: {p["ink"]};
+        font-size: 1.26rem;
+        font-weight: 750;
+    }}
+    .bank-section-title::before {{
+        content: "";
+        display: block;
+        width: 26px;
+        height: 3px;
+        border-radius: 2px;
+        background: {p["accent"]};
+        margin-bottom: 0.45rem;
+    }}
+    .bank-section-caption {{
+        color: {p["muted"]};
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-top: 0.25rem;
+    }}
+    .bank-role .landing-prose {{ max-width: 84ch; }}
+
+    .bank-architecture {{
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) 9rem minmax(0, 1.1fr);
+        gap: 1rem;
+        align-items: center;
+        margin-top: 0.9rem;
+    }}
+    .bank-state {{
+        min-width: 0;
+        padding: 1rem;
+        background: {p.get("table_stripe", "#EFF3FA")};
+        border-top: 3px solid {theme["chart"]["context_gray"]};
+    }}
+    .bank-state-future {{
+        background: {p["accent_soft"]};
+        border-top-color: {p["accent"]};
+    }}
+    .bank-state-kicker {{
+        color: {p["muted"]};
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }}
+    .bank-state-future .bank-state-kicker {{ color: {at}; }}
+    .bank-state-title {{
+        color: {p["ink"]};
+        font-size: 1.08rem;
+        font-weight: 750;
+        margin: 0.15rem 0 0.7rem 0;
+    }}
+    .bank-flow {{ display: grid; gap: 0.45rem; }}
+    .bank-flow-node {{
+        display: grid;
+        grid-template-columns: 1.65rem minmax(0, 1fr);
+        gap: 0.65rem;
+        align-items: start;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 6px;
+        padding: 0.7rem 0.75rem;
+    }}
+    .bank-node-index {{
+        display: inline-grid;
+        place-items: center;
+        width: 1.65rem;
+        height: 1.65rem;
+        border-radius: 50%;
+        background: {p["accent_soft"]};
+        border: 1px solid {p["border"]};
+        color: {at};
+        font-size: 0.76rem;
+        font-weight: 800;
+    }}
+    .bank-node-copy {{ min-width: 0; }}
+    .bank-node-title {{
+        color: {p["ink"]};
+        font-size: 0.9rem;
+        font-weight: 700;
+        line-height: 1.35;
+    }}
+    .bank-node-detail {{
+        color: {p["muted"]};
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-top: 0.12rem;
+        overflow-wrap: anywhere;
+    }}
+    .bank-flow-arrow {{
+        color: {p["muted"]};
+        font-size: 0.95rem;
+        line-height: 0.8;
+        text-align: center;
+    }}
+    .bank-bridge {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.45rem;
+        color: {at};
+        font-size: 0.78rem;
+        font-weight: 750;
+        line-height: 1.35;
+        text-align: center;
+    }}
+    .bank-bridge svg {{ width: 1.45rem; height: 1.45rem; }}
+    .bank-feedback-note {{
+        display: flex;
+        align-items: flex-start;
+        gap: 0.55rem;
+        color: {p["muted"]};
+        background: {p["panel_bg"]};
+        border-left: 3px solid {sel_acc};
+        padding: 0.75rem 0.9rem;
+        margin-top: 0.75rem;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }}
+    .bank-feedback-note svg {{
+        color: {sel_acc};
+        width: 1.05rem;
+        height: 1.05rem;
+        flex: none;
+        margin-top: 0.08rem;
+    }}
+
+    .bank-domain-grid, .bank-value-grid {{ display: grid; gap: 0.8rem; }}
+    .bank-domain-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
+    .bank-value-grid {{ grid-template-columns: repeat(4, minmax(0, 1fr)); }}
+    .bank-icon-card {{
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        min-width: 0;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 8px;
+        padding: 0.85rem;
+        box-shadow: 0 4px 14px {shadow};
+    }}
+    .bank-icon-card.value {{ border-top-color: {navy7}; }}
+    .bank-card-icon {{ background: {p["accent_soft"]}; color: {at}; flex: none; }}
+    .bank-card-copy {{ min-width: 0; }}
+    .bank-card-title {{
+        color: {p["ink"]};
+        font-size: 0.9rem;
+        font-weight: 750;
+        line-height: 1.35;
+    }}
+    .bank-card-detail {{
+        color: {p["muted"]};
+        font-size: 0.8rem;
+        line-height: 1.45;
+        margin-top: 0.25rem;
+        overflow-wrap: anywhere;
+    }}
+
+    .bank-adoption {{
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        margin-top: 0.75rem;
+    }}
+    .bank-stage {{
+        position: relative;
+        min-width: 0;
+        padding: 0.1rem 1.25rem 0.25rem 0;
+    }}
+    .bank-stage:not(:last-child)::after {{
+        content: "";
+        position: absolute;
+        top: 1rem;
+        left: 2.2rem;
+        right: 0.45rem;
+        height: 2px;
+        background: {p["border"]};
+        z-index: 0;
+    }}
+    .bank-stage-number {{
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: {p["accent"]};
+        color: white;
+        font-size: 0.82rem;
+        font-weight: 800;
+        margin-bottom: 0.55rem;
+    }}
+    .bank-stage-title {{ color: {p["ink"]}; font-size: 0.92rem; font-weight: 750; line-height: 1.35; }}
+    .bank-stage-detail {{
+        color: {p["muted"]};
+        font-size: 0.82rem;
+        line-height: 1.5;
+        margin-top: 0.25rem;
+        overflow-wrap: anywhere;
+    }}
+
+    .bank-controls {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem 1.2rem;
+        background: {p.get("table_stripe", "#EFF3FA")};
+        border-left: 3px solid {navy7};
+        padding: 0.9rem 1rem;
+    }}
+    .bank-control-item {{
+        display: grid;
+        grid-template-columns: 1.2rem minmax(0, 1fr);
+        gap: 0.55rem;
+        align-items: start;
+        min-width: 0;
+    }}
+    .bank-control-item > svg {{
+        color: {at};
+        width: 1.05rem;
+        height: 1.05rem;
+        margin-top: 0.12rem;
+    }}
+    .bank-control-title {{ color: {p["ink"]}; font-size: 0.86rem; font-weight: 750; }}
+    .bank-control-detail {{
+        color: {p["muted"]};
+        font-size: 0.79rem;
+        line-height: 1.45;
+        margin-top: 0.15rem;
+        overflow-wrap: anywhere;
+    }}
+
+    @media (max-width: 1050px) {{
+        .bank-domain-grid, .bank-value-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+    }}
+    @media (max-width: 780px) {{
+        .bank-architecture {{ grid-template-columns: 1fr; }}
+        .bank-bridge {{ flex-direction: row; justify-content: center; padding: 0.2rem 0; }}
+        .bank-bridge svg {{ transform: rotate(90deg); }}
+        .bank-adoption {{ grid-template-columns: 1fr; gap: 0.9rem; }}
+        .bank-stage {{ padding-right: 0; padding-left: 2.8rem; }}
+        .bank-stage-number {{ position: absolute; left: 0; top: 0; }}
+        .bank-stage:not(:last-child)::after {{
+            top: 2rem;
+            bottom: -0.9rem;
+            left: 0.95rem;
+            right: auto;
+            width: 2px;
+            height: auto;
+        }}
+    }}
+    @media (max-width: 560px) {{
+        .bank-domain-grid, .bank-value-grid, .bank-controls {{ grid-template-columns: 1fr; }}
+        .bank-icon-card {{ padding: 0.75rem; }}
+    }}
+
     /* ================================================================
        Methodology story page (From Data to Review Queue): sticky mental-
        model strip, five-tile trust band, three scenes with storyboard
@@ -907,6 +1329,11 @@ def apply_global_styles() -> None:
         white-space: nowrap;
     }}
     .banner-icon {{ background: {mm["icon_bg"]}; color: {mm["accent"]}; }}
+    [data-testid="stElementContainer"]:has(.mental-model.future-boundary) {{
+        position: static;
+        top: auto;
+        z-index: auto;
+    }}
 
     /* Five-tile trust band (extends the landing stat-band). */
     .stat-band.five {{ grid-template-columns: repeat(5, 1fr); }}

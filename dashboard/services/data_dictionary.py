@@ -83,9 +83,9 @@ CURATED: dict[str, dict[str, str]] = {
     "selected_review_priority_score": {"category": "Model scores", "unit": "0–1 ranking score",
                                        "pages": "Top 50 Review Queue, Selected Case Review"},
     "rule_score": {"category": "Model scores", "unit": "0–1 ranking score",
-                   "pages": "Model Validation & Controls"},
+                   "pages": "Model Evaluation & Controls"},
     "selected_challenger_score": {"category": "Model scores", "unit": "0–1 ranking score",
-                                  "pages": "Model Validation & Controls"},
+                                  "pages": "Model Evaluation & Controls"},
     # Scenario label: must never be attributed to the official BACI extract.
     "synthetic_review_priority": {
         "category": "Model scores",

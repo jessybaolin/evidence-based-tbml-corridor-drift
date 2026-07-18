@@ -44,6 +44,48 @@ def render_source_card(**kwargs) -> None:
     st.markdown(source_card_markup(**kwargs), unsafe_allow_html=True)
 
 
+def fact_list_markup(rows: list[tuple[str, str]]) -> str:
+    """Label/value fact rows (Case facts panel). Both cells are HTML fragments:
+    callers embed .tip tooltips in labels and status pills in values, so they
+    escape their own plain strings (same contract as kpi_card_markup)."""
+    body = "".join(
+        f'<div class="fact-row"><span class="fact-k">{label_html}</span>'
+        f'<span class="fact-v">{value_html}</span></div>'
+        for label_html, value_html in rows
+    )
+    return f'<div class="fact-list">{body}</div>'
+
+
+def render_fact_list(rows: list[tuple[str, str]]) -> None:
+    st.markdown(fact_list_markup(rows), unsafe_allow_html=True)
+
+
+def comparison_card_markup(*, title: str, value_html: str, support: str,
+                           caveat_tip_html: str, secondary_html: str = "",
+                           available: bool = True) -> str:
+    """A stakeholder comparison card (Why It Ranked High, 2x2 grid).
+
+    title/support are plain strings (escaped here); value_html, secondary_html
+    and caveat_tip_html are pre-built fragments (the caller embeds the info-icon
+    .tip and any emphasis). An unavailable card is muted and carries no support.
+    """
+    klass = "compare-card" if available else "compare-card compare-card-muted"
+    secondary = (
+        f'<div class="compare-secondary">{secondary_html}</div>' if secondary_html else ""
+    )
+    support_html = (
+        f'<div class="compare-support">{html.escape(support)}</div>'
+        if support and available else ""
+    )
+    return (
+        f'<div class="{klass}">'
+        f'<div class="compare-head"><span class="compare-title">{html.escape(title)}</span>'
+        f'{caveat_tip_html}</div>'
+        f'<div class="compare-value">{value_html}</div>'
+        f'{secondary}{support_html}</div>'
+    )
+
+
 def render_chart_card(title: str, caption: str | None = None) -> None:
     caption_html = f'<div class="section-caption">{html.escape(caption)}</div>' if caption else ""
     st.markdown(

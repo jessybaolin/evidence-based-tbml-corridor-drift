@@ -1,4 +1,4 @@
-"""Official data-source cards for the Appendix."""
+"""Official data-source cards for the Data Dictionary page."""
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 """
-Official data-source registry for the Appendix page.
+Official data-source registry for the Data Dictionary page.
 
 WHAT IT DOES:
     Builds one card per official source by combining what the PROJECT METADATA

@@ -1,4 +1,4 @@
-"""Model & Controls — how the ranking was evaluated, selected, controlled, caveated."""
+"""Model Evaluation & Controls — evaluation, selection, controls, and caveats."""
 
 from __future__ import annotations
 

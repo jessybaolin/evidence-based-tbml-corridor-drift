@@ -164,8 +164,315 @@ pages:
   case_investigation:
     eyebrow: "Stakeholder analytics"
     title: "Selected Case Review"
-    subtitle: "One selected official observation: its history, signals, evidence, and limits."
-    caveat: "Aggregate unit value is not an invoice price."
+    subtitle: "Understand why this official trade observation ranked highly by comparing it with the market, its own history and comparable trade corridors."
+    caveat: "The implied unit value is an annual aggregate, not an invoice price."
+    tabs: ["Case Summary", "Why It Ranked High", "Limitations"]
+    selector_label: "Change case"
+    selector_help: "Pick a case here, or select a row on the Review Queue page."
+    not_in_queue: "The selected observation is not in the review queue. Choose another case."
+    # Runtime consistency gate: if any recomputed value disagrees with the
+    # published artefacts the page shows this message INSTEAD of numbers.
+    validation_error: >-
+      This case is not displayed because a consistency check between the
+      published review queue, the feature table and the official clean panel
+      failed: {reason}. No values are shown rather than risking an incorrect
+      number. Re-run the analytical pipeline and reload the dashboard.
+    strip:
+      score_label: "Review-priority score"
+      score_tip: "This score determines review order. A higher score means higher review priority; it is not a probability or finding of financial crime."
+      quality_label: "Data quality"
+      quality_tip: "Data quality rates how usable the underlying official record is. It is separate from how unusual the observation is."
+    facts:
+      heading: "Case facts"
+      caption: "Annual official aggregates — not invoices or shipments."
+      rank: "Review rank"
+      year: "Year"
+      corridor: "Corridor"
+      product: "Product"
+      trade_value: "Trade value"
+      quantity: "Quantity"
+      implied_uv: "Implied unit value"
+      implied_uv_tip: "Annual reported trade value divided by reported quantity. It is an aggregate average, not an invoice price."
+      benchmark: "World Bank benchmark price"
+      vs_benchmark: "Unit value vs benchmark"
+      vs_benchmark_value: "{multiple}× benchmark"
+      quality: "Data quality"
+      valid_extreme_note: "Valid extreme retained (>5× or <0.2× benchmark)."
+      benchmark_caveat_label: "Benchmark caveat"
+    provenance:
+      label: "Data provenance"
+      obs_id: "Observation ID"
+      source_row: "Source row"
+      source_version: "Source version"
+      method_label: "Ranking method"
+      method_value: "Selected blended ranking method"
+      method_link: "How the method was selected — Model Evaluation & Controls"
+    views:
+      selector_label: "Comparison view"
+      labels: ["Market comparison", "Own history", "Peer position"]
+      indicator: "{n} of {total}"
+      prev_label: "← Prev"
+      next_label: "Next →"
+      mode_label: "Display mode"
+      mode_chart: "Chart"
+      mode_table: "Table"
+      market:
+        title: "How did the corridor compare with the wider commodity market?"
+        takeaway: "In {year}, the corridor's implied unit value was {multiple}× the annual World Bank benchmark."
+        takeaway_unavailable: "A market comparison is unavailable for the selected year because the implied unit value or the benchmark cannot be computed from the official record."
+        note: "The World Bank benchmark provides broad market context; it is not invoice-level fair value."
+        series_corridor: "Corridor implied unit value"
+        series_benchmark: "World Bank benchmark"
+        y_title: "USD per metric ton"
+        hover:
+          trade_value: "Trade value"
+          quantity: "Quantity"
+          implied_uv: "Implied unit value"
+          benchmark: "WB benchmark"
+          multiple: "Benchmark multiple"
+          quality: "Data quality"
+        table:
+          year: "Year"
+          trade_value: "Trade value (USD)"
+          quantity: "Quantity (metric tons)"
+          implied_uv: "Implied unit value (USD/t)"
+          benchmark: "WB benchmark (USD/t)"
+          multiple: "Benchmark multiple"
+          quality: "Data-quality status"
+      history:
+        title: "How did the corridor compare with its own prior behaviour?"
+        takeaway: "In {year}, the corridor's implied unit value was {multiple}× the median of its own earlier observed years ({prior_years} prior year(s) used)."
+        takeaway_no_baseline: "Prior corridor baseline unavailable — no earlier observed year for this corridor has a computable unit value."
+        note: "The prior corridor median summarises earlier observed years only. Years without observed trade stay blank; they are never filled in or interpolated."
+        series_corridor: "Corridor implied unit value"
+        series_prior: "Prior corridor median"
+        y_title: "USD per metric ton"
+        hover:
+          implied_uv: "Implied unit value"
+          prior_median: "Prior corridor median"
+          multiple: "Multiple vs prior median"
+          prior_years: "Prior years used"
+          quality: "Data quality"
+        table:
+          year: "Year"
+          implied_uv: "Implied unit value (USD/t)"
+          prior_median: "Prior corridor median (USD/t)"
+          multiple: "Multiple vs prior median"
+          prior_years: "Prior years used for median"
+          quality: "Data-quality status"
+      peers:
+        title: "How unusual was the case among comparable corridors?"
+        takeaway: "This observation sits at or above {percentile} of {peers} same-product corridors in {year}."
+        takeaway_unavailable: "Peer position is unavailable — the selected case has no computable unit-value-to-benchmark multiple among its product-family peers for this year."
+        population_note: "Peers are corridors trading the same product family in {year} with a computable unit-value-to-benchmark multiple ({peers} corridors, including this case)."
+        outside_note: "{n} peer(s) with multiples outside the 0.01×–100× display range are not drawn in the histogram; they remain in the percentile calculation."
+        x_title: "Implied unit value ÷ WB benchmark"
+        y_title: "Peer corridors"
+        reference_label: "1× benchmark"
+        case_label: "{multiple}× benchmark"
+        bar_hover_suffix: "corridors"
+        table:
+          measure: "Measure"
+          value: "Value"
+          case_multiple: "Selected-case benchmark multiple"
+          case_percentile: "Selected-case peer percentile"
+          peer_count: "Total peers (same product family and year)"
+          median_multiple: "Peer median multiple"
+          p95_multiple: "Peer 95th-percentile multiple"
+          at_or_above_3x: "Peers at or above 3× benchmark"
+    why:
+      heading: "Why this observation ranked highly"
+      caption: "Plain-English reasons and the measurable comparisons behind them — no generated conclusions."
+      # Dynamic ranking summary: only the case's flagged evidence types appear.
+      summary_prefix: "This observation ranked highly because "
+      summary_join: ", "
+      summary_final_join: " and "
+      summary_suffix: "."
+      summary_empty: "This observation ranked highly on the review-priority score; the strongest comparisons behind it are shown below."
+      # Keyed by "<evidence_type>.<direction>" (from why_ranked_high.summary_clause_keys).
+      summary_clauses:
+        annual_unit_value_change.increase: "its implied unit value increased sharply"
+        annual_unit_value_change.decrease: "its implied unit value fell sharply"
+        benchmark_gap.above: "it stood well above the annual benchmark"
+        benchmark_gap.below: "it stood well below the annual benchmark"
+        history_deviation.above: "it fell far outside the corridor's prior observed range"
+        history_deviation.below: "it fell far below the corridor's prior observed range"
+        benchmark_adjusted_drift.increase: "its gap to the benchmark widened"
+        benchmark_adjusted_drift.decrease: "its gap to the benchmark narrowed"
+        value_quantity_divergence.increase: "its reported value moved faster than its quantity"
+        value_quantity_divergence.decrease: "its reported quantity moved faster than its value"
+      summary_note: "These comparisons explain the review priority. They are reasons to examine the pattern, not conclusions about wrongdoing."
+      # Four comparison cards (2x2). {multiple} is exp() of the log feature to 1dp;
+      # {z} is the robust z-score to 1dp. Cards show the real per-case value; the
+      # unavailable line shows only when the underlying feature is genuinely missing.
+      cards_heading: "Supporting comparisons"
+      how_calculated_label: "How calculated"
+      how_metric_label: "Technical metric"
+      how_comparison_label: "Compared with"
+      how_derivation_label: "Derivation"
+      how_result_label: "Result"
+      cards:
+        A:
+          title: "Sharp implied-price movement"
+          value_increase: "Implied unit value rose to {multiple}× its previous observed level"
+          value_decrease: "Implied unit value fell to {multiple}× its previous observed level"
+          support: "The annual implied unit value moved sharply compared with the corridor's previous active year."
+          caveat: "Annual implied unit values are aggregate averages calculated from reported trade value and quantity. They are not invoice prices."
+          unavailable: "Previous-year comparison unavailable"
+          metric: "unit_value_yoy_change"
+          comparison: "the corridor's previous observed year"
+          derivation: "exp() of the year-over-year change in log implied unit value."
+        B:
+          title: "Gap to broad market context"
+          value_increase: "Implied unit value was {multiple}× the annual benchmark"
+          value_decrease: "Implied unit value was {multiple}× the annual benchmark"
+          support: "The reported aggregate unit value was materially away from the World Bank annual benchmark for the same product and year."
+          caveat: "The World Bank benchmark provides broad commodity-market context. It is not invoice-level fair value and does not prove mispricing."
+          unavailable: "Benchmark comparison unavailable"
+          metric: "benchmark_residual"
+          comparison: "the same-year World Bank benchmark"
+          derivation: "exp() of the log gap between the implied unit value and the annual benchmark."
+        C:
+          title: "Break from prior corridor behaviour"
+          value_increase: "The selected year falls far outside the corridor's prior observed range"
+          value_decrease: "The selected year falls far below the corridor's prior observed range"
+          secondary: "{z} robust deviations {direction} the prior pattern"
+          direction_above: "above"
+          direction_below: "below"
+          support: "The implied unit value differed substantially from the corridor's own earlier observations."
+          caveat: "Short histories or very stable prior values can make this measure more sensitive. It is a comparison signal, not a finding of wrongdoing."
+          unavailable: "Prior corridor comparison unavailable"
+          metric: "robust_historical_z"
+          comparison: "the corridor's prior-year median and spread"
+          derivation: "Distance from the corridor's prior pattern in robust (median/MAD) units. Not exponentiated."
+        D:
+          title: "Benchmark-relative gap widened"
+          value_increase: "The benchmark-relative ratio rose to {multiple}× its previous level"
+          value_decrease: "The benchmark-relative ratio fell to {multiple}× its previous level"
+          support: "The difference between the corridor's implied unit value and the annual benchmark changed compared with the previous observed corridor year."
+          caveat: "Changes may reflect product grade, commercial terms, contract timing, freight, insurance or reporting differences."
+          unavailable: "Previous benchmark-gap comparison unavailable"
+          metric: "benchmark_adjusted_drift"
+          comparison: "the corridor's previous benchmark residual"
+          derivation: "exp() of the change in the log benchmark residual versus the previous observed corridor year."
+      # Full analytical signal profile (collapsed).
+      signals_heading: "Signals for this observation"
+      signals_description: "The complete analytical profile supporting the selected observation. Expand this section to review each signal, its case-specific result and how it was constructed."
+      signals_empty: "No analytical signals are available for this observation."
+      signals_columns:
+        field: "Technical field"
+        label: "Display label"
+        result: "Case result"
+        derived: "How it is derived"
+        time_safety: "Time-safety rule"
+      # Value formatting for the Case result column (numeric part; joined to the
+      # interpretation with an em dash by the page).
+      value_multiple: "{multiple}× "
+      value_percentile: "{value} percentile"
+      value_zscore: "{z} robust deviations {direction} prior history"
+      value_count: "{n} prior active years"
+      value_flag_yes: "Yes"
+      value_flag_no: "No"
+      value_magnitude: "{value}"
+      value_missing: "Not available"
+      direction_above: "above"
+      direction_below: "below"
+      # Per-field: display label, purpose tooltip, case-result interpretation,
+      # how-derived, and time-safety rule. Technical field names are preserved.
+      signals:
+        robust_historical_z:
+          label: "Deviation from prior history"
+          tooltip: "Measures how far the current implied unit value is from this corridor's own earlier pattern."
+          interpretation: "distance from the corridor's own prior observed range."
+          derived: "Current implied unit value compared with the median of prior corridor years, scaled by the corridor's prior variation."
+          time_safety: "Prior years only"
+        benchmark_residual:
+          label: "Distance from annual benchmark"
+          tooltip: "Shows how far the implied unit value sits from the broad World Bank commodity benchmark for the same product and year."
+          interpretation: "the implied unit value against broad annual market context."
+          derived: "Gap between the log implied unit value and the same-year World Bank benchmark, shown here as a multiple."
+          time_safety: "Current-year benchmark only"
+        benchmark_adjusted_drift:
+          label: "Change in benchmark gap"
+          tooltip: "Shows whether the corridor's gap to the benchmark widened or narrowed versus its previous observed year."
+          interpretation: "the change in the corridor's gap to the benchmark."
+          derived: "Change in the benchmark residual from the previous observed corridor year."
+          time_safety: "Previous observation only"
+        same_family_year_peer_percentile:
+          label: "Position among same-product peers"
+          tooltip: "Shows where this observation sits among corridors trading the same product in the same year."
+          interpretation: "this observation among comparable same-product corridors in the same year."
+          derived: "Percentile position of the benchmark residual among observations for the same product and year."
+          time_safety: "Same-year peers only; no future years"
+        unit_value_yoy_change:
+          label: "Change in implied unit value"
+          tooltip: "Shows how much the implied unit value changed since the corridor's previous active year."
+          interpretation: "the change in implied unit value from the previous active corridor year."
+          derived: "Change from the previous observed year for the same exporter–importer–product corridor."
+          time_safety: "Previous observation only"
+        trade_value_yoy_change:
+          label: "Change in trade value"
+          tooltip: "Shows how much reported annual trade value changed since the previous active year."
+          interpretation: "the change in reported annual trade value."
+          derived: "Change in reported trade value from the previous observed corridor year."
+          time_safety: "Previous observation only"
+        quantity_yoy_change:
+          label: "Change in quantity"
+          tooltip: "Shows how much reported physical quantity changed since the previous active year."
+          interpretation: "the change in reported physical quantity."
+          derived: "Change in reported quantity from the previous observed corridor year."
+          time_safety: "Previous observation only"
+        value_quantity_divergence:
+          label: "Value versus quantity movement"
+          tooltip: "Shows whether reported value moved faster than reported quantity."
+          interpretation: "how far reported value moved relative to reported quantity."
+          derived: "Difference between the value change and the quantity change over the same period."
+          time_safety: "Previous observation only"
+        corridor_activity_history:
+          label: "Prior active-year history"
+          tooltip: "How many earlier years this corridor–product appeared in the observed panel."
+          interpretation: "the number of earlier observed years supporting the comparison."
+          derived: "Count of prior active years for the same exporter–importer–product corridor."
+          time_safety: "Prior activity history only"
+        corridor_novelty_flag:
+          label: "New corridor indicator"
+          tooltip: "Whether this corridor–product has no earlier active year in the observed panel."
+          interpretation: "whether this corridor had no earlier active year in the observed period."
+          derived: "Set when the corridor has no prior active year in the observed panel."
+          time_safety: "Prior activity only"
+        corridor_reactivation_flag:
+          label: "Reactivated corridor indicator"
+          tooltip: "Whether the corridor–product traded, stopped, and reappeared."
+          interpretation: "whether the corridor stopped and reappeared after a gap."
+          derived: "Set when prior activity exists but the previous active year is not the immediately preceding year."
+          time_safety: "Prior activity pattern only"
+        benchmark_consistency_gap:
+          label: "Difference from wider benchmark movement"
+          tooltip: "Whether the corridor moved differently from the wider commodity market. Near zero means the move is explained by the market."
+          interpretation: "how differently the corridor moved from the wider market (near zero = market-explained)."
+          derived: "Compares this row's year-over-year change with the same year's benchmark change (documented in src/tbml_common.py)."
+          time_safety: "Current-year benchmark change only"
+      # Collapsed technical audit section (replaces the old Evidence tab table).
+      audit_heading: "Audit details"
+      audit_caption: "Traceability for technical review — the raw evidence records behind the comparisons above."
+      audit_empty: "No evidence rows exist for this observation in the evidence table."
+      audit_columns:
+        evidence_id: "Evidence ID"
+        evidence_type: "Evidence type"
+        metric_name: "Technical metric"
+        observed_value: "Observed value"
+        comparison_value: "Comparison value"
+        comparison_group: "Comparison group"
+        threshold: "Threshold"
+        source_row_id: "Source row"
+        source_version: "Source version"
+        source_fields: "Source fields"
+        caveat: "Technical caveat"
+    limitations:
+      case_heading: "Case-specific caveats"
+      project_heading: "Project-wide limitations"
+      no_caveats: "No evidence-specific caveats recorded for this case."
+      closing_suffix: "Human review remains necessary before any conclusion."
   portfolio_analytics:
     eyebrow: "Stakeholder analytics"
     title: "Trade Landscape and Patterns"
@@ -403,18 +710,130 @@ pages:
       fields_note: "The dashboard shows readable names; these are the underlying source fields."
       provenance_heading: "Source checksums (SHA-256)"
   model_and_controls:
-    eyebrow: "Governance and validation"
-    title: "Model Validation & Controls"
+    eyebrow: "Methodology"
+    title: "Model Evaluation & Controls"
     subtitle: "How the ranking was evaluated, selected, controlled, and caveated."
     scenario_note: >
       Model comparison uses controlled synthetic review-priority scenarios and
       hard negatives injected into a copy of the panel. Scenario labels are
       evaluation constructs, not confirmed TBML labels. The selected blend is
       then applied to the real official observations to build the review queue.
+  bank_implementation_pathway:
+    eyebrow: "Future-state design"
+    title: "Bank Implementation Pathway"
+    subtitle: "How this public-data triage prototype could support wholesale-banking AFC reviews when joined with governed bank records."
+    boundary:
+      label: "Future-state boundary"
+      body: "Future-state design only. Private bank-data integration, case-management connectivity, and production decisioning have not been built."
+    role:
+      heading: "Where the prototype could fit"
+      body: >-
+        Inside a wholesale bank, the current review queue could sit at the
+        front of the review funnel as an external-intelligence layer. It could
+        add corridor and commodity context before an analyst examines
+        customers, transactions, documents and physical-trade records.
+      body_2: >-
+        It would not replace transaction monitoring, sanctions screening,
+        case management or human investigation. The proposed extension is a
+        controlled joining exercise: retain the public-data analytical core,
+        then add bank-governed evidence around each prioritised pattern.
+    architecture:
+      heading: "From public-data prototype to a bank review workflow"
+      caption: "The analytical core remains an external signal; bank records and human judgement make a case decidable."
+      today:
+        kicker: "Today"
+        title: "Public-data prototype"
+        nodes:
+          - title: "Official trade data and benchmarks"
+            detail: "Annual corridor-product observations with broad market context."
+          - title: "Review-priority queue"
+            detail: "Unusual patterns ordered for human attention."
+          - title: "Evidence and analyst briefs"
+            detail: "Recomputable facts, caveats and suggested review questions."
+      bridge: "Extend with governed bank context"
+      future:
+        kicker: "Future"
+        title: "Bank-integrated design"
+        nodes:
+          - title: "External-intelligence layer"
+            detail: "This project's queue and evidence enter the bank workflow."
+          - title: "Bank-governed enrichment"
+            detail: "Approved customer, document, shipment and payment context is joined."
+          - title: "Case management and human review"
+            detail: "An accountable analyst investigates, records a disposition and decides next steps."
+          - title: "Governed feedback dataset"
+            detail: "Structured outcomes may support evaluation and calibration after quality and bias controls."
+      feedback_note: "Analyst dispositions are not unquestioned ground-truth labels. Coverage, reviewer consistency and selective-label bias must be assessed before they are used for model evaluation or calibration."
+    data_domains:
+      heading: "What a bank would add"
+      caption: "These records are structurally absent from the public-data prototype and remain subject to bank ownership, access and retention controls."
+      items:
+        - title: "KYC/CDD and expected activity"
+          detail: "Customer identity, risk profile, expected trade activity and relationship context."
+          icon: "landmark"
+        - title: "Trade-finance documentation"
+          detail: "Contracts, invoices, instrument terms, Incoterms and goods descriptions."
+          icon: "file-search"
+        - title: "Shipment and customs records"
+          detail: "Bills of lading, customs declarations and evidence of physical movement."
+          icon: "package"
+        - title: "Payments and correspondent data"
+          detail: "Originators, beneficiaries, intermediaries, timing, currencies and amounts."
+          icon: "line-chart"
+        - title: "Sanctions and adverse media"
+          detail: "Existing screening results and investigative context, governed separately from the ranking signal."
+          icon: "search"
+        - title: "Beneficial ownership"
+          detail: "The natural persons who ultimately own or control the trading parties."
+          icon: "shield-check"
+    value:
+      heading: "Potential value to wholesale-banking AFC"
+      caption: "Proposed benefits to test in a controlled pilot, not measured production outcomes."
+      items:
+        - title: "Better-scoped triage"
+          detail: "Use corridor, product and market context to focus limited analyst attention."
+          icon: "checklist"
+        - title: "Contextual review"
+          detail: "Test a public aggregate anomaly against the customer profile, documents, payments and physical trade."
+          icon: "layers"
+        - title: "Traceable rationale"
+          detail: "Carry recomputable evidence, caveats and missing-information questions into the review record."
+          icon: "file-text"
+        - title: "Governed learning loop"
+          detail: "Use quality-controlled review outcomes to evaluate ranking performance and revisit calibration."
+          icon: "rotate-cw"
+    adoption:
+      heading: "A controlled adoption pathway"
+      caption: "Each stage adds evidence and governance before operational reliance increases."
+      stages:
+        - number: "1"
+          title: "Offline enrichment pilot"
+          detail: "Join a limited sample of queued patterns to approved internal records in a segregated environment. No automated decisions or customer action."
+        - number: "2"
+          title: "Controlled workflow integration"
+          detail: "Send evidence packages to case management, capture structured analyst questions and dispositions, and preserve end-to-end lineage."
+        - number: "3"
+          title: "Validated operational use"
+          detail: "Proceed only after independent validation, access-control approval, monitoring design and performance review on fresh periods."
+    controls:
+      heading: "Controls required before operational use"
+      items:
+        - title: "Private-data governance"
+          detail: "Purpose limitation, entitlements, retention, lineage and audit logging for every internal record used."
+        - title: "Model risk and monitoring"
+          detail: "Independent validation, periodic re-evaluation, drift monitoring and documented change control."
+        - title: "Feedback-label governance"
+          detail: "Disposition definitions, reviewer consistency, missing outcomes and selective-label bias must be tested."
+        - title: "Human accountability"
+          detail: "A named analyst remains responsible for every review decision; the score never establishes suspicion or criminal intent."
+    closing:
+      statement: "The credible extension is the operating discipline: prioritise unusual patterns, expose recomputable evidence, state the caveats, join the private records a bank already governs, and leave every conclusion to accountable human review."
+      chips: ["External intelligence", "Governed enrichment", "Human decision"]
+    design_basis: "Design basis: references/DOMAIN_GUIDE.md · references/evidence_first_tbml_project_explainer.md · references/feature_typology_crosswalk.md · supplied project brief section 10"
   appendix:
-    eyebrow: "Reference"
-    title: "Appendix"
-    subtitle: "Data dictionary and official data sources."
+    eyebrow: "Appendix"
+    title: "Data Dictionary"
+    subtitle: "Definitions, analytical fields, and official data sources."
 
 overview_kpis:
   observations: "Official BACI observations"
@@ -431,7 +850,7 @@ navigation_steps:
   - ["Top 50 Review Queue", "Filter and sort the ranked official observations."]
   - ["Selected Case Review", "Open one case: history, signals, and evidence."]
   - ["Trade Landscape and Patterns", "See coverage and concentration across the queue."]
-  - ["Model Validation & Controls", "Check evaluation, selection, and interpretation limits."]
+  - ["Model Evaluation & Controls", "Check evaluation, selection, and interpretation limits."]
 
 # Verbatim from reports/final_analysis_report.md — Key limitations.
 limitations:

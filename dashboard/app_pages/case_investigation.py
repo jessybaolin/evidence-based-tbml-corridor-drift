@@ -1,22 +1,37 @@
-"""Case Investigation — one selected official observation, in depth."""
+"""Selected Case Review — one selected official observation, in depth.
+
+Header: one compact amber selected-case strip (facts · score · quality · the
+change-case control) instead of the old KPI cards. Case Summary: a Case facts
+panel (35%) beside a three-view comparison carousel (65%) — market comparison,
+own history, peer position — each with a Chart|Table mode, all driven by the
+pure frames in services/case_summary.py so a chart and its table can never
+disagree. A runtime consistency gate (validate_case_view) recomputes every
+displayed identity and value; if anything disagrees with the published
+artefacts the page shows a governed error state instead of numbers.
+"""
 
 from __future__ import annotations
+
+import html
 
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.cards import comparison_card_markup, render_fact_list
 from dashboard.components.charts import (
-    history_line, residual_line, show, unit_value_vs_benchmark,
+    case_history_view, case_market_view, case_peer_view, case_view_height, show,
 )
-from dashboard.components.empty_states import missing_output
-from dashboard.components.evidence_panel import evidence_cards
+from dashboard.components.empty_states import render_empty_state
+from dashboard.components.icons import render_icon
 from dashboard.components.page_header import ledger, page_header, section_title
-from dashboard.components.status_badges import quality_pill
+from dashboard.components.status_badges import quality_label, quality_pill
 from dashboard.components.tables import plain_table
+from dashboard.services import case_summary as case
 from dashboard.services import dashboard_metrics as metrics
 from dashboard.services import data_loader as load
 from dashboard.services import formatting as fm
 from dashboard.services import session_state as state
+from dashboard.services import why_ranked_high as wrh
 
 content = load.load_content()
 copy = content["pages"]["case_investigation"]
@@ -25,9 +40,27 @@ page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 queue = load.load_review_queue().sort_values("rank")
 features = load.load_features()
 evidence = load.load_evidence()
+panel = load.load_panel(columns=case.PEER_PANEL_COLUMNS)
 short_labels = content["family_short_labels"]
 
-# ---- Case selector: works with or without a Review Queue selection ----
+
+def _e(text: object) -> str:
+    return html.escape(str(text), quote=True)
+
+
+def _tip(inner_html: str, tip: str) -> str:
+    # CSS-only tooltip (styles.py .tip): opens on hover and keyboard focus.
+    return f'<span class="tip" tabindex="0" data-tip="{_e(tip)}">{inner_html}</span>'
+
+
+def _na(value, formatter) -> str:
+    # NA-safe display cell: missing analytical values show an em dash, never 0.
+    return "—" if value is None or pd.isna(value) else formatter(value)
+
+
+# ---- Selected-case strip: facts · score · quality · change case --------------
+# The selectbox stays the page's FIRST (and only) selectbox and keeps writing
+# the raw obs_id to session state — the shared contract with the Review Queue.
 labels = {
     row.obs_id: (
         f"#{int(row.rank)} · {int(row.year)} · {row.exporter_iso3} → {row.importer_iso3} · "
@@ -38,177 +71,491 @@ labels = {
 ids = list(labels)
 carried = state.selected_obs_id()
 initial_index = ids.index(carried) if carried in ids else 0
-selected_id = st.selectbox(
-    "Selected observation", ids, index=initial_index,
-    format_func=lambda obs: labels[obs],
-    help="Pick a case here, or select a row on the Review Queue page.",
-)
-state.select_obs(selected_id)
 
-record = metrics.case_record(selected_id, queue, features)
-if record is None:
-    st.error("The selected observation is not in the review queue. Choose another case.")
-    st.stop()
+with st.container(key="case_strip"):
+    facts_col, score_col, quality_col, change_col = st.columns(
+        [2.9, 1.3, 1.3, 1.8], vertical_alignment="center", gap="medium"
+    )
+    # The selector renders in the rightmost column but must EXECUTE first so the
+    # facts/score cells on its left describe the case picked on this rerun.
+    with change_col:
+        st.markdown(
+            f'<div class="case-strip-label">{_e(copy["selector_label"])}</div>',
+            unsafe_allow_html=True,
+        )
+        selected_id = st.selectbox(
+            copy["selector_label"], ids, index=initial_index,
+            format_func=lambda obs: labels[obs],
+            help=copy["selector_help"], label_visibility="collapsed",
+        )
+    state.select_obs(selected_id)
+
+    record = metrics.case_record(selected_id, queue, features)
+    if record is None:
+        render_empty_state(copy["not_in_queue"], level="warning")
+        st.stop()
+
+    # Consistency gate: recompute every displayed identity/value against the
+    # published artefacts. Any disagreement -> governed error, no numbers.
+    violations = case.validate_case_view(selected_id, queue, features, panel)
+    if violations:
+        render_empty_state(
+            copy["validation_error"].format(reason=violations[0]), level="warning"
+        )
+        st.stop()
+
+    case_year = int(record["year"])
+    family_id = str(record["family_id"])
+    case_multiple = float(record["unit_value_usd_per_metric_ton"]) / float(
+        record["benchmark_price_usd_per_metric_ton"]
+    )
+
+    with facts_col:
+        st.markdown(
+            f'<div class="case-strip-facts"><strong>#{int(record["rank"])}</strong>'
+            f" · {case_year} · {_e(record['exporter_iso3'])} → {_e(record['importer_iso3'])}"
+            f" · {_e(short_labels.get(family_id, record['product_name']))}"
+            f" · HS6 {_e(record['hs6'])}</div>",
+            unsafe_allow_html=True,
+        )
+    with score_col:
+        score_label = _tip(
+            f'{_e(copy["strip"]["score_label"])} {render_icon("info")}',
+            copy["strip"]["score_tip"],
+        )
+        st.markdown(
+            f'<div class="case-strip-metric"><span class="case-strip-label">{score_label}</span>'
+            f'<span class="case-strip-value">{_e(fm.score(record["selected_review_priority_score"]))}</span></div>',
+            unsafe_allow_html=True,
+        )
+    with quality_col:
+        q_label = _tip(_e(copy["strip"]["quality_label"]), copy["strip"]["quality_tip"])
+        st.markdown(
+            f'<div class="case-strip-metric"><span class="case-strip-label">{q_label}</span>'
+            f'{quality_pill(record["quality_status"])}</div>',
+            unsafe_allow_html=True,
+        )
 
 case_evidence = metrics.case_evidence(evidence, selected_id)
 
-# ---- Case header ----
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Review rank", f"#{int(record['rank'])}")
-m2.metric("Review-priority score", fm.score(record["selected_review_priority_score"]),
-          help=load.load_model_selection().get("score_language"))
-m3.metric("Evidence rows", int(record["key_evidence_count"]))
-with m4:
-    st.markdown("**Data quality**", help="Quality is a usability signal, separate from suspiciousness.")
-    st.markdown(quality_pill(record["quality_status"]), unsafe_allow_html=True)
-    if record.get("valid_extreme_flag"):
-        st.caption("Valid extreme retained (>5× or <0.2× benchmark)")
-
-summary_tab, trend_tab, why_tab, evidence_tab, limits_tab = st.tabs(
-    ["Case Summary", "Trade & Benchmark Trend", "Why It Ranked High", "Evidence", "Limitations"]
+# ---- The comparison frames: one prepared source per view (charts AND tables) --
+series = case.corridor_series(
+    features, record["exporter_iso3"], record["importer_iso3"], record["hs6"]
 )
+market = case.market_comparison_frame(series, case_year)
+own = case.own_history_frame(series, case_year)
+position = case.peer_position(panel, family_id, case_year, selected_id)
 
-# ---- Tab 1: Case Summary ----
+summary_tab, why_tab, limits_tab = st.tabs([str(t) for t in copy["tabs"]])
+
+# ---- Tab 1: Case Summary ------------------------------------------------------
 with summary_tab:
-    left, right = st.columns([1.1, 1], gap="large")
+    left, right = st.columns([35, 65], gap="large")
+
     with left:
-        section_title("Observation")
-        st.markdown(
-            f"""
-            **Observation ID:** `{record['obs_id']}`  \n
-            **Year:** {int(record['year'])}  \n
-            **Corridor:** {record.get('exporter_name', record['exporter_iso3'])} ({record['exporter_iso3']})
-            → {record.get('importer_name', record['importer_iso3'])} ({record['importer_iso3']})  \n
-            **HS6:** `{record['hs6']}` — {record['product_name']}  \n
-            **Ranking method:** {metrics.selected_method_label(load.load_model_selection())}
-            """
+        facts = copy["facts"]
+        section_title(facts["heading"], facts["caption"])
+        exporter = record.get("exporter_name")
+        importer = record.get("importer_name")
+        exporter = exporter if pd.notna(exporter) else record["exporter_iso3"]
+        importer = importer if pd.notna(importer) else record["importer_iso3"]
+        implied_label = _tip(
+            f'{_e(facts["implied_uv"])} {render_icon("info")}', facts["implied_uv_tip"]
         )
-    with right:
-        section_title("Reported values", "Annual official aggregates — not invoices or shipments.")
-        values = pd.DataFrame([
-            {"measure": "Trade value", "value": fm.money(record["trade_value_usd"])},
-            {"measure": "Quantity", "value": fm.quantity_mt(record["quantity_metric_ton"])},
-            {"measure": "Aggregate unit value", "value": fm.money(record["unit_value_usd_per_metric_ton"]) + " / mt"},
-            {"measure": "World Bank benchmark", "value": fm.money(record["benchmark_price_usd_per_metric_ton"]) + " / mt"},
-            {"measure": "Benchmark residual (log gap)", "value": fm.fmt(record.get("benchmark_residual"))},
-            {"measure": "Rule score", "value": fm.score(record["rule_score"])},
-            {"measure": "Challenger score", "value": fm.score(record["selected_challenger_score"])},
+        multiple_1dp = f"{case_multiple:.1f}"
+        render_fact_list([
+            (_e(facts["rank"]), f"#{int(record['rank'])}"),
+            (_e(facts["year"]), str(case_year)),
+            (_e(facts["corridor"]),
+             f"{_e(exporter)} ({_e(record['exporter_iso3'])}) → "
+             f"{_e(importer)} ({_e(record['importer_iso3'])})"),
+            (_e(facts["product"]),
+             f"{_e(record['product_name'])} · HS6 {_e(record['hs6'])}"),
+            (_e(facts["trade_value"]), _e(fm.money(record["trade_value_usd"]))),
+            (_e(facts["quantity"]), _e(fm.quantity_mt(record["quantity_metric_ton"]))),
+            (implied_label,
+             _e(fm.money(record["unit_value_usd_per_metric_ton"]) + " / mt")),
+            (_e(facts["benchmark"]),
+             _e(fm.money(record["benchmark_price_usd_per_metric_ton"]) + " / mt")),
+            (_e(facts["vs_benchmark"]),
+             _e(facts["vs_benchmark_value"].format(multiple=multiple_1dp))),
+            (_e(facts["quality"]), quality_pill(record["quality_status"])),
         ])
-        plain_table(values, column_labels={"measure": "Measure", "value": "Value"})
-    if record.get("benchmark_caveat") and pd.notna(record.get("benchmark_caveat")):
-        st.caption(f"Benchmark caveat: {record['benchmark_caveat']}")
-    ledger("review_queue", "features")
+        if record.get("benchmark_caveat") and pd.notna(record.get("benchmark_caveat")):
+            st.caption(f"{facts['benchmark_caveat_label']}: {record['benchmark_caveat']}")
+        if record.get("valid_extreme_flag"):
+            st.caption(facts["valid_extreme_note"])
 
-# ---- Tab 2: Trade & Benchmark Trend (actual corridor history, no indexing) ----
-with trend_tab:
-    history_columns = (
-        "obs_id", "year", "exporter_iso3", "importer_iso3", "hs6",
-        "trade_value_usd", "quantity_metric_ton", "unit_value_usd_per_metric_ton",
-        "benchmark_price_usd_per_metric_ton", "benchmark_residual", "quality_status",
-    )
-    panel = load.load_panel(columns=history_columns)
-    history = metrics.case_history(panel, record["exporter_iso3"], record["importer_iso3"], record["hs6"])
-    if history.empty:
-        st.info("No corridor history is available in the clean panel for this exporter–importer–HS6.")
-    else:
-        section_title(
-            "Aggregate unit value vs World Bank benchmark",
-            "Both series in USD per metric ton. The benchmark is broad market context, not invoice-level fair value.",
+        prov = copy["provenance"]
+        with st.expander(prov["label"]):
+            st.markdown(
+                f"**{prov['obs_id']}:** `{selected_id}`  \n"
+                f"**{prov['source_row']}:** `{record.get('source_row_id', '—')}` · "
+                f"**{prov['source_version']}:** `{record.get('source_version', '—')}`  \n"
+                f"**{prov['method_label']}:** {prov['method_value']}"
+            )
+            st.page_link(
+                "app_pages/model_and_controls.py", label=str(prov["method_link"]),
+                icon=":material/verified_user:",
+            )
+            ledger("review_queue", "features", "panel")
+
+    with right:
+        views = copy["views"]
+        VIEW_LABELS = [str(v) for v in views["labels"]]
+        MODE_LABELS = [str(views["mode_chart"]), str(views["mode_table"])]
+        _VIEW_IDX = "case_view_idx"
+        _VIEW_BAR = "case_view_bar"
+
+        if _VIEW_IDX not in st.session_state:
+            st.session_state[_VIEW_IDX] = 0
+        st.session_state[_VIEW_IDX] = max(
+            0, min(len(VIEW_LABELS) - 1, int(st.session_state[_VIEW_IDX]))
         )
-        log_scale = st.toggle(
-            "Log scale", value=False,
-            help="Useful when the unit value sits orders of magnitude from the benchmark.",
+        st.session_state.setdefault(_VIEW_BAR, VIEW_LABELS[st.session_state[_VIEW_IDX]])
+
+        def _go_view(delta: int) -> None:
+            idx = max(0, min(len(VIEW_LABELS) - 1,
+                             int(st.session_state[_VIEW_IDX]) + delta))
+            st.session_state[_VIEW_IDX] = idx
+            st.session_state[_VIEW_BAR] = VIEW_LABELS[idx]
+
+        def _on_view_bar() -> None:
+            label = st.session_state.get(_VIEW_BAR)
+            if label is None:
+                # segmented_control allows deselection; keep the current view.
+                st.session_state[_VIEW_BAR] = VIEW_LABELS[int(st.session_state[_VIEW_IDX])]
+                return
+            st.session_state[_VIEW_IDX] = VIEW_LABELS.index(label)
+
+        def _mode_control(view_idx: int) -> str:
+            # Chart|Table applies to the CURRENT view only: one key per view,
+            # so toggling one view never flips another.
+            key = f"case_view_mode_{view_idx}"
+            st.session_state.setdefault(key, MODE_LABELS[0])
+
+            def _restore() -> None:
+                if st.session_state.get(key) is None:
+                    st.session_state[key] = MODE_LABELS[0]
+
+            choice = st.segmented_control(
+                str(views["mode_label"]), MODE_LABELS, key=key, on_change=_restore,
+                label_visibility="collapsed",
+            )
+            return choice or MODE_LABELS[0]
+
+        def _takeaway(text: str) -> None:
+            st.markdown(f'<div class="case-takeaway">{_e(text)}</div>',
+                        unsafe_allow_html=True)
+
+        bar_col, ind_col, prev_col, next_col = st.columns(
+            [3.1, 0.8, 1.3, 1.3], vertical_alignment="center"
         )
-        show(unit_value_vs_benchmark(history, int(record["year"]), log_scale),
-             height=420, key="case_unit_value_trend")
+        with bar_col:
+            st.segmented_control(
+                str(views["selector_label"]), VIEW_LABELS, key=_VIEW_BAR,
+                on_change=_on_view_bar, label_visibility="collapsed",
+            )
+        view_idx = int(st.session_state[_VIEW_IDX])
+        with ind_col:
+            st.markdown(
+                f'<div class="scene-indicator">'
+                f'{_e(views["indicator"].format(n=view_idx + 1, total=len(VIEW_LABELS)))}'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        with prev_col:
+            st.button(str(views["prev_label"]), key="case_view_prev",
+                      on_click=_go_view, args=(-1,), type="secondary",
+                      disabled=view_idx == 0, width="stretch")
+        with next_col:
+            st.button(str(views["next_label"]), key="case_view_next",
+                      on_click=_go_view, args=(1,), type="primary",
+                      disabled=view_idx == len(VIEW_LABELS) - 1, width="stretch")
 
-        left, right = st.columns(2, gap="large")
-        with left:
-            section_title("Trade value over time", "Annual aggregate trade value (USD).")
-            show(history_line(history, "trade_value_usd", "USD", int(record["year"])),
-                 key="case_trade_value")
-        with right:
-            section_title("Quantity over time", "Annual aggregate quantity (metric tons).")
-            show(history_line(history, "quantity_metric_ton", "Metric tons", int(record["year"]), ",.3f"),
-                 key="case_quantity")
+        if view_idx == 0:
+            # ---- View 1 · Market comparison --------------------------------
+            vw = views["market"]
+            section_title(str(vw["title"]))
+            case_row = market.loc[market["year"] == case_year].iloc[0]
+            take_col, mode_col = st.columns([3.2, 1.1], vertical_alignment="center")
+            with mode_col:
+                mode = _mode_control(0)
+            with take_col:
+                if pd.notna(case_row["multiple"]):
+                    _takeaway(vw["takeaway"].format(
+                        year=case_year, multiple=f"{case_row['multiple']:.1f}"))
+                else:
+                    _takeaway(vw["takeaway_unavailable"])
+            if mode == MODE_LABELS[0]:
+                show(case_market_view(market, family_id, vw),
+                     height=case_view_height(), key="case_view_market")
+            else:
+                observed = market[market["observed"]]
+                mt = vw["table"]
+                plain_table(pd.DataFrame({
+                    mt["year"]: observed["year"].astype(int).astype(str),
+                    mt["trade_value"]: observed["trade_value_usd"].map(
+                        lambda v: _na(v, fm.money)),
+                    mt["quantity"]: observed["quantity_metric_ton"].map(
+                        lambda v: _na(v, fm.quantity_mt)),
+                    mt["implied_uv"]: observed["unit_value"].map(
+                        lambda v: _na(v, fm.money)),
+                    mt["benchmark"]: observed["benchmark"].map(
+                        lambda v: _na(v, fm.money)),
+                    mt["multiple"]: observed["multiple"].map(
+                        lambda v: _na(v, lambda x: f"{x:,.2f}×")),
+                    mt["quality"]: observed["quality_status"].map(
+                        lambda s: _na(s, quality_label)),
+                }))
+            st.caption(str(vw["note"]))
 
-        section_title("Benchmark residual over time",
-                      "Log gap between the corridor's unit value and the benchmark; 0 means at benchmark.")
-        show(residual_line(history, int(record["year"])), key="case_residual")
+        elif view_idx == 1:
+            # ---- View 2 · Own history --------------------------------------
+            vw = views["history"]
+            section_title(str(vw["title"]))
+            case_own = own.loc[own["year"] == case_year].iloc[0]
+            take_col, mode_col = st.columns([3.2, 1.1], vertical_alignment="center")
+            with mode_col:
+                mode = _mode_control(1)
+            with take_col:
+                if pd.notna(case_own["multiple_vs_prior"]):
+                    _takeaway(vw["takeaway"].format(
+                        year=case_year,
+                        multiple=f"{case_own['multiple_vs_prior']:.1f}",
+                        prior_years=int(case_own["prior_years_used"])))
+                else:
+                    _takeaway(vw["takeaway_no_baseline"])
+            if mode == MODE_LABELS[0]:
+                show(case_history_view(own, family_id, vw),
+                     height=case_view_height(), key="case_view_history")
+            else:
+                observed = own[own["observed"]]
+                ht = vw["table"]
+                plain_table(pd.DataFrame({
+                    ht["year"]: observed["year"].astype(int).astype(str),
+                    ht["implied_uv"]: observed["unit_value"].map(
+                        lambda v: _na(v, fm.money)),
+                    ht["prior_median"]: observed["prior_median"].map(
+                        lambda v: _na(v, fm.money)),
+                    ht["multiple"]: observed["multiple_vs_prior"].map(
+                        lambda v: _na(v, lambda x: f"{x:,.2f}×")),
+                    ht["prior_years"]: observed["prior_years_used"].map(
+                        lambda v: _na(v, lambda x: str(int(x)))),
+                    ht["quality"]: observed["quality_status"].map(
+                        lambda s: _na(s, quality_label)),
+                }))
+            st.caption(str(vw["note"]))
 
-        observed_years = ", ".join(str(int(y)) for y in history["year"])
-        st.caption(f"Observed years for this corridor-product: {observed_years}. Missing years were not traded or not reported.")
-    ledger("panel")
+        else:
+            # ---- View 3 · Peer position ------------------------------------
+            vw = views["peers"]
+            section_title(str(vw["title"]))
+            if position is None:
+                render_empty_state(str(vw["takeaway_unavailable"]), level="warning")
+            else:
+                take_col, mode_col = st.columns([3.2, 1.1], vertical_alignment="center")
+                with mode_col:
+                    mode = _mode_control(2)
+                with take_col:
+                    _takeaway(vw["takeaway"].format(
+                        percentile=f"{position['percentile']:.1%}",
+                        peers=f"{position['peer_count']:,}", year=case_year))
+                if mode == MODE_LABELS[0]:
+                    show(case_peer_view(position, vw),
+                         height=case_view_height(), key="case_view_peers")
+                else:
+                    pt = vw["table"]
+                    plain_table(pd.DataFrame({
+                        pt["measure"]: [
+                            pt["case_multiple"], pt["case_percentile"],
+                            pt["peer_count"], pt["median_multiple"],
+                            pt["p95_multiple"], pt["at_or_above_3x"],
+                        ],
+                        pt["value"]: [
+                            f"{position['case_ratio']:,.2f}×",
+                            f"{position['percentile']:.1%}",
+                            f"{position['peer_count']:,}",
+                            f"{position['median_multiple']:,.2f}×",
+                            f"{position['p95_multiple']:,.2f}×",
+                            f"{position['peers_at_or_above_3x']:,}",
+                        ],
+                    }))
+                st.caption(vw["population_note"].format(
+                    year=case_year, peers=f"{position['peer_count']:,}"))
+                if position["n_outside"]:
+                    st.caption(vw["outside_note"].format(n=position["n_outside"]))
 
-# ---- Tab 3: Why It Ranked High (actual features + approved interpretations) ----
+# ---- Tab 2: Why It Ranked High (plain-English reasons + comparison cards) -----
 with why_tab:
-    section_title(
-        "Ranking signals for this observation",
-        "Actual feature values with the project's approved plain-English interpretations. "
-        "No generated explanations.",
-    )
-    signals = metrics.case_signals(record, load.load_feature_explanations())
-    if signals.empty:
-        st.info("No feature values are available for this observation.")
-    else:
-        display = signals.copy()
-        display["value"] = display["value"].map(lambda v: fm.fmt(v, 3))
-        plain_table(
-            display,
-            column_labels={
-                "signal": "Signal", "value": "Value",
-                "interpretation": "What it means (approved wording)",
-                "time_safety": "Time-safety rule",
-            },
-            height=430,
-        )
-    if record.get("data_quality_flags") and pd.notna(record.get("data_quality_flags")):
-        st.caption(f"Data-quality flags: `{record['data_quality_flags']}`")
+    why = copy["why"]
 
-    section_title("Model-contribution context (global)",
-                  "Global model contribution context; not a row-specific explanation.")
-    # Row-level SHAP values are not produced by the pipeline — only the global
-    # summary exists, and it is labelled as such rather than presented per-case.
-    shap_figure = load.figure_path("shap_summary")
-    if shap_figure:
-        st.image(str(shap_figure), width="stretch")
-        st.caption("SHAP explains model behaviour; it is not factual or legal evidence. "
-                   f"Source: reports/figures/{shap_figure.name}")
-    else:
-        missing_output("shap_summary_values")
-    ledger("features", "feature_explanations")
+    def _signal_value(kind: str, number, raw) -> str:
+        # The numeric token for the Case-result column; interpretation is joined
+        # by the caller. Every log field is already exp()'d in signal_number.
+        if number is None:
+            return str(why["value_missing"])
+        if kind == "log_multiple":
+            return str(why["value_multiple"]).format(multiple=f"{number:.1f}").strip()
+        if kind == "percentile":
+            return str(why["value_percentile"]).format(
+                value=wrh.percentile_ordinal(number))
+        if kind == "zscore":
+            direction = why["direction_above"] if number >= 0 else why["direction_below"]
+            return str(why["value_zscore"]).format(
+                z=f"{abs(number):.1f}", direction=direction)
+        if kind == "count":
+            return str(why["value_count"]).format(n=int(number))
+        if kind == "flag":
+            return str(why["value_flag_yes"] if number >= 0.5 else why["value_flag_no"])
+        return str(why["value_magnitude"]).format(value=f"{number:.2f}")
 
-# ---- Tab 4: Evidence ----
-with evidence_tab:
-    section_title(
-        "Recomputable evidence",
-        "Each card restates a metric that can be recomputed from the official data. "
-        "Severity reflects distance from the metric's review threshold.",
-    )
-    if case_evidence.empty:
-        st.info("No evidence rows exist for this observation in the evidence table.")
+    section_title(why["heading"], why["caption"])
+
+    # 1) Dynamic ranking summary — only the case's flagged evidence types appear.
+    clause_keys = wrh.summary_clause_keys(record, case_evidence)
+    clauses = [str(why["summary_clauses"][k]) for k in clause_keys
+               if k in why["summary_clauses"]]
+    if clauses:
+        if len(clauses) == 1:
+            body = clauses[0]
+        else:
+            body = (str(why["summary_join"]).join(clauses[:-1])
+                    + str(why["summary_final_join"]) + clauses[-1])
+        summary_text = str(why["summary_prefix"]) + body + str(why["summary_suffix"])
     else:
-        evidence_cards(case_evidence)
-        with st.expander("Evidence as a table"):
-            plain_table(case_evidence[[
+        summary_text = str(why["summary_empty"])
+    st.markdown(f'<div class="why-summary">{_e(summary_text)}</div>',
+                unsafe_allow_html=True)
+    st.caption(why["summary_note"])
+
+    # 2) Four comparison cards (2x2). Each shows the real per-case value; a card
+    #    shows its data-absence line only when the feature is genuinely missing.
+    section_title(why["cards_heading"])
+    cards_meta = wrh.card_metrics(record)
+    card_copy = why["cards"]
+    grid = [st.columns(2, gap="medium"), st.columns(2, gap="medium")]
+    cells = [grid[0][0], grid[0][1], grid[1][0], grid[1][1]]
+    for meta, cell in zip(cards_meta, cells):
+        c = card_copy[meta["slot"]]
+        caveat_tip = _tip(render_icon("info"), c["caveat"])
+        with cell:
+            if not meta["available"]:
+                st.markdown(
+                    comparison_card_markup(
+                        title=c["title"], value_html=_e(c["unavailable"]),
+                        support="", caveat_tip_html=caveat_tip, available=False),
+                    unsafe_allow_html=True,
+                )
+                continue
+            magnitude = meta["magnitude"]
+            secondary_html = ""
+            if meta["slot"] == "C":
+                template = c["value_increase"] if meta["direction"] == "above" \
+                    else c["value_decrease"]
+                value_html = _e(str(template))
+                dir_word = c["direction_above"] if meta["direction"] == "above" \
+                    else c["direction_below"]
+                secondary_html = _e(str(c["secondary"]).format(
+                    z=f"{magnitude:.1f}", direction=dir_word))
+                result_str = f"{magnitude:.1f} robust deviations {dir_word} prior history"
+            else:
+                if meta["slot"] == "B":
+                    template = c["value_increase"] if meta["direction"] == "above" \
+                        else c["value_decrease"]
+                else:  # A, D — change direction
+                    template = c["value_increase"] if meta["direction"] == "increase" \
+                        else c["value_decrease"]
+                value_html = _e(str(template).format(multiple=f"{magnitude:.1f}"))
+                result_str = f"{magnitude:.2f}×"
+            st.markdown(
+                comparison_card_markup(
+                    title=c["title"], value_html=value_html, support=c["support"],
+                    caveat_tip_html=caveat_tip, secondary_html=secondary_html),
+                unsafe_allow_html=True,
+            )
+            with st.expander(why["how_calculated_label"]):
+                st.markdown(
+                    f"**{why['how_result_label']}:** {result_str}  \n"
+                    f"**{why['how_metric_label']}:** `{c['metric']}`  \n"
+                    f"**{why['how_comparison_label']}:** {c['comparison']}  \n"
+                    f"**{why['how_derivation_label']}:** {c['derivation']}  \n"
+                    f"{c['caveat']}"
+                )
+
+    # 3) Full analytical signal profile (collapsed). Custom table: monospace
+    #    technical field names, native-title tooltips on labels, sticky header.
+    with st.expander(why["signals_heading"]):
+        st.caption(why["signals_description"])
+        profile = wrh.signal_profile(record)
+        sig_cols = why["signals_columns"]
+        sig_meta = why["signals"]
+        rows_html = []
+        for row in profile:
+            field = row["field"]
+            meta = sig_meta.get(field)
+            if meta is None:  # display-label mapping must cover every rendered signal
+                continue
+            token = _signal_value(row["kind"], row["number"], row["raw"])
+            if row["kind"] == "flag" or row["number"] is None:
+                case_result = token
+            else:
+                case_result = f"{token} — {meta['interpretation']}"
+            rows_html.append(
+                f'<tr><td class="mono">{_e(field)}</td>'
+                f'<td title="{_e(meta["tooltip"])}">{_e(meta["label"])}</td>'
+                f'<td>{_e(case_result)}</td>'
+                f'<td>{_e(meta["derived"])}</td>'
+                f'<td>{_e(meta["time_safety"])}</td></tr>'
+            )
+        if rows_html:
+            header = "".join(
+                f"<th>{_e(sig_cols[k])}</th>"
+                for k in ("field", "label", "result", "derived", "time_safety")
+            )
+            st.markdown(
+                f'<div class="data-table-wrap signals-scroll">'
+                f'<table class="data-table zebra"><thead><tr>{header}</tr></thead>'
+                f'<tbody>{"".join(rows_html)}</tbody></table></div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.info(why["signals_empty"])
+
+    # 4) Audit details (collapsed): the raw evidence records behind the cards.
+    with st.expander(why["audit_heading"]):
+        st.caption(why["audit_caption"])
+        if case_evidence.empty:
+            st.info(why["audit_empty"])
+        else:
+            ac = why["audit_columns"]
+            audit_fields = [
                 "evidence_id", "evidence_type", "metric_name", "observed_value",
-                "comparison_value", "comparison_group", "threshold", "severity",
-                "plain_english_summary", "caveat",
-            ]])
-    ledger("evidence")
+                "comparison_value", "comparison_group", "threshold",
+                "source_row_id", "source_version", "source_fields", "caveat",
+            ]
+            plain_table(
+                case_evidence[audit_fields],
+                column_labels={f: ac[f] for f in audit_fields},
+            )
+    ledger("evidence", "features")
 
-# ---- Tab 5: Limitations ----
+# ---- Tab 3: Limitations -------------------------------------------------------
 with limits_tab:
-    section_title("Case-specific caveats")
-    case_caveats = case_evidence["caveat"].dropna().unique().tolist() if not case_evidence.empty else []
+    lim = copy["limitations"]
+    section_title(lim["case_heading"])
+    case_caveats = (
+        case_evidence["caveat"].dropna().unique().tolist()
+        if not case_evidence.empty else []
+    )
     if record.get("benchmark_caveat") and pd.notna(record.get("benchmark_caveat")):
         case_caveats.append(str(record["benchmark_caveat"]))
     if case_caveats:
         for caveat in dict.fromkeys(case_caveats):
             st.markdown(f"- {caveat}")
     else:
-        st.markdown("- No evidence-specific caveats recorded for this case.")
-    section_title("Project-wide limitations")
+        st.markdown(f"- {lim['no_caveats']}")
+    section_title(lim["project_heading"])
     for bullet in content["limitations"]:
         st.markdown(f"- {bullet}")
-    st.markdown(f"- {copy['caveat']} Human review remains necessary before any conclusion.")
+    st.markdown(f"- {copy['caveat']} {lim['closing_suffix']}")

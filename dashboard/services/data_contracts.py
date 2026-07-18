@@ -202,7 +202,7 @@ def run_integrity_report(
     features: pd.DataFrame,
     comparison: pd.DataFrame,
 ) -> dict[str, list[str]]:
-    # One dict per contract; empty lists mean pass. Rendered on Model & Controls
+    # One dict per contract; empty lists mean pass. Rendered on Model Evaluation & Controls
     # and asserted by the test suite.
     return {
         "review_queue": validate_queue(queue),

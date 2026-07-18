@@ -3,6 +3,143 @@
 Working notes so the next refinement cycle (human or AI) does not have to
 rediscover decisions. First working version completed 2026-07-14.
 
+## 2026-07-18 — Selected Case Review: "Why It Ranked High" merge + comparison cards
+
+Merged the old "Why It Ranked High" and "Evidence" tabs into one stakeholder
+tab; final tabs are Case Summary · Why It Ranked High · Limitations. Scoring,
+ranking, features and evidence generation untouched; presentation/wording only.
+Tests 79 -> 103 (new `tests/test_why_ranked_high.py`, 18 checks over all 50 cases).
+
+**New pure module `services/why_ranked_high.py`** (no Streamlit, unit-tested):
+`signal_number()` is the ONLY place log space becomes a multiple — exp() for the
+six log fields (unit_value_yoy_change, benchmark_residual, benchmark_adjusted_drift,
+trade_value_yoy_change, quantity_yoy_change, value_quantity_divergence), x100 for
+same_family_year_peer_percentile, identity for robust_historical_z (a z-score,
+NEVER exp'd — exp(18.8) is nonsense), counts/flags/benchmark_consistency_gap kept
+raw. `card_metrics()` returns the 4 card slots with availability + magnitude +
+direction. `summary_clause_keys()` returns the evidence-row-driven summary keys.
+`percentile_ordinal()` formats 99.36 -> "99.4th". `signal_profile()` orders the
+12 signals by analytical importance.
+
+**KEY DESIGN DECISION (data-driven, verified):** each queue case has exactly 4
+evidence rows drawn from 5 evidence types, so which types are present VARIES
+(benchmark_gap 33/50, value_quantity_divergence 29/50, etc.). Audited fact: for
+every case LACKING a card's evidence type, the underlying feature is still
+present and often large (rank 2 lacks a benchmark_gap row yet its benchmark
+multiple is ~9x). Therefore: the **four comparison cards always show the real
+per-case feature value** (a card shows its data-absence line only when the
+feature is genuinely NaN — none in the current queue), while the **dynamic
+top-of-tab summary is strictly evidence-row-driven** (names a comparison as a
+reason only when that evidence_type is one of the case's rows). This never hides
+a real signal and never claims an unflagged one. Cards read from the feature
+(equal to the evidence row's observed_value, verified).
+
+**Layout:** dynamic plain-English summary (`.why-summary`) + verbatim note
+"These comparisons explain the review priority. They are reasons to examine the
+pattern, not conclusions about wrongdoing." -> four cards in a 2x2 st.columns
+grid (`components/cards.comparison_card_markup`, `.compare-card`; teal top rule,
+no red severity badges; caveat = info-icon `.tip`; per-card "How calculated"
+expander) -> collapsed "Signals for this observation" (custom `.data-table` with
+monospace technical field column, native-title tooltips on display labels,
+`.signals-scroll` sticky-header scroll; columns Technical field · Display label ·
+Case result [value + interpretation] · How it is derived · Time-safety rule) ->
+collapsed "Audit details" (raw evidence records; renamed from "Evidence as a
+table"). Card C (robust_historical_z) shows plain-English primary + "{z} robust
+deviations {above/below} the prior pattern" secondary — the z is never the
+headline and never exp'd.
+
+**Removed from the page:** the global SHAP block "Model-contribution context
+(global)" (belongs on Model Validation & Controls, not an individual case) and
+the raw `data_quality_flags` string (`quantity_missing=0; ...`) — the compact
+header quality pill and Limitations tab carry quality context. All new copy is
+in `dashboard_content.yml pages.case_investigation.why`. `dashboard_metrics.case_signals`
+and `SIGNAL_FIELDS` are now unused by the page (kept; no consumer) — the signal
+profile is built by `why_ranked_high.signal_profile` + content labels.
+
+**Percentile wording note:** the signals-table "Case result" uses the spec's
+ordinal form ("99.4th percentile", suffix from the last shown digit); the Case
+Summary peer view still says "at or above 99.4% of peers". Both are the same
+0-1 share x100.
+
+## 2026-07-17 — Selected Case Review rework (strip header, comparison carousel, validation gate)
+
+Rework of `app_pages/case_investigation.py` per notebook §6.2
+(`data-profiling/business_Review_Data_profiling_revamped.ipynb`). Scoring
+logic, ranking outputs and analytical datasets untouched. Tests 64 → 79.
+
+**Header.** The four KPI cards (rank / score / evidence rows / quality) are
+replaced by ONE compact amber selected-case strip (`.st-key-case_strip`, the
+Review Queue selection treatment): `#RANK · YEAR · EXP → IMP · PRODUCT · HS6`
+on the left; review-priority score with the governed tooltip, a compact
+data-quality pill and the **Change case** selectbox on the right. The selectbox
+remains the page's FIRST selectbox (AppTest drives `at.selectbox[0]`) and keeps
+the `tbml_selected_obs_id` contract: it renders in the rightmost strip column
+but EXECUTES first so the facts on its left describe this rerun's pick.
+
+**Tabs.** "Trade & Benchmark Trend" is retired (its three chart builders left
+`components/charts.py` with it). Remaining: Case Summary, Why It Ranked High,
+Evidence, Limitations. All page copy moved to
+`dashboard_content.yml pages.case_investigation` (the page previously
+hardcoded nearly everything).
+
+**Case Summary.** `st.columns([35, 65])`. Left: "Case facts" panel
+(`cards.render_fact_list`, new `.fact-list` CSS) merging the old Observation +
+Reported values sections; "Aggregate unit value" renamed **Implied unit value**
+with the exact governed tooltip; removed from view: rule score, challenger
+score, raw benchmark residual, obs_id, source paths, the "Hybrid: 75% …"
+formula (now "Selected blended ranking method" + a page link to Model
+Validation & Controls). obs_id / source row / source version / ledger live in a
+collapsed **Data provenance** expander. Right: a three-view comparison carousel
+(market comparison · own history · peer position) reusing the dtrq segmented +
+prev/next mechanics with NEW keys (`case_view_idx`, `case_view_bar`,
+`case_view_prev/next`), a per-view Chart|Table segmented control
+(`case_view_mode_{i}` — one key per view, so toggling one view never flips
+another), and one fixed chart height (`chart.height_tall` via
+`charts.case_view_height()`), so switching views never jumps. No auto-rotate;
+swipe is not possible in CSS/JS-free Streamlit and was deliberately skipped.
+
+**Analytics.** All view analytics are pure functions in
+`services/case_summary.py`: `corridor_series`, `market_comparison_frame`,
+`own_history_frame` (exponentiates the NATURAL-LOG
+`shifted_corridor_history_median` exactly once; prior years only; unobserved
+years stay all-NaN so lines GAP — never filled), `peer_position` (notebook
+§6.2b population: same family_id + year, finite ratio > 0, case included;
+inclusive at-or-below percentile; log10 histogram bins clipped to 0.01×–100×
+for DISPLAY while every peer stays in the percentile maths) and
+`validate_case_view` — a runtime consistency gate the page runs before showing
+any number (identity agreement across queue/features/panel, unit value =
+value/quantity, multiple = uv/benchmark, prior-median recomputation, peer
+membership/percentile, histogram conservation). Any violation renders a
+governed warning INSTEAD of numbers. Charts and tables consume the same
+prepared frames; new builders `case_market_view` / `case_history_view` /
+`case_peer_view` live in `components/charts.py` (family colour for the
+corridor, dotted grey benchmark, dashed navy prior median, muted-amber
+selection diamonds from the theme selection tokens).
+
+**Percentile wording.** The notebook prints "above 99.4% of peers" but
+computes the INCLUSIVE at-or-below share `(ratio <= case).mean()` — so the
+takeaway says "sits **at or above** {pct} of {n} same-product corridors",
+which is mathematically true under the §6.2 formula. The stored feature
+`same_family_year_peer_percentile` uses average-rank tie handling and can
+differ by half a tie (e.g. rank 6: 0.8813 vs 0.8808); tests assert closeness,
+not equality, and the display follows §6.2.
+
+**Terminology.** `pages.case_investigation.caveat` updated to "The implied
+unit value is an annual aggregate, not an invoice price." so the Limitations
+closing line matches the renamed measure.
+
+**Fixer round 1.** The Own-history table column originally titled "Prior
+active-year count" (spec wording) is relabelled **"Prior years used for
+median"**: the cell shows `prior_years_used` — prior years with a COMPUTABLE
+unit value, i.e. the values the prior median is built from — while
+"active-year count" is the project's name for `corridor_activity_history`
+(src/tbml_common.py), which also counts missing-quantity prior years. The two
+diverge for 4 of the 50 queue corridors (e.g. MYS→NPL gold 2022 shows 1 year
+used vs 3 active prior years), so the old header understated corridor
+activity. The hover ("Prior years used") and takeaway already labelled the
+number correctly; only the header changed. Do not rename it back to
+"active-year count" unless the column switches to `corridor_activity_history`.
+
 ## 2026-07-17 — Review Queue rework (filters, 9-column grid, amber current-case banner)
 
 Stakeholder-facing UI rework of `app_pages/review_queue.py`. Ranking logic and

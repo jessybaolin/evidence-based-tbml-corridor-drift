@@ -227,17 +227,6 @@ def case_record(obs_id: str, queue: pd.DataFrame, features: pd.DataFrame) -> dic
     return record
 
 
-def case_history(panel: pd.DataFrame, exporter_iso3: str, importer_iso3: str, hs6: str) -> pd.DataFrame:
-    # All observed years for the same exporter–importer–HS6 corridor, straight
-    # from the clean panel — no interpolation, no indexing, no synthetic points.
-    history = panel[
-        (panel["exporter_iso3"] == exporter_iso3)
-        & (panel["importer_iso3"] == importer_iso3)
-        & (panel["hs6"] == hs6)
-    ]
-    return history.sort_values("year").reset_index(drop=True)
-
-
 def case_evidence(evidence: pd.DataFrame, obs_id: str) -> pd.DataFrame:
     severity_order = {"high": 0, "medium": 1, "low": 2}
     rows = evidence.loc[evidence["obs_id"] == obs_id].copy()

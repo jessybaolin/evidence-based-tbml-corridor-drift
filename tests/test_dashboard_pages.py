@@ -24,6 +24,7 @@ PAGES = [
     "case_investigation.py",
     "portfolio_analytics.py",
     "from_data_to_review_queue.py",
+    "bank_implementation_pathway.py",
     "model_and_controls.py",
     "appendix.py",
 ]
@@ -155,6 +156,55 @@ def test_data_trust_scene_navigation_and_corrected_wording():
     assert "Scene 2 of 3" in _rendered_text(at)
 
 
+def test_bank_implementation_pathway_is_explicitly_future_state():
+    at = _run_page("bank_implementation_pathway.py")
+    assert not at.exception
+    text = _rendered_text(at)
+    assert (
+        "Future-state design only. Private bank-data integration, "
+        "case-management connectivity, and production decisioning have not been built."
+    ) in text
+    assert "It would not replace transaction monitoring" in text
+    assert "Analyst dispositions are not unquestioned ground-truth labels" in text
+
+
+def test_bank_implementation_pathway_names_required_bank_context():
+    at = _run_page("bank_implementation_pathway.py")
+    text = _rendered_text(at)
+    for label in (
+        "KYC/CDD and expected activity",
+        "Trade-finance documentation",
+        "Shipment and customs records",
+        "Payments and correspondent data",
+        "Sanctions and adverse media",
+        "Beneficial ownership",
+    ):
+        assert label in text, label
+    for stage in (
+        "Offline enrichment pilot",
+        "Controlled workflow integration",
+        "Validated operational use",
+    ):
+        assert stage in text, stage
+
+
+def test_navigation_group_order_and_renamed_reference_page():
+    source = ENTRY_POINT.read_text(encoding="utf-8")
+    assert source.index('"Business & Review"') < source.index('"Methodology"')
+    assert source.index('"Methodology"') < source.index('"Future State"')
+    assert source.index('"Future State"') < source.index('"Appendix"')
+    assert '"title": "Model Evaluation & Controls"' in source
+    assert '"title": "Bank Implementation Pathway"' in source
+    assert '"title": "Data Dictionary"' in source
+
+
+def test_renamed_methodology_and_dictionary_titles_render():
+    model = _run_page("model_and_controls.py")
+    dictionary = _run_page("appendix.py")
+    assert "Model Evaluation &amp; Controls" in _rendered_text(model)
+    assert "Data Dictionary" in _rendered_text(dictionary)
+
+
 def test_review_queue_filters_and_empty_state():
     at = _run_page("review_queue.py")
     # The score slider now lives inside the collapsed "Advanced filters"
@@ -223,6 +273,93 @@ def test_case_investigation_respects_queue_selection():
     at = _run_page("case_investigation.py", tbml_selected_obs_id=carried)
     assert not at.exception
     assert at.selectbox[0].value == carried
+
+
+def test_case_strip_governed_copy_and_removed_kpis():
+    # The compact strip replaces the old KPI cards; the governed tooltip texts
+    # ride verbatim, and the removed header/summary items stay removed.
+    from dashboard.services.data_loader import load_review_queue
+
+    top = load_review_queue().sort_values("rank").iloc[0]
+    at = _run_page("case_investigation.py")
+    assert not at.exception
+    text = _rendered_text(at)
+    assert f"#{int(top['rank'])}" in text
+    assert f"{top['exporter_iso3']} → {top['importer_iso3']}" in text
+    assert ("This score determines review order. A higher score means higher "
+            "review priority; it is not a probability or finding of financial "
+            "crime.") in text
+    assert ("Annual reported trade value divided by reported quantity. "
+            "It is an aggregate average, not an invoice price.") in text
+    assert ("The World Bank benchmark provides broad market context; "
+            "it is not invoice-level fair value.") in text
+    # Removed from the visible page: score internals, the method formula and
+    # the retired trend tab.
+    assert "Rule score" not in text
+    assert "Challenger score" not in text
+    assert "Hybrid:" not in text
+    assert "Trade & Benchmark Trend" not in text
+
+
+def test_case_view_carousel_switches_without_changing_case():
+    from dashboard.services.data_loader import load_review_queue
+
+    default_id = str(load_review_queue().sort_values("rank").iloc[0]["obs_id"])
+    at = _run_page("case_investigation.py")
+    assert "wider commodity market" in _rendered_text(at)
+
+    at = at.button(key="case_view_next").click().run()
+    assert not at.exception
+    assert "own prior behaviour" in _rendered_text(at)
+    assert at.session_state["tbml_selected_obs_id"] == default_id
+
+    at = at.button(key="case_view_next").click().run()
+    assert not at.exception
+    assert "comparable corridors" in _rendered_text(at)
+    assert at.session_state["tbml_selected_obs_id"] == default_id
+
+    at = at.button(key="case_view_prev").click().run()
+    assert "own prior behaviour" in _rendered_text(at)
+    assert at.session_state["tbml_selected_obs_id"] == default_id
+
+
+def test_case_view_table_mode_shows_same_frame_and_keeps_case():
+    from dashboard.services.data_loader import load_review_queue
+
+    top = load_review_queue().sort_values("rank").iloc[0]
+    default_id = str(top["obs_id"])
+    multiple = float(top["unit_value_usd_per_metric_ton"]) / float(
+        top["benchmark_price_usd_per_metric_ton"]
+    )
+    at = _run_page("case_investigation.py")
+    mode = next(s for s in at.segmented_control if s.key == "case_view_mode_0")
+    at = mode.set_value("Table").run()
+    assert not at.exception
+    text = _rendered_text(at)
+    # The market table renders from the SAME prepared frame as the chart: the
+    # case-year benchmark multiple appears with the table's 2-dp format.
+    assert f"{multiple:,.2f}×" in text
+    assert "Benchmark multiple" in text
+    assert at.session_state["tbml_selected_obs_id"] == default_id
+
+
+def test_case_change_refreshes_strip_facts_and_takeaway():
+    from dashboard.services.data_loader import load_review_queue
+
+    queue = load_review_queue().sort_values("rank")
+    target = queue.iloc[4]
+    multiple = float(target["unit_value_usd_per_metric_ton"]) / float(
+        target["benchmark_price_usd_per_metric_ton"]
+    )
+    at = _run_page("case_investigation.py")
+    at = at.selectbox[0].select_index(4).run()
+    assert not at.exception
+    text = _rendered_text(at)
+    assert f"#{int(target['rank'])}" in text
+    assert f"{target['exporter_iso3']} → {target['importer_iso3']}" in text
+    # The market takeaway recomputes for the new case (1-dp multiple).
+    assert f"{multiple:.1f}× the annual World Bank benchmark" in text
+    assert at.session_state["tbml_selected_obs_id"] == str(target["obs_id"])
 
 
 def test_model_controls_split_switch():

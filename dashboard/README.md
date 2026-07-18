@@ -35,7 +35,7 @@ the dashboard has anything to show:
 | `data/outputs/evidence_table.csv` | Case, Portfolio | `python src/07_build_evidence.py` |
 | `data/processed/corridor_product_year_panel.parquet` | Overview, Case trends, Portfolio | `python src/03_build_panel.py` |
 | `data/processed/corridor_features.parquet` | Queue enrichment, Case signals | `python src/04_build_features.py` |
-| `data/outputs/model_comparison.csv`, `model_selection.json` | Model & Controls | `python src/06_train_evaluate_models.py` |
+| `data/outputs/model_comparison.csv`, `model_selection.json` | Model Evaluation & Controls | `python src/06_train_evaluate_models.py` |
 | `configs/project.yml`, `configs/hs_families.yml` | boundary, scope, labels | (checked-in configuration) |
 
 Optional files (missing ones produce a labelled empty state, never fake data):
@@ -71,25 +71,30 @@ python -m pytest tests/ -q
 
 ## Pages
 
-1. **Executive Overview** — boundary banner, one-paragraph explanation, eight
-   derived KPI cards, top-five candidates, family coverage, data-quality
-   summary, key limitations, navigation guidance.
-2. **Review Queue** — the 50 top-ranked official observations with filters
+1. **Business Problem & Value** — the AFC prioritisation problem, what the
+   prototype does, its stakeholder outputs, and its human-review boundary.
+2. **From Data to Review Queue** — official sources, data preparation,
+   time-safe feature construction, controlled evaluation, and evidence flow.
+3. **Trade Landscape and Patterns** — queue and population coverage,
+   concentration, score distributions, and product-family patterns.
+4. **Top 50 Review Queue** — the top-ranked official observations with filters
    (year, family, exporter, importer, quality, score range, evidence count,
    search, top-N), single-row selection, and filtered CSV download.
-3. **Case Investigation** — one selected observation in five tabs: Case
-   Summary, Trade & Benchmark Trend (real corridor history from the clean
-   panel), Why It Ranked High (actual feature values + approved plain-English
+5. **Selected Case Review** — one selected observation in four tabs: Case
+   Summary (compact amber selected-case strip, Case facts panel, and a
+   three-view comparison carousel — market comparison, own history, peer
+   position — each with a Chart|Table mode and a runtime consistency gate),
+   Why It Ranked High (actual feature values + approved plain-English
    interpretations; global SHAP labelled as global), Evidence (cards from
    `evidence_table.csv`), Limitations.
-4. **Portfolio Analytics** — candidates by year/family, score strip, benchmark
-   residual distribution (queue vs population), exporter/importer/corridor
-   concentration, evidence severity mix.
-5. **Model & Controls** — scenario-based comparison (split/family/metric),
+6. **Model Evaluation & Controls** — scenario-based comparison (split/family/metric),
    hard-negative false-positive rates, model selection record, split design,
    live integrity checks (including the no-synthetic-rows control), and
    allowed/not-allowed interpretation language.
-6. **Appendix** — searchable data dictionary (documented + schema-inferred,
+7. **Bank Implementation Pathway** — a clearly labelled future-state design
+   for joining the external-intelligence layer to bank-governed records and
+   case-management workflows.
+8. **Data Dictionary** — searchable analytical definitions (documented + schema-inferred,
    with definition provenance) and official source cards with clickable URLs.
 
 ## How case selection works

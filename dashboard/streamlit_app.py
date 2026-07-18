@@ -61,10 +61,16 @@ PAGE_GROUPS = {
         {"path": "app_pages/case_investigation.py", "title": "Selected Case Review",
          "icon": ":material/search:"},
     ],
-    "Trust & Methodology": [
-        {"path": "app_pages/model_and_controls.py", "title": "Model Validation & Controls",
+    "Methodology": [
+        {"path": "app_pages/model_and_controls.py", "title": "Model Evaluation & Controls",
          "icon": ":material/verified_user:"},
-        {"path": "app_pages/appendix.py", "title": "Appendix",
+    ],
+    "Future State": [
+        {"path": "app_pages/bank_implementation_pathway.py", "title": "Bank Implementation Pathway",
+         "icon": ":material/hub:"},
+    ],
+    "Appendix": [
+        {"path": "app_pages/appendix.py", "title": "Data Dictionary",
          "icon": ":material/menu_book:"},
     ],
 }

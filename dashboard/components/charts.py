@@ -16,6 +16,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 
+from dashboard.components.status_badges import quality_label
+from dashboard.services import formatting as fm
 from dashboard.services.data_loader import load_content, load_theme
 
 def chart_layout(height: int | None = None) -> dict:
@@ -184,70 +186,180 @@ def shap_importance_bar(values: pd.DataFrame) -> go.Figure:
     return fig
 
 
-# ---- Case trend charts ----------------------------------------------------------
+# ---- Selected Case Review: the three comparison views ---------------------------
+#
+# Shared rules (notebook §6.2 + the case-page spec):
+#   - corridor value = family colour; comparison series = dotted context gray
+#     (market benchmark) or dashed navy (prior corridor median); the selected
+#     year = one muted-amber diamond (theme selection tokens) in every view;
+#   - missing years/values GAP (connectgaps=False, NaN y) — never zero-filled;
+#   - short legends; the long explanations live in tooltips and captions;
+#   - one fixed height (case_view_height) so switching views never jumps.
 
-def unit_value_vs_benchmark(history: pd.DataFrame, case_year: int,
-                            log_scale: bool = False) -> go.Figure:
-    # Same unit (USD per metric ton) -> one axis, two series: corridor value in
-    # the accent hue, World Bank benchmark as gray context. The selected year
-    # is direct-labelled; everything else stays in the tooltip.
-    theme = load_theme()["chart"]
+def case_view_height() -> int:
+    """One fixed height (theme token) shared by the three comparison views."""
+    return int(load_theme()["chart"]["height_tall"])
+
+
+def _dash(value, formatter) -> str:
+    # NA-safe hover cell: missing analytical values show an em dash, never 0.
+    if value is None or pd.isna(value):
+        return "—"
+    return formatter(value)
+
+
+def _add_case_diamond(fig: go.Figure, x, y, text: str | None = None) -> None:
+    # The selected-year marker: muted amber diamond (selection role tokens).
+    theme = load_theme()
+    mode = "markers+text" if text else "markers"
+    fig.add_scatter(
+        x=x, y=y, mode=mode, showlegend=False,
+        marker=dict(symbol="diamond", size=14, color=theme["selection"]["border"],
+                    line=dict(color=theme["chart"]["marker_outline"], width=2)),
+        text=[text] if text else None, textposition="top center",
+        textfont=dict(size=12, color=theme["palette"]["ink"]),
+        hoverinfo="skip",
+    )
+
+
+def case_market_view(frame: pd.DataFrame, family_id: str, copy: dict) -> go.Figure:
+    """View 1 — corridor implied unit value vs the annual World Bank benchmark."""
+    theme = load_theme()
+    chart = theme["chart"]
+    family_color = theme["families"].get(family_id, chart["emphasis"])
+    hover = copy["hover"]
+    quality = frame["quality_status"].map(lambda s: _dash(s, quality_label))
+    custom = list(zip(
+        frame["trade_value_usd"].map(lambda v: _dash(v, fm.money)),
+        frame["quantity_metric_ton"].map(lambda v: _dash(v, fm.quantity_mt)),
+        frame["unit_value"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
+        frame["benchmark"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
+        frame["multiple"].map(lambda v: _dash(v, lambda x: f"{x:,.2f}×")),
+        quality,
+    ))
+    template = (
+        "<b>%{x}</b>"
+        f"<br>{hover['trade_value']}: %{{customdata[0]}}"
+        f"<br>{hover['quantity']}: %{{customdata[1]}}"
+        f"<br>{hover['implied_uv']}: %{{customdata[2]}}"
+        f"<br>{hover['benchmark']}: %{{customdata[3]}}"
+        f"<br>{hover['multiple']}: %{{customdata[4]}}"
+        f"<br>{hover['quality']}: %{{customdata[5]}}"
+        "<extra></extra>"
+    )
     fig = go.Figure()
     fig.add_scatter(
-        x=history["year"], y=history["benchmark_price_usd_per_metric_ton"],
-        mode="lines+markers", name="World Bank benchmark",
-        line=dict(color=theme["context_gray"], width=2),
-        marker=dict(size=7),
-        hovertemplate="%{x} · benchmark $%{y:,.0f}/mt<extra></extra>",
+        x=frame["year"], y=frame["benchmark"], mode="lines+markers",
+        name=copy["series_benchmark"], connectgaps=False,
+        line=dict(color=chart["context_gray"], width=2, dash="dot"),
+        marker=dict(size=6),
+        hovertemplate="%{x} · " + copy["series_benchmark"] + " $%{y:,.0f}/mt<extra></extra>",
     )
     fig.add_scatter(
-        x=history["year"], y=history["unit_value_usd_per_metric_ton"],
-        mode="lines+markers", name="Aggregate unit value",
-        line=dict(color=theme["emphasis"], width=2.5),
-        marker=dict(size=8),
-        hovertemplate="%{x} · unit value $%{y:,.0f}/mt<extra></extra>",
+        x=frame["year"], y=frame["unit_value"], mode="lines+markers",
+        name=copy["series_corridor"], connectgaps=False,
+        line=dict(color=family_color, width=2.5), marker=dict(size=7),
+        customdata=custom, hovertemplate=template,
     )
-    focus = history.loc[history["year"] == case_year]
-    if not focus.empty and pd.notna(focus["unit_value_usd_per_metric_ton"].iloc[0]):
-        fig.add_scatter(
-            x=focus["year"], y=focus["unit_value_usd_per_metric_ton"],
-            mode="markers+text", showlegend=False,
-            marker=dict(size=13, color=theme["emphasis"],
-                        line=dict(color=theme["marker_outline"], width=2)),
-            text=[f"{int(case_year)}"], textposition="top center",
-            hoverinfo="skip",
-        )
-    fig.update_layout(yaxis_title="USD per metric ton", xaxis_title="",
-                      yaxis_type="log" if log_scale else "linear")
+    focus = frame[frame["is_case_year"] & frame["unit_value"].notna()]
+    if not focus.empty:
+        _add_case_diamond(fig, focus["year"], focus["unit_value"])
+    fig.update_layout(yaxis_title=copy["y_title"], xaxis_title="",
+                      xaxis=dict(dtick=1), yaxis=dict(rangemode="tozero"))
     return fig
 
 
-def history_line(history: pd.DataFrame, column: str, y_title: str,
-                 case_year: int, hover_fmt: str = ",.0f") -> go.Figure:
-    # Single-series official history with the case year highlighted.
-    theme = load_theme()["chart"]
+def case_history_view(frame: pd.DataFrame, family_id: str, copy: dict) -> go.Figure:
+    """View 2 — corridor implied unit value vs its own prior-year median.
+
+    `prior_median` arrives already exponentiated (case_summary owns the log→
+    level conversion); missing medians and unobserved years stay as gaps.
+    """
+    theme = load_theme()
+    chart = theme["chart"]
+    family_color = theme["families"].get(family_id, chart["emphasis"])
+    hover = copy["hover"]
+    quality = frame["quality_status"].map(lambda s: _dash(s, quality_label))
+    custom = list(zip(
+        frame["unit_value"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
+        frame["prior_median"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
+        frame["multiple_vs_prior"].map(lambda v: _dash(v, lambda x: f"{x:,.2f}×")),
+        frame["prior_years_used"].map(lambda v: _dash(v, lambda x: f"{int(x)}")),
+        quality,
+    ))
+    template = (
+        "<b>%{x}</b>"
+        f"<br>{hover['implied_uv']}: %{{customdata[0]}}"
+        f"<br>{hover['prior_median']}: %{{customdata[1]}}"
+        f"<br>{hover['multiple']}: %{{customdata[2]}}"
+        f"<br>{hover['prior_years']}: %{{customdata[3]}}"
+        f"<br>{hover['quality']}: %{{customdata[4]}}"
+        "<extra></extra>"
+    )
     fig = go.Figure()
     fig.add_scatter(
-        x=history["year"], y=history[column], mode="lines+markers",
-        line=dict(color=theme["emphasis"], width=2), marker=dict(size=7),
-        hovertemplate="%{x} · %{y:" + hover_fmt + "}<extra></extra>",
+        x=frame["year"], y=frame["prior_median"], mode="lines+markers",
+        name=copy["series_prior"], connectgaps=False,
+        line=dict(color=theme["palette"]["navy_700"], width=2, dash="dash"),
+        marker=dict(size=6),
+        hovertemplate="%{x} · " + copy["series_prior"] + " $%{y:,.0f}/mt<extra></extra>",
+    )
+    fig.add_scatter(
+        x=frame["year"], y=frame["unit_value"], mode="lines+markers",
+        name=copy["series_corridor"], connectgaps=False,
+        line=dict(color=family_color, width=2.5), marker=dict(size=7),
+        customdata=custom, hovertemplate=template,
+    )
+    focus = frame[frame["is_case_year"] & frame["unit_value"].notna()]
+    if not focus.empty:
+        _add_case_diamond(fig, focus["year"], focus["unit_value"])
+    fig.update_layout(yaxis_title=copy["y_title"], xaxis_title="",
+                      xaxis=dict(dtick=1), yaxis=dict(rangemode="tozero"))
+    return fig
+
+
+def case_peer_view(position: dict, copy: dict) -> go.Figure:
+    """View 3 — where the case sits among same-family, same-year peers.
+
+    Bars come precomputed from case_summary.peer_position (log10-spaced bins on
+    a linear axis with power-of-ten tick labels — Plotly bars misbehave on true
+    log axes). Peers outside the drawn window stay in the percentile maths; the
+    page states how many are not drawn.
+    """
+    theme = load_theme()
+    chart = theme["chart"]
+    p = theme["palette"]
+    bins = position["bins"]
+    custom = list(zip(
+        bins["ratio_low"].map(lambda v: f"{v:,.2g}"),
+        bins["ratio_high"].map(lambda v: f"{v:,.2g}"),
+        bins["count"].astype(int),
+    ))
+    fig = go.Figure(go.Bar(
+        x=bins["log_center"], y=bins["count"],
+        width=(bins["log_right"] - bins["log_left"]) * 0.92,
+        marker_color=chart["context_gray"], marker_line_width=0,
+        customdata=custom,
+        hovertemplate=("%{customdata[0]}×–%{customdata[1]}× · %{customdata[2]} "
+                       + copy["bar_hover_suffix"] + "<extra></extra>"),
         showlegend=False,
+    ))
+    fig.add_vline(
+        x=0.0, line_color=p["navy_700"], line_width=1.5, line_dash="dash",
+        annotation_text=copy["reference_label"], annotation_position="top right",
+        annotation_font=dict(size=11, color=p["muted"]),
     )
-    focus = history.loc[history["year"] == case_year]
-    if not focus.empty and pd.notna(focus[column].iloc[0]):
-        fig.add_scatter(
-            x=focus["year"], y=focus[column], mode="markers", showlegend=False,
-            marker=dict(size=12, color=theme["emphasis"],
-                        line=dict(color=theme["marker_outline"], width=2)),
-            hoverinfo="skip",
-        )
-    fig.update_layout(yaxis_title=y_title, xaxis_title="")
-    return fig
-
-
-def residual_line(history: pd.DataFrame, case_year: int) -> go.Figure:
-    # Benchmark residual vs the zero baseline (log scale gap; 0 = at benchmark).
-    fig = history_line(history, "benchmark_residual",
-                       "Log gap to benchmark (0 = at benchmark)", case_year, ".3f")
-    fig.add_hline(y=0, line_color=load_theme()["chart"]["axis_color"], line_width=1)
+    lo = float(bins["log_left"].min())
+    hi = float(bins["log_right"].max())
+    marker_x = min(max(position["case_log_ratio"], lo), hi)
+    marker_y = max(position["max_count"] * 0.24, 1.0)
+    label = copy["case_label"].format(multiple=f"{position['case_ratio']:,.1f}")
+    _add_case_diamond(fig, [marker_x], [marker_y], text=label)
+    tickvals = list(range(int(lo), int(hi) + 1))
+    fig.update_layout(
+        xaxis=dict(range=[lo - 0.05, hi + 0.05], tickvals=tickvals,
+                   ticktext=[f"{10 ** t:g}×" for t in tickvals],
+                   title=copy["x_title"]),
+        yaxis_title=copy["y_title"], bargap=0.0, showlegend=False,
+    )
     return fig

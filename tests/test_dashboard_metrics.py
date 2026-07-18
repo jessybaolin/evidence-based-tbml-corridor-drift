@@ -112,16 +112,13 @@ def test_default_case_and_family_hs6_map(queue, features, content):
     assert all(len(code) == 6 for code in mapping.values())
 
 
-def test_case_record_history_and_evidence(queue, features, evidence, panel):
+def test_case_record_and_evidence(queue, features, evidence):
+    # Corridor time-series logic lives in services/case_summary.py now
+    # (tests/test_case_summary.py); this covers the record join + evidence sort.
     obs_id = queue.iloc[0]["obs_id"]
     record = metrics.case_record(obs_id, queue, features)
     assert record is not None and record["obs_id"] == obs_id
     assert "robust_historical_z" in record  # feature join worked
-    history = metrics.case_history(
-        panel, record["exporter_iso3"], record["importer_iso3"], record["hs6"]
-    )
-    assert not history.empty
-    assert int(record["year"]) in set(history["year"])
     case_rows = metrics.case_evidence(evidence, obs_id)
     assert len(case_rows) == int(record["key_evidence_count"])
     assert (case_rows["obs_id"] == obs_id).all()

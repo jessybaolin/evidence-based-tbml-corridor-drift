@@ -1,4 +1,4 @@
-"""Appendix — data dictionary and official data sources."""
+"""Data Dictionary — analytical definitions and official data sources."""
 
 from __future__ import annotations
 
