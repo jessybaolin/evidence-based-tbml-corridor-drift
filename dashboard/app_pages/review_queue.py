@@ -8,8 +8,9 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.components.empty_states import no_rows
-from dashboard.components.filters import queue_filters
+from dashboard.components.filters import queue_filters, render_active_filter_chips
 from dashboard.components.controls import render_filter_panel
+from dashboard.components.icons import render_icon
 from dashboard.components.page_header import ledger, page_header, section_title
 from dashboard.components.tables import queue_table
 from dashboard.services import dashboard_metrics as metrics
@@ -40,8 +41,13 @@ def _country(row: pd.Series, name_column: str, iso_column: str) -> str:
 
 content = load.load_content()
 copy = content["pages"]["review_queue"]
-page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-st.caption(copy["caveat"])
+with st.container(key="queue_header"):
+    page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
+    st.markdown(
+        f'<div class="queue-interpretation-boundary" role="note">'
+        f'{render_icon("info")}<span>{html.escape(copy["caveat"])}</span></div>',
+        unsafe_allow_html=True,
+    )
 
 queue = load.load_review_queue()
 features = load.load_features(columns=(
@@ -50,13 +56,27 @@ features = load.load_features(columns=(
 enriched = metrics.enrich_queue(queue, features, content["family_short_labels"])
 
 with render_filter_panel():
-    section_title(copy["filters_heading"], copy["filters_caption"])
-    filters = queue_filters(metrics.queue_filter_options(enriched), copy)
-filtered = metrics.apply_queue_filters(enriched, filters)
-
-section_title(copy["results_heading"])
+    filter_title, filter_action = st.columns(
+        [4.6, 1], vertical_alignment="center", gap="medium",
+    )
+    with filter_title:
+        section_title(copy["filters_heading"], copy["filters_caption"], icon="sliders")
+    with filter_action:
+        st.button(
+            copy["reset_label"], key="queue_reset_filters",
+            icon=":material/restart_alt:", on_click=state.reset_queue_filters,
+            width="stretch",
+        )
+    filters, result_slot = queue_filters(metrics.queue_filter_options(enriched), copy)
+    filtered = metrics.apply_queue_filters(enriched, filters)
+    result_slot.markdown(
+        f'<div class="queue-filter-result"><strong>{len(filtered):,}</strong> '
+        f"matching observations</div>",
+        unsafe_allow_html=True,
+    )
 
 if filtered.empty:
+    section_title(copy["results_heading"], icon="list-ordered")
     no_rows(copy["empty_message"])
 else:
     # Key the table by the filtered row set: Streamlit keeps a row selection
@@ -90,23 +110,37 @@ else:
         f"{family} = HS6 {code}" for family, code in metrics.family_hs6_map(enriched).items()
     )
 
-    # ---- Export row: the current view, full precision, always rank-ordered ----
-    count_col, export_col = st.columns([2.8, 1], vertical_alignment="center")
-    with count_col:
-        st.caption(copy["results_caption"].format(
-            shown=f"{len(filtered):,}", total=f"{len(enriched):,}",
-        ))
-    with export_col:
-        st.download_button(
-            copy["export_label"],
-            data=metrics.queue_export_frame(filtered).to_csv(index=False).encode("utf-8"),
-            file_name="review_queue_current_view.csv",
-            mime="text/csv",
-            help=copy["export_help"],
-            width="stretch",
+    # ---- Results header: interpretation left, live count and export right. ----
+    with st.container(key="queue_results_header"):
+        heading_col, count_col, export_col = st.columns(
+            [3.4, 0.8, 1.35], vertical_alignment="center", gap="medium",
         )
+        with heading_col:
+            section_title(
+                copy["results_heading"],
+                copy["results_caption"].format(
+                    shown=f"{len(filtered):,}", total=f"{len(enriched):,}",
+                ),
+                icon="list-ordered",
+            )
+        with count_col:
+            st.markdown(
+                f'<div class="queue-result-count"><strong>{len(filtered):,}</strong>'
+                f"<span>results</span></div>",
+                unsafe_allow_html=True,
+            )
+        with export_col:
+            st.download_button(
+                copy["export_label"],
+                data=metrics.queue_export_frame(filtered).to_csv(index=False).encode("utf-8"),
+                file_name="review_queue_current_view.csv",
+                mime="text/csv",
+                help=copy["export_help"],
+                icon=":material/download:",
+                width="stretch",
+            )
 
-    # ---- Current-case banner: amber = attention/caveat, never a finding ----
+    # ---- Current-case control: a pinned representation of the selected row. ----
     line = template.format(
         rank=int(case_row["rank"]),
         year=int(case_row["year"]),
@@ -119,6 +153,7 @@ else:
         text_col, cta_col = st.columns([3.4, 1], vertical_alignment="center", gap="medium")
         with text_col:
             st.markdown(
+                f'<div class="current-case-label">Current case</div>'
                 f'<div class="case-banner-text"><strong>{html.escape(lead)}:</strong> '
                 f"{html.escape(rest)}</div>",
                 unsafe_allow_html=True,
@@ -129,14 +164,40 @@ else:
                 icon=":material/folder_open:", width="stretch",
             )
 
-    # ---- The queue itself ----
+    # ---- Compact state summary and one-filter-at-a-time clear actions. ----
+    scores = filtered["selected_review_priority_score"]
+    st.markdown(
+        f'<div class="queue-state-summary" role="status">'
+        f'<span><strong>{len(filtered):,}</strong> results</span>'
+        f'<span><strong>{filtered["family_label"].nunique():,}</strong> product families</span>'
+        f'<span>Score range <strong>{scores.min():.3f}&ndash;{scores.max():.3f}</strong></span>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+    render_active_filter_chips(filters)
+
+    # ---- The queue itself: native selection and sorting remain unchanged. ----
     display = metrics.queue_display_frame(filtered)
     positions = filtered.index[filtered["obs_id"] == case_row["obs_id"]]
     highlight = int(positions[0]) if len(positions) else None
-    queue_table(display, key=table_key, highlight_row=highlight, mappings=mappings)
+    with st.container(key="queue_table_region"):
+        queue_table(display, key=table_key, highlight_row=highlight, mappings=mappings)
 
-    st.caption(copy["score_note"])
-    st.caption(copy["table_caption_products"].format(mappings=mappings))
-    st.caption(copy["table_caption_precision"])
+    with st.container(key="queue_score_guidance"):
+        st.markdown(
+            f'<div class="queue-guidance-icon">{render_icon("info")}</div>'
+            f'<div><div class="queue-guidance-label">How to read the score</div>'
+            f'<div class="queue-guidance-text">{html.escape(copy["score_note"])}</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    with st.container(key="queue_table_notes"):
+        with st.expander("Table notes and methodology"):
+            st.markdown(
+                f'<div class="queue-technical-notes">'
+                f'<p>{html.escape(copy["table_caption_products"].format(mappings=mappings))}</p>'
+                f'<p>{html.escape(copy["table_caption_precision"])}</p></div>',
+                unsafe_allow_html=True,
+            )
 
 ledger("review_queue", "features", note="scores ranked on real official observations only")

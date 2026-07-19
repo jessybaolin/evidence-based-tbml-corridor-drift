@@ -11,9 +11,18 @@ from dashboard.components.icons import render_icon, render_icon_badge
 SOURCE_ROLES = frozenset({"official", "benchmark", "typology"})
 
 
-def kpi_card_markup(value: str, label_html: str, detail: str, icon: str) -> str:
+def kpi_card_markup(
+    value: str,
+    label_html: str,
+    detail: str,
+    icon: str,
+    *,
+    extra_classes: str = "",
+) -> str:
+    classes = "stat-tile kpi-card" + (f" {extra_classes}" if extra_classes else "")
     return (
-        f'<div class="stat-tile kpi-card">{render_icon_badge(icon, class_name="kpi-icon")}'
+        f'<div class="{html.escape(classes, quote=True)}">'
+        f'{render_icon_badge(icon, class_name="kpi-icon")}'
         f'<div class="kpi-copy"><div class="stat-value">{html.escape(str(value))}</div>'
         f'<div class="stat-label">{label_html}</div>'
         f'<div class="stat-detail">{html.escape(str(detail))}</div></div></div>'
@@ -22,6 +31,16 @@ def kpi_card_markup(value: str, label_html: str, detail: str, icon: str) -> str:
 
 def render_kpi_card(value: str, label: str, detail: str, icon: str) -> None:
     st.markdown(kpi_card_markup(value, html.escape(label), detail, icon), unsafe_allow_html=True)
+
+
+def commodity_card_markup(*, title: str, family_id: str, icon: str) -> str:
+    """Compact editorial product-family card for narrative scope panels."""
+    safe_family = html.escape(family_id.replace("_", "-"), quote=True)
+    return (
+        f'<article class="commodity-card family-{safe_family}">'
+        f'{render_icon_badge(icon, class_name="commodity-icon")}'
+        f'<div class="commodity-title">{html.escape(title)}</div></article>'
+    )
 
 
 def source_card_markup(*, role: str, icon: str, eyebrow: str, title: str,
@@ -93,4 +112,3 @@ def render_chart_card(title: str, caption: str | None = None) -> None:
         f'<div><div class="section-label">{html.escape(title)}</div>{caption_html}</div></div>',
         unsafe_allow_html=True,
     )
-

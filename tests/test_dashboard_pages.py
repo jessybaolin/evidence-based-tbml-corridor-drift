@@ -105,6 +105,78 @@ def test_landing_page_tooltip_names_real_evidence_checks():
         assert label in text, label
 
 
+def test_landing_story_control_defaults_and_persists():
+    content = yaml.safe_load(
+        (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(
+            encoding="utf-8"
+        )
+    )["pages"]["executive_overview"]
+    labels = [
+        content["what_heading"],
+        content["why_heading"],
+        content["pipeline_heading"],
+    ]
+
+    at = _run_page("executive_overview.py")
+    control = next(
+        item for item in at.segmented_control
+        if item.key == "business_value_story_tab"
+    )
+    assert control.options == labels
+    assert control.value == labels[0]
+    assert "Explore the project" in _rendered_text(at)
+
+    at = control.set_value(labels[1]).run()
+    assert not at.exception
+    assert content["quote_before"] in _rendered_text(at)
+    assert next(
+        item for item in at.segmented_control
+        if item.key == "business_value_story_tab"
+    ).value == labels[1]
+
+    at = at.run()
+    assert next(
+        item for item in at.segmented_control
+        if item.key == "business_value_story_tab"
+    ).value == labels[1]
+
+
+def test_landing_story_control_exposes_existing_project_and_pipeline_content():
+    content = yaml.safe_load(
+        (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(
+            encoding="utf-8"
+        )
+    )["pages"]["executive_overview"]
+    labels = [
+        content["what_heading"],
+        content["why_heading"],
+        content["pipeline_heading"],
+    ]
+    at = _run_page("executive_overview.py")
+    assert all(
+        family_class in _rendered_text(at)
+        for family_class in (
+            "family-crude-palm-oil",
+            "family-refined-copper-cathodes",
+            "family-gold-unwrought",
+        )
+    )
+
+    control = next(
+        item for item in at.segmented_control
+        if item.key == "business_value_story_tab"
+    )
+    at = control.set_value(labels[2]).run()
+    text = _rendered_text(at)
+    assert not at.exception
+    for step in content["pipeline_steps"]:
+        assert step in text
+    assert any(
+        content["pipeline_cta"] in str(getattr(link, "label", ""))
+        for link in at.get("page_link")
+    )
+
+
 def test_data_trust_page_mental_model_and_derived_kpis():
     # The Data Coverage & Trust page must show its one mental model and a KPI
     # strip whose numbers come from the panel, never typed-in copy.
@@ -243,12 +315,79 @@ def test_review_queue_export_size_control_and_score_note():
     assert len(at.download_button) == 1, "CSV export button missing"
     assert len(at.segmented_control) == 1, "queue-size control missing"
     assert at.segmented_control[0].value == "Top 50"
+    assert at.segmented_control[0].options == ["Top 50"]
     # The verbatim score explainer must appear on the page (column tooltip
     # copy is the same YAML anchor, so one assertion covers both).
     content = yaml.safe_load(
         (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(encoding="utf-8")
     )
     assert content["pages"]["review_queue"]["score_note"] in _rendered_text(at)
+
+
+def test_review_queue_summary_and_guidance_are_derived_and_separated():
+    from dashboard.services import dashboard_metrics as metrics
+    from dashboard.services import data_loader as load
+
+    content = load.load_content()
+    queue = load.load_review_queue()
+    features = load.load_features(columns=(
+        "obs_id", "exporter_name", "importer_name", "benchmark_residual",
+        "robust_historical_z",
+    ))
+    enriched = metrics.enrich_queue(queue, features, content["family_short_labels"])
+    scores = enriched["selected_review_priority_score"]
+
+    at = _run_page("review_queue.py")
+    text = _rendered_text(at)
+    assert f"<strong>{len(enriched):,}</strong> results" in text
+    assert f"<strong>{enriched['family_label'].nunique():,}</strong> product families" in text
+    assert f"{scores.min():.3f}&ndash;{scores.max():.3f}" in text
+    assert "How to read the score" in text
+    assert content["pages"]["review_queue"]["caveat"] in text
+    assert any(expander.label == "Table notes and methodology" for expander in at.expander)
+
+
+def test_review_queue_active_chip_clears_only_its_filter():
+    at = _run_page(
+        "review_queue.py",
+        queue_years=[2022],
+        queue_families=["Gold"],
+    )
+    assert not at.exception
+    labels = {button.label for button in at.button}
+    assert "Year: 2022" in labels
+    assert "Product: Gold" in labels
+
+    at = at.button(key="queue_clear_queue_years").click().run()
+    assert not at.exception
+    year = next(item for item in at.multiselect if item.key == "queue_years")
+    family = next(item for item in at.multiselect if item.key == "queue_families")
+    assert year.value == []
+    assert family.value == ["Gold"]
+
+
+def test_review_queue_reset_and_clear_advanced_controls():
+    at = _run_page(
+        "review_queue.py",
+        queue_years=[2022],
+        queue_families=["Gold"],
+    )
+    at = at.button(key="queue_reset_filters").click().run()
+    assert not at.exception
+    assert next(item for item in at.multiselect if item.key == "queue_years").value == []
+    assert next(item for item in at.multiselect if item.key == "queue_families").value == []
+
+    slider = next(item for item in at.slider if item.key == "queue_score_range")
+    default_range = slider.value
+    narrowed = (default_range[0], round(default_range[1] - 0.001, 4))
+    at = slider.set_value(narrowed).run()
+    assert next(item for item in at.slider if item.key == "queue_score_range").value == narrowed
+
+    at = at.button(key="queue_clear_advanced").click().run()
+    assert not at.exception
+    assert next(
+        item for item in at.slider if item.key == "queue_score_range"
+    ).value == default_range
 
 
 def test_case_investigation_selectbox_changes_case():

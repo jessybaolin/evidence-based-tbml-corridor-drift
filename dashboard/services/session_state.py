@@ -37,3 +37,10 @@ def reset_queue_filters() -> None:
     # Deleting widget keys resets each widget to its declared default on rerun.
     for key in QUEUE_FILTER_KEYS:
         st.session_state.pop(key, None)
+
+
+def clear_queue_filter(key: str) -> None:
+    """Clear one governed queue widget without disturbing the other filters."""
+    if key not in QUEUE_FILTER_KEYS:
+        raise ValueError(f"Unknown queue filter key: {key}")
+    st.session_state.pop(key, None)

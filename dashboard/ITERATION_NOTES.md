@@ -3,6 +3,95 @@
 Working notes so the next refinement cycle (human or AI) does not have to
 rediscover decisions. First working version completed 2026-07-14.
 
+## 2026-07-18 — Model Evaluation & Controls: stakeholder rewrite (6 tabs → 1 narrative)
+
+The page was six dense technical tabs (metric-picker bars, hard-negative FPR
+charts, raw XGBoost params, logistic coefficients, SHAP, split-manifest counts,
+SHA-256 inventory) — built for a model reviewer, unreadable for a director.
+Rewritten per notebook Section 7 ("Model validation — enough for stakeholder
+confidence, no more") as ONE plain-language scroll answering "can you trust the
+ranking?", with all technical machinery moved into a single collapsed drawer.
+Presentation only; no scoring/eval logic changed. Tests +8, suite 124 green.
+
+**Structure (single scroll):** objective callout → 1) How it's tested (synthetic
+scenarios + benign look-alikes, time-safe learn/choose/judge-once split, pinned
+caveat "not real-world detection rates") → 2) Does it work? (one plain bar: the
+chosen method vs simple rules vs random, as "share of the top 50 that were
+genuinely planted patterns" — 48% vs 14% vs ~2%, ≈27× lift; guardrail "no benign
+look-alikes reached the top 50"; family limit strongest gold / weakest palm) →
+3) Why this method (rules-anchored blend chosen for auditability, learned model a
+touch higher — stated openly; serves the case page's "how the method was
+selected" link) → 4) What makes flagged cases different (the 7.2 driver
+separation on a shared 0–100 percentile dumbbell; queue near the top on all four
+lenses) → 5) What keeps it honest (integrity checks as a pass summary, allowed /
+not-allowed language, boundary note) → ▸ Technical details drawer.
+
+**New metrics** (`dashboard_metrics.py`): `headline_eval(comparison, selection)`
+translates precision@k into share/lift + best/worst family, all from
+model_comparison.csv; `driver_separation(features, queue_ids)` gives each lens's
+queue vs population median + the queue-median percentile (model-eligible rows).
+**New builders** (`charts.py`): `headline_bar` (emphasis %-bar) and
+`driver_dumbbell` (shared percentile scale) — both through `show()`, page stays
+theme-contract clean. All copy moved to `dashboard_content.yml
+pages.model_and_controls` (was 4 keys hardcoding everything) in the de-AI'd
+voice. Title kept "Model Evaluation & Controls" (rename not requested; two tests
+assert it). Drawer's split selectbox stays `at.selectbox[0]` so the existing
+split-switch test holds.
+
+**Moved into the drawer (was on the main page):** full metric table + split/
+family pickers, SHAP importance, XGBoost params, logistic coefficients, scenario
+split counts, SHA-256 source inventory. Dropped: the two pipeline PNG expanders
+and the standalone hard-negative FPR charts (the guardrail is now a stated fact).
+
+## 2026-07-18 — Trade Landscape and Patterns page revamp (adds the missing Section 4)
+
+The page was named "Trade Landscape and Patterns" but only delivered the
+Patterns half — all six charts profiled the 50-row queue. It had none of the
+profiling notebook's Section 4 "Trade landscape" (scale / structure / market
+context), which is the reading frame a reviewer needs before the queue. Revamp
+adds that as Part 1 and trims the queue-pattern half to Part 2. Presentation
+only; no scoring/ranking/data change. Tests 103 -> 113.
+
+**Part 1 — the landscape (full official panel).** Objective callout up top
+(`.why-summary`) so the page's purpose is clear on a skim, then a derived
+context strip (`.stat-band four`), then the three Section-4 blocks:
+- 4.1 Scale — per-family small multiples of trade value, with a Value/Quantity
+  `segmented_control` toggle (`pa_scale_mode`). Independent y per panel.
+- 4.2 Structure — active corridors per family per year (shared-axis lines) +
+  top-10 corridor value share per family (family-coloured bars).
+- 4.3 Market context — per-family small multiples of the World Bank benchmark.
+Every block has a one-line `.case-takeaway` and a guardrail `st.caption`
+(scale is not risk / heights not comparable / concentration is market structure
+/ benchmark is context not fair value).
+
+**Part 2 — queue shape (trimmed).** Kept candidates-by-year, candidates-by-
+family, and the residual histogram (queue vs population — the bridge that shows
+the 50 are the benchmark-relative tails). DROPPED the score strip, the three
+exporter/importer/corridor concentration bars (close to the notebook's rejected
+"per-country league table"), and the evidence-severity stack. Ends on a handoff
+line into the Top 50 queue.
+
+**New pure metrics** in `services/dashboard_metrics.py` (all over the panel,
+not the queue): `trade_scale_by_family_year` (value+quantity+active corridors),
+`top_corridor_share_by_family`, `benchmark_by_family_year`, `landscape_summary`.
+Numbers verified against the notebook: gold 81.0% of value ($3.5tn total),
+top-10 share palm 60% / copper 36% / gold 27%, gold benchmark x1.9, copper
++~50% in 2021, palm peak 2022.
+
+**New chart builders** in `components/charts.py`: `small_multiples_by_family`
+(px.line facet per family, `update_yaxes(matches=None)` for independent scales,
+family colours, value/qty/benchmark hover) and `lines_by_family` (one line per
+family, shared axis). Both go through `show()`/`chart_layout` — the page builds
+no Plotly and touches no colour (theme-contract clean; `test_dashboard_theme_
+contract` green).
+
+**Copy** — the page previously hardcoded every heading/caption (the only page
+that broke the "copy in YAML" rule). All copy now lives in
+`dashboard_content.yml pages.portfolio_analytics`, written in a plain,
+de-AI'd analyst voice (skimmable objective + one-line takeaways). Scope line:
+in-page value/quantity toggle only; the notebook's cross-page family filter is
+a larger architectural change, deliberately out of scope.
+
 ## 2026-07-18 — Selected Case Review: "Why It Ranked High" merge + comparison cards
 
 Merged the old "Why It Ranked High" and "Evidence" tabs into one stakeholder

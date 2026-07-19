@@ -32,3 +32,12 @@ def render_section_heading(title: str, caption: str | None = None,
         f'<div><div class="section-label">{html.escape(title)}</div>{caption_html}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+def story_section_heading_markup(title: str) -> str:
+    """Full-width divider heading for narrative stakeholder pages."""
+    return (
+        '<div class="story-section-header">'
+        f'<div class="story-section-title">{html.escape(title)}</div>'
+        '<div class="story-section-rule" aria-hidden="true"></div></div>'
+    )

@@ -6,6 +6,7 @@ import html
 
 _PATHS: dict[str, str] = {
     "database": '<ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5"/><path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    "droplet": '<path d="M12 2.5S5.5 9.4 5.5 14.2a6.5 6.5 0 0 0 13 0C18.5 9.4 12 2.5 12 2.5Z"/><path d="M9 15.2c.4 1.4 1.4 2.2 3 2.5"/>',
     "calendar": '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
     "package": '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4.5 7.7 7.5 4.2 7.5-4.2M12 12v9"/>',
     "shield-check": '<path d="M12 22s8-3.8 8-10V5l-8-3-8 3v7c0 6.2 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
@@ -20,6 +21,8 @@ _PATHS: dict[str, str] = {
     "info": '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
     "checklist": '<path d="m3 6 2 2 4-4M3 12l2 2 4-4M3 18l2 2 4-4M13 6h8M13 12h8M13 18h8"/>',
     "search": '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+    "sliders": '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/>',
+    "list-ordered": '<path d="M10 6h11M10 12h11M10 18h11"/><path d="M4 6h1V3.5L3.5 5M3.5 11.5a1.5 1.5 0 1 1 2.5 1.1L3.5 15h3M3.5 18h1.25a1.25 1.25 0 0 1 0 2.5H3.5M4.75 20.5a1.25 1.25 0 0 1 0 2.5H3.5"/>',
 }
 
 
@@ -46,4 +49,3 @@ def render_icon_badge(name: str, *, class_name: str = "") -> str:
     """Wrap a registry icon in the shared circular badge anatomy."""
     classes = "icon-badge" + (f" {class_name}" if class_name else "")
     return f'<span class="{html.escape(classes, quote=True)}">{render_icon(name)}</span>'
-

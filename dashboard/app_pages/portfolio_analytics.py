@@ -1,11 +1,21 @@
-"""Portfolio Analytics — patterns across the official review population."""
+"""Trade Landscape and Patterns — the reading frame before the review queue.
+
+Part 1 sets the context from the full official panel: scale (value by family),
+structure (corridor base + concentration), and market movement (benchmarks).
+Part 2 shows the shape of the fifty flagged cases before the queue table. All
+copy lives in dashboard_content.yml; every number is derived from the loaded
+frames, and every chart is built through a components/charts.py builder.
+"""
 
 from __future__ import annotations
+
+import html
 
 import streamlit as st
 
 from dashboard.components.charts import (
-    bar_by_family, bar_single, histogram_emphasis, severity_stack, score_strip, show,
+    bar_by_family, bar_single, histogram_emphasis, lines_by_family,
+    small_multiples_by_family, show,
 )
 from dashboard.components.page_header import ledger, page_header, section_title
 from dashboard.services import dashboard_metrics as metrics
@@ -13,81 +23,149 @@ from dashboard.services import data_loader as load
 
 content = load.load_content()
 copy = content["pages"]["portfolio_analytics"]
+short_labels = content["family_short_labels"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 
+panel = load.load_panel(columns=(
+    "obs_id", "year", "family_id", "exporter_iso3", "importer_iso3", "hs6",
+    "trade_value_usd", "quantity_metric_ton",
+    "benchmark_price_usd_per_metric_ton", "benchmark_residual",
+))
 queue = load.load_review_queue()
 features = load.load_features(columns=(
     "obs_id", "exporter_name", "importer_name", "benchmark_residual", "robust_historical_z",
 ))
-enriched = metrics.enrich_queue(queue, features, content["family_short_labels"])
-evidence = load.load_evidence()
-panel = load.load_panel(columns=("obs_id", "benchmark_residual", "quality_status", "year", "family_id"))
+enriched = metrics.enrich_queue(queue, features, short_labels)
 
-# ---- Queue composition ----
+
+def _e(text: object) -> str:
+    return html.escape(str(text), quote=True)
+
+
+def _takeaway(text: str) -> None:
+    # One-line, readable takeaway above a chart (skim path).
+    st.markdown(f'<div class="case-takeaway">{_e(text)}</div>', unsafe_allow_html=True)
+
+
+# ---- Objective (skimmable, states what the page is for) ----------------------
+st.markdown(f'<div class="why-summary">{_e(copy["objective"])}</div>',
+            unsafe_allow_html=True)
+
+# ---- Context strip: derived headline figures ---------------------------------
+summary = metrics.landscape_summary(panel, short_labels)
+years_text = f"{summary['year_start']}–{summary['year_end']}"
+strip = copy["strip"]
+tiles = [
+    (f"${summary['total_value'] / 1e12:.1f}T", strip["value_label"],
+     strip["value_detail"].format(years=years_text), "acc-teal"),
+    (f"{summary['dominant_share']:.0f}%",
+     strip["dominant_label"].format(family=summary["dominant_family_label"]),
+     strip["dominant_detail"], "acc-amber"),
+    (f"{summary['n_families']}", strip["families_label"],
+     strip["families_detail"], "acc-blue"),
+    (f"{summary['n_corridors']:,}", strip["corridors_label"],
+     strip["corridors_detail"], "acc-green"),
+]
+strip_html = "".join(
+    f'<div class="stat-tile {accent}"><div class="stat-value">{_e(value)}</div>'
+    f'<div class="stat-label">{_e(label)}</div>'
+    f'<div class="stat-detail">{_e(detail)}</div></div>'
+    for value, label, detail, accent in tiles
+)
+st.markdown(f'<div class="stat-band four">{strip_html}</div>', unsafe_allow_html=True)
+
+# =============================================================================
+# PART 1 — THE TRADE LANDSCAPE (the full official population)
+# =============================================================================
+section_title(copy["landscape_heading"])
+scale_frame = metrics.trade_scale_by_family_year(panel, short_labels)
+
+# ---- 4.1 Scale (with a value / quantity toggle) ------------------------------
+sc = copy["scale"]
+head_col, toggle_col = st.columns([3, 1.1], vertical_alignment="bottom")
+with head_col:
+    section_title(sc["heading"])
+with toggle_col:
+    _MODE_KEY = "pa_scale_mode"
+    st.session_state.setdefault(_MODE_KEY, sc["toggle_value"])
+    mode = st.segmented_control(
+        sc["toggle_label"], [sc["toggle_value"], sc["toggle_quantity"]],
+        key=_MODE_KEY, label_visibility="collapsed",
+    ) or sc["toggle_value"]
+if mode == sc["toggle_quantity"]:
+    _takeaway(sc["takeaway_quantity"])
+    show(small_multiples_by_family(scale_frame, "quantity_metric_ton",
+                                   hover_label=sc["y_quantity"], value_suffix=" mt"),
+         key="pa_scale_small_multiples")
+else:
+    _takeaway(sc["takeaway_value"].format(
+        family=summary["dominant_family_label"], share=f"{summary['dominant_share']:.0f}"))
+    show(small_multiples_by_family(scale_frame, "trade_value_usd",
+                                   hover_label=sc["y_value"], value_prefix="$"),
+         key="pa_scale_small_multiples")
+st.caption(sc["caption"])
+ledger("panel")
+
+# ---- 4.2 Structure: stable base + concentration ------------------------------
+stc = copy["structure"]
+section_title(stc["heading"])
+_takeaway(stc["takeaway"])
 left, right = st.columns(2, gap="large")
 with left:
-    # The caption derives its claim from the same frame the chart plots, so a
-    # pipeline rerun can never leave a stale analytic statement on screen.
+    st.markdown(f"**{_e(stc['corridors_subhead'])}**")
+    show(lines_by_family(scale_frame, "active_corridors", stc["y_corridors"],
+                         stc["y_corridors"]), height=340, key="pa_active_corridors")
+    st.caption(stc["corridors_caption"])
+with right:
+    st.markdown(f"**{_e(stc['concentration_subhead'])}**")
+    show(bar_by_family(metrics.top_corridor_share_by_family(panel, short_labels),
+                       x="family_label", y="top_share_pct", y_title=stc["y_share"],
+                       hover=["top_corridors"]), height=340, key="pa_top_share")
+st.caption(stc["caption"])
+ledger("panel")
+
+# ---- 4.3 Market context: benchmarks moved ------------------------------------
+mk = copy["market"]
+section_title(mk["heading"])
+_takeaway(mk["takeaway"])
+show(small_multiples_by_family(metrics.benchmark_by_family_year(panel, short_labels),
+                               "benchmark", hover_label=mk["y_benchmark"],
+                               value_prefix="$", value_suffix="/mt"),
+     key="pa_benchmark_small_multiples")
+st.caption(mk["caption"])
+ledger("panel")
+
+# =============================================================================
+# PART 2 — HOW THE FLAGGED CASES FALL OUT (the queue's shape, trimmed)
+# =============================================================================
+section_title(copy["patterns_heading"])
+_takeaway(copy["patterns_intro"])
+
+p1, p2 = st.columns(2, gap="large")
+with p1:
     by_year = metrics.candidates_by_year(enriched)
     top_year = by_year.loc[by_year["candidates"].idxmax()]
     section_title(
-        "Review candidates by year",
-        f"Where the top-{len(enriched)} queue concentrates in time. "
-        f"{int(top_year['year'])} leads the current run "
-        f"({int(top_year['candidates'])} of {int(by_year['candidates'].sum())} candidates).",
+        copy["by_year"]["heading"],
+        copy["by_year"]["caption"].format(
+            year=int(top_year["year"]), n=int(top_year["candidates"]),
+            total=int(by_year["candidates"].sum())),
     )
-    show(bar_single(by_year, x="year", y="candidates", y_title="Review candidates"),
+    show(bar_single(by_year, x="year", y="candidates", y_title=copy["by_year"]["y"]),
          key="pa_candidates_by_year")
-with right:
-    section_title("Review candidates by product family",
-                  "Candidate counts across the three selected HS6 families.")
+with p2:
+    section_title(copy["by_family"]["heading"], copy["by_family"]["caption"])
     show(bar_by_family(metrics.candidates_by_family(enriched), x="family_label",
-                       y="candidates", y_title="Review candidates"),
+                       y="candidates", y_title=copy["by_family"]["y"]),
          key="pa_candidates_by_family")
 ledger("review_queue")
 
-# ---- Scores in context ----
-section_title("Review-priority scores by year and product",
-              "Each mark is one review candidate; colour is the product family.")
-show(score_strip(enriched), height=400, key="pa_score_strip")
-ledger("review_queue")
-
-section_title(
-    "Benchmark residuals: queue vs full official population",
-    "Log gap to the World Bank benchmark. Gray: all official observations; "
-    "blue: the review queue. Review candidates sit in the tails.",
-)
+res = copy["residual"]
+section_title(res["heading"], res["caption"])
 population, selected = metrics.residual_context(panel, enriched)
-show(histogram_emphasis(population, selected, "Log gap to benchmark",
-                        "All official observations", "Review queue"),
-     height=400, key="pa_residual_hist")
+show(histogram_emphasis(population, selected, res["x"], res["population_name"],
+                        res["queue_name"]), height=400, key="pa_residual_hist")
 ledger("panel", "review_queue")
 
-# ---- Concentration ----
-section_title("Corridor concentration in the review queue",
-              "Countries and corridors appearing most often among the top-ranked candidates.")
-c1, c2, c3 = st.columns(3, gap="medium")
-with c1:
-    st.markdown("**By exporter**")
-    show(bar_single(metrics.concentration(enriched, "exporter_iso3"), x="exporter_iso3",
-                    y="candidates", y_title="Candidates", horizontal=True),
-         height=320, key="pa_conc_exporter")
-with c2:
-    st.markdown("**By importer**")
-    show(bar_single(metrics.concentration(enriched, "importer_iso3"), x="importer_iso3",
-                    y="candidates", y_title="Candidates", horizontal=True),
-         height=320, key="pa_conc_importer")
-with c3:
-    st.markdown("**By corridor**")
-    show(bar_single(metrics.concentration(enriched, "corridor"), x="corridor",
-                    y="candidates", y_title="Candidates", horizontal=True),
-         height=320, key="pa_conc_corridor")
-st.caption("Counts describe the top-ranked queue, not the full trade population; "
-           "small counts should not be read as country risk ratings.")
-ledger("review_queue")
-
-# ---- Evidence severity ----
-section_title("Evidence by type and severity",
-              f"How the {len(evidence):,} evidence rows distribute across metrics and severity bands.")
-show(severity_stack(metrics.severity_distribution(evidence)), height=380, key="pa_severity_stack")
-ledger("evidence")
+st.markdown(f'<div class="case-takeaway">{_e(copy["handoff"])}</div>',
+            unsafe_allow_html=True)

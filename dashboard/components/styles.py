@@ -51,8 +51,17 @@ def apply_global_styles() -> None:
     entry_ms = int(motion.get("entry_ms", 350))
     step_ms = int(motion.get("entry_step_ms", 70))
     hover_ms = int(motion.get("hover_ms", 180))
+    fast_ms = int(motion.get("fast_ms", 120))
+    standard_ms = int(motion.get("standard_ms", hover_ms))
+    landing_entry_ms = int(motion.get("landing_entry_ms", 260))
+    landing_stagger_ms = int(motion.get("landing_stagger_ms", 45))
+    motion_easing = motion.get("easing", "ease-out")
     scene_ms = int(motion.get("scene_step_ms", 120))
     travel_ms = int(motion.get("travel_ms", 600))
+    family_colors = theme["families"]
+    challenge_accent = theme["status"]["severity"]["high"]["color"]
+    outcome_blue = source_roles["official"]["accent"]
+    outcome_amber = source_roles["typology"]["accent"]
     css = f"""
     <style>
     html,
@@ -599,6 +608,259 @@ def apply_global_styles() -> None:
         border-color: {at};
     }}
 
+    /* ---- Top 50 Review Queue: compact operational review surface. ---- */
+    .st-key-queue_header .page-header {{ margin-bottom: 0.55rem; }}
+    .st-key-queue_header .page-subtitle {{
+        max-width: 1000px;
+        color: {p["muted"]};
+        font-size: 1.08rem;
+        font-weight: 450;
+        line-height: 1.5;
+        margin-bottom: 0.75rem;
+    }}
+    .queue-interpretation-boundary {{
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        max-width: 1000px;
+        padding: 0.58rem 0.75rem;
+        color: {p["ink"]};
+        background: color-mix(in srgb, {p["accent_soft"]} 68%, white);
+        border: 1px solid color-mix(in srgb, {p["accent"]} 34%, white);
+        border-left: 3px solid {p["accent"]};
+        border-radius: 8px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        animation: rise-in {landing_entry_ms}ms {motion_easing} both;
+    }}
+    .queue-interpretation-boundary svg {{
+        width: 1rem;
+        height: 1rem;
+        color: {p["accent"]};
+        flex: none;
+    }}
+
+    .st-key-dashboard_filter_panel {{
+        background: color-mix(in srgb, {p["page_bg"]} 60%, white);
+        border-color: color-mix(in srgb, {btn2b} 58%, white);
+        border-radius: 8px;
+        padding: 0.6rem 0.85rem;
+        gap: 0.375rem;
+        margin: 0.65rem 0 0.75rem 0;
+        box-shadow: 0 3px 12px {shadow};
+        animation: rise-in {landing_entry_ms}ms {motion_easing} both;
+    }}
+    .st-key-dashboard_filter_panel .section-heading {{ margin: 0; }}
+    .st-key-dashboard_filter_panel .section-icon {{ margin-top: 0.15rem; }}
+    .st-key-dashboard_filter_panel .section-label {{
+        margin-top: 0;
+        font-size: 1rem;
+    }}
+    .st-key-dashboard_filter_panel .section-caption {{
+        margin: 0.05rem 0 0;
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }}
+    .st-key-queue_reset_filters button {{
+        min-height: 38px;
+        padding: 0.35rem 0.65rem;
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stMultiSelect"] label,
+    .st-key-dashboard_filter_panel [data-testid="stWidgetLabel"] {{
+        color: {p["ink"]};
+        font-weight: 650;
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stMultiSelect"] [data-baseweb="select"] > div {{
+        min-height: 42px;
+        background: {p["panel_bg"]};
+        border: 1px solid {btn2b};
+        border-radius: 8px;
+        transition: border-color {standard_ms}ms {motion_easing},
+                    box-shadow {standard_ms}ms {motion_easing};
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stMultiSelect"] [data-baseweb="select"] > div:hover {{
+        border-color: {p["accent"]};
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stMultiSelect"] [data-baseweb="select"]:focus-within > div {{
+        border-color: {p["accent"]};
+        box-shadow: 0 0 0 3px color-mix(in srgb, {p["accent_soft"]} 82%, white);
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stMultiSelect"] svg {{
+        color: {navy7};
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stButtonGroup"] {{ width: fit-content; }}
+    .st-key-dashboard_filter_panel [role="radiogroup"] {{ max-width: none; }}
+    .st-key-dashboard_filter_panel [role="radio"] {{ min-height: 38px; }}
+    .queue-size-helper {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 1.15rem;
+        color: {p["muted"]};
+        font-size: 0.78rem;
+    }}
+    .queue-size-helper svg {{ width: 0.95rem; height: 0.95rem; color: {p["accent"]}; }}
+    .queue-filter-result {{
+        margin-top: 1.15rem;
+        color: {p["muted"]};
+        font-size: 0.82rem;
+        text-align: right;
+        white-space: nowrap;
+    }}
+    .queue-filter-result strong {{ color: {p["ink"]}; font-size: 0.98rem; }}
+    .st-key-dashboard_filter_panel [data-testid="stExpander"] {{
+        background: color-mix(in srgb, {p["table_stripe"]} 74%, white);
+        border: 1px solid {p["border"]};
+        border-radius: 8px;
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stExpander"] summary {{
+        min-height: 38px;
+        color: {p["ink"]};
+        font-weight: 650;
+    }}
+    .st-key-dashboard_filter_panel [data-testid="stSlider"] {{ padding-bottom: 0.2rem; }}
+    .st-key-queue_clear_advanced button {{ width: fit-content; min-height: 34px; }}
+
+    .st-key-queue_results_header {{ margin-top: 0.2rem; }}
+    .st-key-queue_results_header .section-heading {{ margin-top: 0; }}
+    .st-key-queue_results_header .section-icon {{ color: {outcome_blue}; }}
+    .st-key-queue_results_header .section-label {{ font-size: 1.16rem; }}
+    .st-key-queue_results_header .section-caption {{
+        max-width: 760px;
+        margin-bottom: 0;
+        line-height: 1.4;
+    }}
+    .queue-result-count {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        color: {p["muted"]};
+        background: color-mix(in srgb, {outcome_blue} 8%, white);
+        border: 1px solid color-mix(in srgb, {outcome_blue} 25%, white);
+        border-radius: 8px;
+        line-height: 1.05;
+    }}
+    .queue-result-count strong {{ color: {outcome_blue}; font-size: 1.05rem; }}
+    .queue-result-count span {{ font-size: 0.7rem; text-transform: uppercase; }}
+    [data-testid="stMain"] .st-key-queue_results_header [data-testid="stDownloadButton"] button {{
+        min-height: 42px;
+        border-color: {p["accent"]};
+        color: {at};
+    }}
+
+    .st-key-queue_case_banner {{
+        background: color-mix(in srgb, {sel_bg} 58%, white);
+        border: 1px solid color-mix(in srgb, {sel_acc} 72%, white);
+        border-left: 4px solid {source_roles["typology"]["accent"]};
+        border-radius: 8px;
+        padding: 0.65rem 0.9rem;
+        box-shadow: 0 2px 8px {shadow};
+        margin: 0.35rem 0 0.65rem;
+        transition: background-color {standard_ms}ms {motion_easing},
+                    border-color {standard_ms}ms {motion_easing};
+    }}
+    .current-case-label {{
+        color: {source_roles["typology"]["text"]};
+        font-size: 0.67rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        margin-bottom: 0.15rem;
+    }}
+    .case-banner-text {{ font-size: 0.93rem; animation: none; }}
+
+    .queue-state-summary {{
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.55rem 1.25rem;
+        min-height: 38px;
+        margin: 0 0 0.45rem;
+        padding: 0.45rem 0.7rem;
+        color: {p["muted"]};
+        background: color-mix(in srgb, {p["table_stripe"]} 64%, white);
+        border-top: 1px solid {p["border"]};
+        border-bottom: 1px solid {p["border"]};
+        font-size: 0.82rem;
+    }}
+    .queue-state-summary strong {{ color: {p["ink"]}; font-variant-numeric: tabular-nums; }}
+    .st-key-queue_filter_chips {{ margin: 0 0 0.45rem; }}
+    .st-key-queue_filter_chips button {{
+        min-height: 34px;
+        border-radius: 999px !important;
+        background: {p["panel_bg"]};
+        color: {navy7};
+        font-size: 0.8rem;
+    }}
+    .st-key-queue_table_region {{
+        margin-top: 0.15rem;
+        animation: rise-in {landing_entry_ms}ms {motion_easing} both;
+    }}
+    .st-key-queue_table_region div[data-testid="stDataFrame"] {{
+        border: 1px solid color-mix(in srgb, {btn2b} 62%, white);
+        border-radius: 8px;
+        box-shadow: 0 4px 14px {shadow};
+        background: {p["panel_bg"]};
+    }}
+
+    .st-key-queue_score_guidance {{
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        margin: 0.75rem 0 0.55rem;
+        padding: 0.75rem 0.9rem;
+        color: {p["ink"]};
+        background: color-mix(in srgb, {outcome_blue} 8%, white);
+        border: 1px solid color-mix(in srgb, {outcome_blue} 26%, white);
+        border-left: 3px solid {outcome_blue};
+        border-radius: 8px;
+    }}
+    .queue-guidance-icon {{
+        display: grid;
+        place-items: center;
+        width: 1.8rem;
+        height: 1.8rem;
+        flex: none;
+        color: {outcome_blue};
+        background: color-mix(in srgb, {outcome_blue} 12%, white);
+        border-radius: 50%;
+    }}
+    .queue-guidance-icon svg {{ width: 1rem; height: 1rem; }}
+    .queue-guidance-label {{
+        color: {outcome_blue};
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.15rem;
+    }}
+    .queue-guidance-text {{ color: {p["ink"]}; font-size: 0.9rem; line-height: 1.45; }}
+    .st-key-queue_table_notes [data-testid="stExpander"] {{
+        background: transparent;
+        border: 1px solid {p["border"]};
+        border-radius: 8px;
+    }}
+    .st-key-queue_table_notes [data-testid="stExpander"] summary {{ min-height: 40px; }}
+    .queue-technical-notes {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.45; }}
+    .queue-technical-notes p {{ margin: 0 0 0.45rem; }}
+    .queue-technical-notes p:last-child {{ margin-bottom: 0; }}
+
+    @media (max-width: 1100px) {{
+        .st-key-dashboard_filter_panel [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
+        .st-key-queue_results_header .queue-result-count {{ align-items: flex-start; padding-left: 0.65rem; }}
+    }}
+    @media (max-width: 780px) {{
+        .st-key-dashboard_filter_panel {{ padding: 0.75rem; }}
+        .queue-filter-result {{ text-align: left; margin-top: 0.35rem; }}
+        .queue-size-helper {{ margin-top: 0.35rem; }}
+        .st-key-queue_case_banner [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
+        .queue-state-summary {{ align-items: flex-start; flex-direction: column; gap: 0.25rem; }}
+        .st-key-queue_filter_chips [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
+        .st-key-queue_score_guidance {{ padding: 0.7rem; }}
+    }}
+
     /* ---- Selected Case Review: compact selected-case strip. Same muted-amber
        selection role as the Review Queue banner — "the case you are carrying",
        never an alarm. Facts + score + quality + the change-case control sit on
@@ -1024,6 +1286,404 @@ def apply_global_styles() -> None:
     }}
     @media (max-width: 560px) {{
         .stat-band {{ grid-template-columns: 1fr; }}
+    }}
+
+    /* ================================================================
+       Business Problem & Value: balanced narrative grid + manual story
+       module. Everything is scoped to the keyed page container so the
+       generic landing primitives remain available to other pages.
+       ================================================================ */
+    .st-key-business_value_page {{
+        width: 100%;
+        max-width: 1220px;
+        margin-inline: auto;
+    }}
+    .business-value-page {{ display: none; }}
+    .st-key-business_value_page .hero-block {{
+        padding: 0.35rem 0 0;
+        margin-bottom: 3.35rem;
+    }}
+    .st-key-business_value_page .hero-block .page-title {{
+        font-size: 2.55rem;
+        line-height: 1.1;
+        letter-spacing: 0;
+        max-width: 29ch;
+    }}
+    .st-key-business_value_page .hero-block .page-subtitle {{
+        max-width: 72ch;
+        margin-top: 0.75rem;
+        margin-bottom: 0;
+        line-height: 1.55;
+    }}
+    .st-key-business_value_page .bv-section {{
+        margin: 0 0 3.75rem 0;
+    }}
+    .st-key-business_value_page .story-section-header {{
+        margin-bottom: 1.45rem;
+    }}
+    .st-key-business_value_page .story-section-title {{
+        color: {p["ink"]};
+        font-size: 1.32rem;
+        font-weight: 760;
+        line-height: 1.3;
+    }}
+    .st-key-business_value_page .story-section-rule {{
+        position: relative;
+        height: 1px;
+        margin-top: 0.7rem;
+        background: {p["border"]};
+    }}
+    .st-key-business_value_page .story-section-rule::before {{
+        content: "";
+        position: absolute;
+        inset: -1px auto auto 0;
+        width: 34px;
+        height: 3px;
+        background: {p["accent"]};
+        border-radius: 2px;
+    }}
+    .st-key-business_value_page .bv-readable {{ max-width: 110ch; }}
+    .st-key-business_value_page .landing-prose {{
+        max-width: none;
+        font-size: 1rem;
+        line-height: 1.64;
+        margin: 0 0 0.75rem 0;
+    }}
+
+    /* Challenge / response: equal, restrained comparison surfaces. */
+    .st-key-business_value_page .twin-grid {{
+        align-items: stretch;
+        gap: 1rem;
+        margin: 1.25rem 0 0 0;
+    }}
+    .st-key-business_value_page .twin-card {{
+        display: flex;
+        flex-direction: column;
+        min-height: 154px;
+        border-radius: 8px;
+        border-top-color: {challenge_accent};
+        padding: 1rem 1.15rem;
+        box-shadow: 0 2px 8px {shadow};
+        transition: border-color {standard_ms}ms {motion_easing};
+    }}
+    .st-key-business_value_page .twin-card.response {{ border-top-color: {p["accent"]}; }}
+    .st-key-business_value_page .twin-card:hover {{
+        transform: none;
+        box-shadow: 0 2px 8px {shadow};
+    }}
+    .st-key-business_value_page .twin-card.challenge .twin-label {{ color: {challenge_accent}; }}
+
+    /* Four stakeholder outputs: same anatomy, restrained semantic accents. */
+    .st-key-business_value_page .stat-band {{
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin: 0;
+    }}
+    .st-key-business_value_page .stat-tile {{
+        min-height: 150px;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px {shadow};
+    }}
+    .st-key-business_value_page .stat-tile:hover {{
+        transform: none;
+        box-shadow: 0 2px 8px {shadow};
+    }}
+    .st-key-business_value_page .kpi-icon {{ width: 38px; height: 38px; }}
+    .st-key-business_value_page .outcome-teal {{ border-top-color: {p["accent"]}; }}
+    .st-key-business_value_page .outcome-blue {{ border-top-color: {outcome_blue}; }}
+    .st-key-business_value_page .outcome-amber {{ border-top-color: {outcome_amber}; }}
+    .st-key-business_value_page .outcome-navy {{ border-top-color: {navy7}; }}
+    .st-key-business_value_page .outcome-teal .stat-label {{ color: {p["accent"]}; }}
+    .st-key-business_value_page .outcome-blue .stat-label {{ color: {outcome_blue}; }}
+    .st-key-business_value_page .outcome-amber .stat-label {{ color: {outcome_amber}; }}
+    .st-key-business_value_page .outcome-navy .stat-label {{ color: {navy7}; }}
+    .st-key-business_value_page .outcome-blue .kpi-icon {{
+        color: {outcome_blue};
+        background: color-mix(in srgb, {outcome_blue} 12%, white);
+    }}
+    .st-key-business_value_page .outcome-amber .kpi-icon {{
+        color: {outcome_amber};
+        background: color-mix(in srgb, {outcome_amber} 14%, white);
+    }}
+    .st-key-business_value_page .outcome-navy .kpi-icon {{
+        color: {navy7};
+        background: color-mix(in srgb, {navy7} 11%, white);
+    }}
+    .st-key-business_value_stakeholders {{ margin-bottom: 3.75rem; }}
+    .st-key-business_value_stakeholders .bv-section {{ margin-bottom: 0.7rem; }}
+
+    /* Manual story selector: all options visible, stable-height content. */
+    .st-key-business_value_page .bv-explore {{ margin-bottom: 0.2rem; }}
+    .st-key-business_value_story {{ margin-bottom: 3.75rem; }}
+    .st-key-business_value_story_tab {{
+        width: min(720px, 100%);
+    }}
+    .st-key-business_value_story_tab [data-testid="stButtonGroup"],
+    .st-key-business_value_story_tab [role="radiogroup"] {{
+        width: 100%;
+        display: flex;
+    }}
+    .st-key-business_value_story_tab [role="radiogroup"] {{
+        flex: 1 1 auto;
+        max-width: none;
+    }}
+    .st-key-business_value_story_tab [role="radio"] {{
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 48px;
+        padding: 0.55rem 0.8rem;
+        transition: background-color {standard_ms}ms {motion_easing},
+                    border-color {standard_ms}ms {motion_easing},
+                    color {standard_ms}ms {motion_easing};
+    }}
+    .st-key-business_value_story_tab button p {{
+        white-space: nowrap;
+        text-align: center;
+        line-height: 1.25;
+    }}
+    .st-key-business_value_story .story-panel {{
+        min-height: 278px;
+        margin-top: 0.8rem;
+        padding: 1.25rem 1.35rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 8px;
+        box-shadow: 0 2px 8px {shadow};
+        animation: bv-panel-in {standard_ms}ms {motion_easing} both;
+    }}
+    .st-key-business_value_story .story-panel-heading {{
+        color: {p["ink"]};
+        font-size: 1.12rem;
+        font-weight: 750;
+        line-height: 1.35;
+        margin-bottom: 0.8rem;
+    }}
+    .st-key-business_value_story .landing-prose:last-child {{ margin-bottom: 0; }}
+
+    /* Editorial product-family cards; family colour remains local here. */
+    .st-key-business_value_story .commodity-grid {{
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin: 1rem 0;
+    }}
+    .st-key-business_value_story .commodity-card {{
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+        min-height: 94px;
+        padding: 0.85rem 0.9rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 8px;
+        box-shadow: 0 2px 8px {shadow};
+        transition: border-color {standard_ms}ms {motion_easing},
+                    box-shadow {standard_ms}ms {motion_easing},
+                    transform {standard_ms}ms {motion_easing};
+    }}
+    .st-key-business_value_story .commodity-card:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px {shadow};
+    }}
+    .st-key-business_value_story .commodity-icon {{
+        width: 38px;
+        height: 38px;
+        flex: none;
+        transition: transform {fast_ms}ms {motion_easing};
+    }}
+    .st-key-business_value_story .commodity-card:hover .commodity-icon {{
+        transform: scale(1.02);
+    }}
+    .st-key-business_value_story .commodity-title {{
+        min-width: 0;
+        color: {p["ink"]};
+        font-size: 0.91rem;
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }}
+    .st-key-business_value_story .family-crude-palm-oil {{
+        border-top-color: {family_colors["crude_palm_oil"]};
+    }}
+    .st-key-business_value_story .family-crude-palm-oil .commodity-icon {{
+        color: {family_colors["crude_palm_oil"]};
+        background: color-mix(in srgb, {family_colors["crude_palm_oil"]} 13%, white);
+    }}
+    .st-key-business_value_story .family-refined-copper-cathodes {{
+        border-top-color: {family_colors["refined_copper_cathodes"]};
+    }}
+    .st-key-business_value_story .family-refined-copper-cathodes .commodity-icon {{
+        color: {family_colors["refined_copper_cathodes"]};
+        background: color-mix(in srgb, {family_colors["refined_copper_cathodes"]} 13%, white);
+    }}
+    .st-key-business_value_story .family-gold-unwrought {{
+        border-top-color: {family_colors["gold_unwrought"]};
+    }}
+    .st-key-business_value_story .family-gold-unwrought .commodity-icon {{
+        color: {family_colors["gold_unwrought"]};
+        background: color-mix(in srgb, {family_colors["gold_unwrought"]} 14%, white);
+    }}
+
+    /* Why-it-matters comparison and connected review-queue flow. */
+    .st-key-business_value_story .quote-grid {{ margin: 0 0 1rem 0; }}
+    .st-key-business_value_story .quote-card {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 116px;
+        border-radius: 8px;
+        padding: 1rem 1.1rem;
+        box-shadow: none;
+    }}
+    .st-key-business_value_story .story-process-flow {{
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1.35rem;
+        margin-top: 1rem;
+    }}
+    .st-key-business_value_process_panel {{
+        min-height: 278px;
+        margin-top: 0.8rem;
+        padding: 1.25rem 1.35rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 8px;
+        box-shadow: 0 2px 8px {shadow};
+        animation: bv-panel-in {standard_ms}ms {motion_easing} both;
+    }}
+    .st-key-business_value_process_panel .story-panel-process {{
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        animation: none;
+    }}
+    .st-key-business_value_process_panel [data-testid="stPageLink"] {{
+        margin-top: 1rem;
+    }}
+    .st-key-business_value_story .story-process-stage {{
+        --process-accent: {p["accent"]};
+        position: relative;
+        min-width: 0;
+        min-height: 118px;
+        padding: 0.9rem;
+        background: color-mix(in srgb, var(--process-accent) 7%, white);
+        border: 1px solid color-mix(in srgb, var(--process-accent) 28%, white);
+        border-top: 3px solid var(--process-accent);
+        border-radius: 8px;
+        animation: bv-panel-in {standard_ms}ms {motion_easing} both;
+    }}
+    .st-key-business_value_story .story-process-stage:not(:last-child)::after {{
+        content: "→";
+        position: absolute;
+        top: 50%;
+        right: -1.02rem;
+        color: var(--process-accent);
+        font-size: 1rem;
+        font-weight: 800;
+        transform: translateY(-50%);
+    }}
+    .st-key-business_value_story .process-stage-1 {{ --process-accent: {outcome_blue}; }}
+    .st-key-business_value_story .process-stage-2 {{
+        --process-accent: {family_colors["refined_copper_cathodes"]};
+        animation-delay: {landing_stagger_ms}ms;
+    }}
+    .st-key-business_value_story .process-stage-3 {{
+        --process-accent: {p["accent"]};
+        animation-delay: {landing_stagger_ms * 2}ms;
+    }}
+    .st-key-business_value_story .process-stage-4 {{
+        --process-accent: {family_colors["crude_palm_oil"]};
+        animation-delay: {landing_stagger_ms * 3}ms;
+    }}
+    .st-key-business_value_story .process-stage-meta {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.65rem;
+    }}
+    .st-key-business_value_story .process-stage-number {{
+        display: inline-grid;
+        place-items: center;
+        width: 1.55rem;
+        height: 1.55rem;
+        border-radius: 50%;
+        color: #FFFFFF;
+        background: var(--process-accent);
+        font-size: 0.72rem;
+        font-weight: 800;
+    }}
+    .st-key-business_value_story .process-stage-icon {{
+        width: 1.15rem;
+        height: 1.15rem;
+        color: var(--process-accent);
+    }}
+    .st-key-business_value_story .process-stage-title {{
+        color: {p["ink"]};
+        font-size: 0.9rem;
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }}
+
+    .st-key-business_value_page .bv-final {{ margin-bottom: 0.4rem; }}
+    .st-key-business_value_page .bottom-line {{
+        border-radius: 8px;
+        padding: 1.25rem 1.35rem;
+        box-shadow: 0 2px 8px {shadow};
+    }}
+    .st-key-business_value_page .bottom-line-text {{ max-width: none; }}
+
+    @keyframes bv-rise-in {{
+        from {{ opacity: 0; transform: translateY(8px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    @keyframes bv-panel-in {{
+        from {{ opacity: 0; transform: translateY(3px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    .st-key-business_value_page .bv-entry {{
+        animation: bv-rise-in {landing_entry_ms}ms {motion_easing} both;
+    }}
+    .st-key-business_value_page .bv-d1 {{ animation-delay: {landing_stagger_ms}ms; }}
+    .st-key-business_value_page .bv-d2 {{ animation-delay: {landing_stagger_ms * 2}ms; }}
+    .st-key-business_value_page .bv-d3 {{ animation-delay: {landing_stagger_ms * 3}ms; }}
+    .st-key-business_value_page .bv-d4 {{ animation-delay: {landing_stagger_ms * 4}ms; }}
+
+    @media (max-width: 1100px) {{
+        .st-key-business_value_page .stat-band {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .st-key-business_value_story .story-process-flow {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .st-key-business_value_story .story-process-stage::after {{ display: none; }}
+    }}
+    @media (max-width: 780px) {{
+        .st-key-business_value_page .hero-block {{ margin-bottom: 2.75rem; }}
+        .st-key-business_value_page .hero-block .page-title {{ font-size: 2rem; }}
+        .st-key-business_value_page .bv-section,
+        .st-key-business_value_stakeholders,
+        .st-key-business_value_story {{ margin-bottom: 3rem; }}
+        .st-key-business_value_story .commodity-grid {{ grid-template-columns: 1fr; }}
+    }}
+    @media (max-width: 600px) {{
+        .st-key-business_value_page .stat-band,
+        .st-key-business_value_story .story-process-flow {{ grid-template-columns: 1fr; }}
+        .st-key-business_value_story_tab [role="radiogroup"] {{ flex-wrap: wrap; }}
+        .st-key-business_value_story_tab [role="radio"] {{
+            flex: 1 1 100%;
+        }}
+        .st-key-business_value_story .story-panel {{
+            min-height: 0;
+            padding: 1rem;
+        }}
+        .st-key-business_value_process_panel {{
+            min-height: 0;
+            padding: 1rem;
+        }}
     }}
 
     /* ---- Bank Implementation Pathway: future-state operating model. ---- */
@@ -2324,12 +2984,18 @@ def apply_global_styles() -> None:
         [data-testid="stMain"] [data-testid="stBaseButton-primary"]:hover,
         [data-testid="stMain"] [data-testid="stBaseButton-secondary"]:hover,
         .anim, .twin-card, .stat-tile, .flow-step,
+        .bv-entry, .story-panel, .commodity-card, .commodity-icon,
+        .story-process-stage,
         .sb, .src-card, .fam-card,
         .merge-tile.ma, .merge-tile.mb, .merge-tile.mc, .merge-row,
         .yr.lit.yl1, .yr.lit.yl2, .yr.lit.yl3, .yr.lit.yl4, .yr.lit.yl5,
         .yr.focus.ylf,
         .s3-chip, .s3-late1, .s3-late2,
         .case-banner-text,
+        .queue-interpretation-boundary,
+        .st-key-dashboard_filter_panel,
+        .st-key-queue_case_banner,
+        .st-key-queue_table_region,
         .tip::after, .tip::before {{
             animation: none !important;
             transition: none !important;

@@ -80,7 +80,7 @@ pages:
         label: "review queue"
         detail: "The most unusual patterns are brought to the front."
       evidence:
-        label: "evidence points per case"
+        label: "evidence checks per case"
         detail: "Each ranking is supported by recomputable facts."
       briefs:
         label: "caveated analyst briefs"
@@ -476,7 +476,61 @@ pages:
   portfolio_analytics:
     eyebrow: "Stakeholder analytics"
     title: "Trade Landscape and Patterns"
-    subtitle: "Patterns across the official review population — coverage, concentration, and score context."
+    subtitle: "The context for reading the review queue: how large the trade is, how the corridors are built, and how far commodity prices moved on their own."
+    # Skimmable objective, stated plainly at the top of the page.
+    objective: "Read this page before the queue. It sets the baseline. Once you know the scale of the trade, the shape of the corridors, and how much prices moved market-wide, a flagged case reads as unusual against that backdrop rather than just a large number."
+    # Context strip. Every figure is derived live from the official panel.
+    strip:
+      value_label: "Trade value covered"
+      value_detail: "{years}, official annual aggregates"
+      dominant_label: "{family} share of value"
+      dominant_detail: "One family dominates, so read each family on its own"
+      families_label: "Product families"
+      families_detail: "Gold, copper, palm oil"
+      corridors_label: "Trading corridors"
+      corridors_detail: "Exporter–importer routes across the window"
+    landscape_heading: "The trade landscape"
+    scale:
+      heading: "Scale: where the money is"
+      toggle_label: "Show"
+      toggle_value: "Trade value"
+      toggle_quantity: "Quantity"
+      takeaway_value: "{family} carries about {share}% of the value covered. Because one family is that large, any value-weighted figure is mostly a statement about {family} unless you look at each family separately."
+      takeaway_quantity: "By physical volume the ranking looks different. Gold's recent value growth came from price rather than tonnage, which is why value and quantity are kept apart."
+      caption: "Each panel has its own scale, so heights are not comparable across panels. Figures are nominal USD, not adjusted for inflation. Scale tells you where the money is, not where the unusual behaviour is."
+      y_value: "Trade value (USD)"
+      y_quantity: "Quantity (metric tons)"
+    structure:
+      heading: "Structure: a steady base, unevenly concentrated"
+      takeaway: "The corridor base holds up year to year, with no year where coverage collapses. How concentrated it is differs by family. Palm oil leans on a few large routes, while gold spreads across a long tail of small ones, and small routes are where the most extreme unit values tend to come from."
+      corridors_subhead: "Active corridors each year"
+      corridors_caption: "Steady counts matter here. A sudden coverage gap could look like a wave of drift that is really just missing data."
+      concentration_subhead: "Value carried by each family's ten largest corridors"
+      caption: "Concentration describes how the market is built. It is not a control weakness or a finding about any country. A corridor is a country pair, not a customer or a bank relationship."
+      y_corridors: "Active corridors"
+      y_share: "Top-10 share of value (%)"
+    market:
+      heading: "Market context: prices moved on their own"
+      takeaway: "All three benchmarks moved sharply across the window. Palm oil roughly doubled into 2022 and then fell back, copper stepped up about 50% in 2021, and gold nearly doubled. A corridor's price level therefore says little by itself. What counts is how it moved relative to its benchmark."
+      caption: "The benchmark is broad market context, one series per family. It is not an invoice price, a landed cost, or a legal reference price. These are annual nominal averages."
+      y_benchmark: "USD per metric ton"
+    patterns_heading: "How the flagged cases fall out"
+    patterns_intro: "Now the fifty highest-priority cases the queue will list. This is their shape: when they occur, which families they sit in, and why they stand out from the market."
+    by_year:
+      heading: "Flagged cases by year"
+      caption: "{year} carries the most in the current run, {n} of {total}."
+      y: "Review candidates"
+    by_family:
+      heading: "Flagged cases by product family"
+      caption: "Counts across the three families. These are the fifty cases, not the whole market."
+      y: "Review candidates"
+    residual:
+      heading: "Why these fifty: distance from the benchmark"
+      caption: "The log gap to the benchmark for every official observation (grey) and for the queue (blue). The flagged cases sit in the tails. They are the corridors furthest from their market benchmark, not simply the largest."
+      population_name: "All official observations"
+      queue_name: "Review queue"
+      x: "Log gap to benchmark"
+    handoff: "Next, the Top 50 Review Queue lists these cases in rank order, each with its evidence and caveats."
   from_data_to_review_queue:
     eyebrow: "Data coverage & trust"
     title: "From Trusted Public Data to Review-Ready Evidence"
@@ -712,12 +766,71 @@ pages:
   model_and_controls:
     eyebrow: "Methodology"
     title: "Model Evaluation & Controls"
-    subtitle: "How the ranking was evaluated, selected, controlled, and caveated."
+    subtitle: "Can you trust the ranking that builds the queue, and what are its limits?"
+    objective: "This page explains, in plain terms, how the ranking was tested and what keeps it honest. Public trade data carries no confirmed cases to learn from, so the method is measured on controlled scenarios, chosen on a time-safe holdout, and held to firm limits on what it may claim."
+    # Retained for reuse; the scenario idea is now told plainly in the 'tested' section.
     scenario_note: >
-      Model comparison uses controlled synthetic review-priority scenarios and
-      hard negatives injected into a copy of the panel. Scenario labels are
-      evaluation constructs, not confirmed TBML labels. The selected blend is
-      then applied to the real official observations to build the review queue.
+      Model testing uses controlled synthetic scenarios and benign look-alikes
+      added to a copy of the data. These are evaluation constructs, not real
+      cases. The chosen method is then applied to the real official observations
+      to build the review queue.
+    tested:
+      heading: "How the ranking is tested"
+      body: >
+        Because there are no confirmed cases to learn from, we test the method on
+        patterns we plant ourselves. We take a copy of the data, insert known
+        unusual patterns, and mix in benign look-alikes — routes that move a lot
+        for ordinary market reasons and should be left alone. A method earns trust
+        by finding the planted patterns while ignoring the look-alikes.
+      split_line: "It learns on {train}, the approach is chosen on {validation}, and it is judged once on {test}, so it never sees the years it is tested on."
+      caveat: "These results measure how well the method ranks planted patterns in public data. They are not real-world detection rates."
+    works:
+      heading: "Does it work?"
+      takeaway: "On the years it had never seen, the chosen method put about {selected_pct}% of the planted patterns into its top 50, roughly {lift} times better than reviewing cases at random."
+      bar_x: "Share of the top 50 that were genuinely unusual patterns"
+      bar_selected: "The chosen method"
+      bar_rule: "Simple fixed rules"
+      bar_random: "Reviewing at random"
+      guardrail: "It left the benign look-alikes alone as well: none reached the top 50, so the method does not raise alarms on ordinary market swings."
+      family_limit: "It is strongest on {best} and weakest on {worst} — worth remembering for a queue weighted toward {worst}."
+    method:
+      heading: "Why this method was chosen"
+      body: >
+        Five approaches were compared, from simple fixed rules to a learned model.
+        The one in use is a blend: mostly the learned model, anchored by the
+        transparent rules. The pure learned model scored a little higher in
+        testing, and we say so plainly. The blend was chosen because it can be
+        explained and audited, which matters more than a small edge for a ranking
+        that people act on.
+      score_note: "The score sets review order. A higher score means higher review priority. It is not a probability or a finding of financial crime."
+    drivers:
+      heading: "What makes the flagged cases different"
+      takeaway: "The flagged cases are not unusual by luck on a single measure. A typical one sits near the top on all four at once: far from its own history, far from the market benchmark, high among its peers, and moving sharply year over year."
+      queue_label: "A typical flagged case"
+      population_label: "A typical route"
+      x_title: "Where it ranks among all routes (0 = lowest, 100 = highest)"
+      caption: "Shown on a shared 0-to-100 scale so the four measures line up. This describes the flagged rows; the measures are related, so one price spike can lift several at once."
+    honest:
+      heading: "What keeps it honest"
+      integrity_pass: "All {n} live data checks pass. The queue carries only real official values, with no test scenarios mixed in."
+      integrity_fail_intro: "A live data check did not pass:"
+      allowed_label: "The dashboard may say"
+      not_allowed_label: "The dashboard may not say"
+      boundary_note: "Scores are review-priority signals, not probabilities. Benchmarks are market context, not fair value. Typology references frame caveats; they are never evidence about a specific case."
+    drawer:
+      label: "Technical details (for model reviewers)"
+      intro: "Full evaluation numbers and model internals. Not needed to read the page above."
+      split_label: "Evaluation split"
+      family_label: "Product family"
+      metrics_heading: "Full metric table"
+      hybrid_heading: "Blend weights tested on validation"
+      splits_heading: "Scenario counts by split"
+      splits_note: "Scenario identifiers and labels are stored in a separate file, never in the model inputs. The test split was scored once, after the design was frozen."
+      shap_heading: "What the learned model leans on (SHAP)"
+      shap_caveat: "Model-contribution context for reviewers only. It is not evidence about any case and never appears in a case view."
+      params_heading: "Selected model parameters"
+      coeffs_heading: "Transparent-baseline coefficients"
+      sources_heading: "Source files and checksums"
   bank_implementation_pathway:
     eyebrow: "Future-state design"
     title: "Bank Implementation Pathway"

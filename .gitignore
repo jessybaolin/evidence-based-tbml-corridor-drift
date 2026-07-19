@@ -24,6 +24,7 @@ data-profiling/
 # Dashboard visual-refactor QA scratch (screenshots + a browser profile) —
 # process artefacts, never committed; the durable record is the code + tests.
 reports/dashboard_visual_refactor/
+artifacts/
 
 # Claude Code local-only agents/skills/settings (never pushed)
 .claude/agents/

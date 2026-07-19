@@ -108,6 +108,49 @@ def bar_single(frame: pd.DataFrame, x: str, y: str, y_title: str = "",
     return fig
 
 
+def small_multiples_by_family(frame: pd.DataFrame, value_col: str,
+                              hover_label: str, value_prefix: str = "",
+                              value_suffix: str = "", value_fmt: str = ".3s") -> go.Figure:
+    """One panel per family over year, each on its OWN scale.
+
+    Gold dwarfs the others (value and benchmark alike), so a shared y-axis would
+    flatten palm oil and copper to the baseline — the panels are deliberately not
+    comparable in height. Line colour follows the family entity.
+    """
+    fig = px.line(
+        frame, x="year", y=value_col, facet_col="family_label",
+        color="family_label", color_discrete_map=family_color_map(),
+        markers=True, facet_col_wrap=3, facet_col_spacing=0.07,
+    )
+    fig.update_yaxes(matches=None, showticklabels=True, title_text="")
+    fig.update_xaxes(dtick=1, title_text="")
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig.update_traces(
+        line=dict(width=2.5), marker=dict(size=6),
+        hovertemplate=(f"<b>%{{x}}</b><br>{hover_label}: {value_prefix}"
+                       f"%{{y:{value_fmt}}}{value_suffix}<extra></extra>"),
+    )
+    fig.update_layout(showlegend=False)
+    return fig
+
+
+def lines_by_family(frame: pd.DataFrame, y: str, y_title: str,
+                    hover_label: str) -> go.Figure:
+    """One line per family on a shared axis — for comparable magnitudes (counts)."""
+    fig = px.line(
+        frame, x="year", y=y, color="family_label",
+        color_discrete_map=family_color_map(), markers=True,
+    )
+    fig.update_traces(
+        line=dict(width=2.5), marker=dict(size=6),
+        hovertemplate=(f"<b>%{{x}}</b> · %{{fullData.name}}"
+                       f"<br>{hover_label}: %{{y:,.0f}}<extra></extra>"),
+    )
+    fig.update_layout(xaxis_title="", yaxis_title=y_title, legend_title_text="",
+                      xaxis=dict(dtick=1))
+    return fig
+
+
 def score_strip(queue: pd.DataFrame) -> go.Figure:
     # Review scores by year, coloured by family. Evidence counts are constant
     # in the current outputs, so no size channel — position + colour only.
@@ -183,6 +226,62 @@ def shap_importance_bar(values: pd.DataFrame) -> go.Figure:
         hovertemplate="%{y}: %{x:.3f}<extra></extra>",
     ))
     fig.update_layout(xaxis_title="Mean |SHAP| (challenger model)", yaxis_title="")
+    return fig
+
+
+def headline_bar(frame: pd.DataFrame, label_col: str, value_col: str,
+                 emphasis_label: str, x_title: str) -> go.Figure:
+    """Plain 'how much better' bars (a share, 0-100%), one method emphasised.
+
+    For the stakeholder 'does it work?' beat: the chosen method against the simple
+    rules and a random-review baseline. Percent labels, no metric jargon.
+    """
+    theme = load_theme()["chart"]
+    ordered = frame.sort_values(value_col, ascending=True)
+    colors = [theme["emphasis"] if label == emphasis_label else theme["context_gray"]
+              for label in ordered[label_col]]
+    fig = go.Figure(go.Bar(
+        x=ordered[value_col], y=ordered[label_col], orientation="h",
+        marker_color=colors, marker_line_width=0, width=0.6,
+        text=[f"{v:.0f}%" for v in ordered[value_col]], textposition="outside",
+        hovertemplate="%{y}: %{x:.0f}%<extra></extra>",
+    ))
+    top = float(ordered[value_col].max())
+    fig.update_layout(xaxis_title=x_title, yaxis_title="",
+                      xaxis=dict(range=[0, max(100.0, top * 1.15)], ticksuffix="%"))
+    return fig
+
+
+def driver_dumbbell(frame: pd.DataFrame, queue_label: str, population_label: str,
+                    x_title: str) -> go.Figure:
+    """One shared 0-100 percentile scale showing the queue is extreme on every lens.
+
+    Each row is a drift lens; a grey dot marks a typical route (the 50th
+    percentile) and an accent dot marks a typical queue row, joined by a line.
+    The visual point: on all four measures at once, queue rows sit near the top.
+    """
+    theme = load_theme()["chart"]
+    fig = go.Figure()
+    for _, row in frame.iterrows():
+        fig.add_scatter(
+            x=[row["population_pct"], row["queue_pct"]], y=[row["label"], row["label"]],
+            mode="lines", line=dict(color=theme["axis_color"], width=2),
+            showlegend=False, hoverinfo="skip",
+        )
+    fig.add_scatter(
+        x=frame["population_pct"], y=frame["label"], mode="markers", name=population_label,
+        marker=dict(size=12, color=theme["context_gray"],
+                    line=dict(color=theme["marker_outline"], width=1)),
+        hovertemplate="%{y}<br>" + population_label + ": %{x:.0f} of 100<extra></extra>",
+    )
+    fig.add_scatter(
+        x=frame["queue_pct"], y=frame["label"], mode="markers", name=queue_label,
+        marker=dict(size=13, color=theme["emphasis"],
+                    line=dict(color=theme["marker_outline"], width=1)),
+        hovertemplate="%{y}<br>" + queue_label + ": %{x:.0f} of 100<extra></extra>",
+    )
+    fig.update_layout(xaxis_title=x_title, yaxis_title="",
+                      xaxis=dict(range=[0, 100]), legend_title_text="")
     return fig
 
 

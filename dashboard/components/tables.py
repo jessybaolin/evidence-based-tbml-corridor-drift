@@ -29,18 +29,45 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     # are rounded by st.column_config only — the underlying values stay exact.
     theme = load_theme()
     palette = theme["palette"]
-    columns_copy = load_content()["pages"]["review_queue"]["columns"]
+    content = load_content()
+    columns_copy = content["pages"]["review_queue"]["columns"]
     stripe = theme["components"]["table"]["stripe_bg"]
     selected_bg = theme["selection"]["background"]
+    selected_border = theme["selection"]["border"]
+    family_styles = {
+        content["family_short_labels"][family_id]: color
+        for family_id, color in theme["families"].items()
+    }
 
     frame = display.reset_index(drop=True)
+    style_frame = pd.DataFrame("", index=frame.index, columns=frame.columns)
+    for row_index, row in frame.iterrows():
+        selected = highlight_row is not None and row_index == highlight_row
+        if selected:
+            selected_style = (
+                f"background-color: color-mix(in srgb, {selected_bg} 58%, white); "
+                f"color: {theme['selection']['text']}"
+            )
+            style_frame.loc[row_index, :] = selected_style
+            style_frame.loc[row_index, "rank"] += (
+                f"; border-left: 3px solid {selected_border}; font-weight: 800"
+            )
+        elif row_index % 2 == 1:
+            style_frame.loc[row_index, :] = f"background-color: {stripe}"
 
-    def _row_style(row: pd.Series) -> list[str]:
-        if highlight_row is not None and row.name == highlight_row:
-            return [f"background-color: {selected_bg}"] * len(row)
-        if row.name % 2 == 1:
-            return [f"background-color: {stripe}"] * len(row)
-        return [""] * len(row)
+        rank = int(row["rank"])
+        if rank == 1:
+            style_frame.loc[row_index, "rank"] += f"; color: {palette['ink']}; font-weight: 800"
+        elif rank <= 3:
+            style_frame.loc[row_index, "rank"] += "; font-weight: 700"
+
+        if not selected:
+            family_color = family_styles.get(str(row["product"]))
+            if family_color:
+                style_frame.loc[row_index, "product"] += (
+                    f"; background-color: color-mix(in srgb, {family_color} 10%, white); "
+                    f"color: {family_color}; font-weight: 700"
+                )
 
     def _copy(column: str, **fmt) -> dict:
         entry = columns_copy[column]
@@ -52,11 +79,11 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     product_copy = _copy("product", mappings=mappings)
     score_copy = _copy("selected_review_priority_score")
     return st.dataframe(
-        frame.style.apply(_row_style, axis=1),
+        frame.style.apply(lambda _: style_frame, axis=None),
         hide_index=True,
         width="stretch",
         height=height,
-        row_height=38,
+        row_height=42,
         on_select="rerun",
         selection_mode="single-row",
         key=key,
@@ -72,7 +99,7 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
                 corridor_copy["label"], width=108, help=corridor_copy["help"],
             ),
             "product": st.column_config.TextColumn(
-                product_copy["label"], width=100, help=product_copy["help"],
+                product_copy["label"], width=112, help=product_copy["help"],
             ),
             "trade_value_usd": st.column_config.NumberColumn(
                 _copy("trade_value_usd")["label"], format="localized", width=128,
@@ -92,7 +119,7 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
             ),
             "selected_review_priority_score": st.column_config.ProgressColumn(
                 score_copy["label"], min_value=0.0, max_value=1.0, format="%.3f",
-                help=score_copy["help"],
+                help=score_copy["help"], width=180,
             ),
         },
     )

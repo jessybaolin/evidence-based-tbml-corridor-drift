@@ -164,6 +164,11 @@ chart:
   margin: {l: 10, r: 10, t: 24, b: 10}
 
 motion:
+  fast_ms: 120
+  standard_ms: 180
+  landing_entry_ms: 260
+  landing_stagger_ms: 45
+  easing: "cubic-bezier(0.22, 1, 0.36, 1)"
   entry_ms: 350
   entry_step_ms: 70
   hover_ms: 180

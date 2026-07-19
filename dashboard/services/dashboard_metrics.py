@@ -321,6 +321,85 @@ def residual_context(panel: pd.DataFrame, queue: pd.DataFrame) -> tuple[pd.Serie
     return population, selected
 
 
+# ---- Trade landscape (the full official panel, not the 50-row queue) -----------
+# These describe the whole official population — the reading frame a reviewer
+# needs before the queue: how large the trade is (scale), how the corridors are
+# built (structure), and how far prices moved on their own (market context).
+
+def _with_corridor(panel: pd.DataFrame) -> pd.DataFrame:
+    frame = panel.copy()
+    frame["corridor"] = (frame["exporter_iso3"].astype(str) + "→"
+                         + frame["importer_iso3"].astype(str))
+    return frame
+
+
+def trade_scale_by_family_year(panel: pd.DataFrame, short_labels: dict) -> pd.DataFrame:
+    # Value, quantity and active-corridor count per family per year. One frame
+    # feeds the scale small multiples (value/quantity toggle) and the structure
+    # active-corridor lines. Columns: family_id, family_label, year,
+    # trade_value_usd, quantity_metric_ton, active_corridors.
+    frame = _with_corridor(panel)
+    grouped = frame.groupby(["family_id", "year"], as_index=False).agg(
+        trade_value_usd=("trade_value_usd", "sum"),
+        quantity_metric_ton=("quantity_metric_ton", "sum"),
+        active_corridors=("corridor", "nunique"),
+    )
+    grouped["family_label"] = grouped["family_id"].map(short_labels).fillna(
+        grouped["family_id"])
+    return grouped.sort_values(["family_label", "year"]).reset_index(drop=True)
+
+
+def top_corridor_share_by_family(panel: pd.DataFrame, short_labels: dict,
+                                 top_n: int = 10) -> pd.DataFrame:
+    # Share of each family's total value carried by its N largest corridors —
+    # how top-heavy the market is, and where small-denominator unit-value
+    # extremes come from. Columns: family_id, family_label, top_share_pct,
+    # top_corridors (the three biggest, for the tooltip).
+    frame = _with_corridor(panel)
+    by_corridor = frame.groupby(["family_id", "corridor"], as_index=False).agg(
+        value=("trade_value_usd", "sum"))
+    by_corridor["share"] = by_corridor["value"] / by_corridor.groupby(
+        "family_id")["value"].transform("sum")
+    ordered = by_corridor.sort_values("value", ascending=False)
+    out = ordered.groupby("family_id").head(top_n).groupby(
+        "family_id", as_index=False).agg(top_share=("share", "sum"))
+    out["top_share_pct"] = out["top_share"] * 100.0
+    names = (ordered.groupby("family_id").head(3).groupby("family_id")["corridor"]
+             .apply(lambda s: ", ".join(s)).rename("top_corridors").reset_index())
+    out = out.merge(names, on="family_id", how="left")
+    out["family_label"] = out["family_id"].map(short_labels).fillna(out["family_id"])
+    return out.sort_values("top_share_pct", ascending=False).reset_index(drop=True)
+
+
+def benchmark_by_family_year(panel: pd.DataFrame, short_labels: dict) -> pd.DataFrame:
+    # The World Bank benchmark per family per year (constant within a family-year;
+    # max ignores any missing row). Columns: family_id, family_label, year, benchmark.
+    grouped = panel.groupby(["family_id", "year"], as_index=False).agg(
+        benchmark=("benchmark_price_usd_per_metric_ton", "max"))
+    grouped["family_label"] = grouped["family_id"].map(short_labels).fillna(
+        grouped["family_id"])
+    return grouped.sort_values(["family_label", "year"]).reset_index(drop=True)
+
+
+def landscape_summary(panel: pd.DataFrame, short_labels: dict) -> dict:
+    # Headline context figures for the landscape strip — all derived, never typed.
+    total_value = float(panel["trade_value_usd"].sum())
+    by_family = panel.groupby("family_id")["trade_value_usd"].sum()
+    dominant = str(by_family.idxmax())
+    years = sorted(int(y) for y in panel["year"].unique())
+    return {
+        "total_value": total_value,
+        "dominant_family_id": dominant,
+        "dominant_family_label": short_labels.get(dominant, dominant),
+        "dominant_share": 100.0 * float(by_family.max()) / total_value,
+        "n_families": int(panel["family_id"].nunique()),
+        "year_start": years[0],
+        "year_end": years[-1],
+        "n_years": len(years),
+        "n_corridors": int(_with_corridor(panel)["corridor"].nunique()),
+    }
+
+
 # ---- Model & controls ----------------------------------------------------------
 
 def comparison_view(comparison: pd.DataFrame, split: str, family_id: str = "all") -> pd.DataFrame:
@@ -337,3 +416,90 @@ def split_years_table(project_config: dict) -> pd.DataFrame:
         {"split": "Test", "years": fm.year_span(project_config["test_years"]),
          "purpose": "Final evaluation after design freeze"},
     ])
+
+
+# ---- Model evaluation, in plain-language stakeholder terms ----------------------
+# The four drift lenses shown on the case page, paired with a plain label. Used by
+# driver_separation to show that queue rows are extreme on several measures at once.
+DRIVER_LENSES: list[tuple[str, str]] = [
+    ("robust_historical_z", "Distance from its own history"),
+    ("benchmark_residual", "Distance from the market benchmark"),
+    ("same_family_year_peer_percentile", "Rank among same-product peers"),
+    ("unit_value_yoy_change", "Year-over-year price move"),
+]
+
+
+def headline_eval(comparison: pd.DataFrame, selection: dict, split: str = "test") -> dict | None:
+    """The plain "does it work?" numbers for the selected method vs simple rules.
+
+    Translates precision@k into a share (what fraction of the top-k were the
+    planted patterns), against the transparent rule baseline and a random-review
+    baseline (positives / n). Every value is read from model_comparison.csv, never
+    typed in. `split` defaults to the held-out test years.
+    """
+    selected_model = str(selection.get("selected_score_column", "hybrid_score")).replace("_score", "")
+    view = comparison[(comparison["split"] == split) & (comparison["family_id"] == "all")]
+
+    def _row(model: str):
+        rows = view[view["model"] == model]
+        return rows.iloc[0] if not rows.empty else None
+
+    selected = _row(selected_model)
+    rule = _row("rule")
+    if selected is None:
+        return None
+    n = int(selected["n"])
+    positives = int(selected["positives"])
+    random_pct = 100.0 * positives / n if n else 0.0
+    family_rows = comparison[
+        (comparison["split"] == split) & (comparison["model"] == selected_model)
+        & (comparison["family_id"] != "all")
+    ]
+    best_family = worst_family = None
+    if not family_rows.empty:
+        best_family = str(family_rows.loc[family_rows["average_precision"].idxmax(), "family_id"])
+        worst_family = str(family_rows.loc[family_rows["average_precision"].idxmin(), "family_id"])
+    return {
+        "selected_model": selected_model,
+        "k": int(selected["k"]),
+        "n": n,
+        "positives": positives,
+        "selected_pct": 100.0 * float(selected["precision_at_k"]),
+        "rule_pct": 100.0 * float(rule["precision_at_k"]) if rule is not None else None,
+        "random_pct": random_pct,
+        "lift": float(selected["lift_at_k"]),
+        "hard_negative_fpr": float(selected["hard_negative_false_positive_rate"]),
+        "best_family_id": best_family,
+        "worst_family_id": worst_family,
+    }
+
+
+def driver_separation(features: pd.DataFrame, queue_ids: set) -> pd.DataFrame:
+    """Where the queue's typical value sits among all scored rows, per lens.
+
+    For each drift lens, the median of the 50-row queue and of every other scored
+    row, plus the percentile the queue median occupies in the scored population
+    (0 = lowest, 100 = highest). Queue rows land near the top on ALL of them,
+    which is the plain answer to "what makes these different?". Descriptive only.
+    """
+    scored = (features[features["model_eligible"].astype(bool)]
+              if "model_eligible" in features.columns else features)
+    ids = {str(o) for o in queue_ids}
+    in_queue = scored["obs_id"].astype(str).isin(ids)
+    queue = scored[in_queue]
+    rest = scored[~in_queue]
+    rows = []
+    for column, label in DRIVER_LENSES:
+        population = scored[column].dropna()
+        queue_median = float(queue[column].dropna().median())
+        rest_median = float(rest[column].dropna().median())
+        queue_pct = 100.0 * float((population <= queue_median).mean()) if len(population) else 0.0
+        rows.append({
+            "lens": column,
+            "label": label,
+            "queue_median": queue_median,
+            "rest_median": rest_median,
+            "queue_pct": queue_pct,
+            "population_pct": 50.0,
+        })
+    return pd.DataFrame(rows)

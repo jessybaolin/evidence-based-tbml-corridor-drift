@@ -14,9 +14,10 @@ import html
 
 import streamlit as st
 
-from dashboard.components.cards import kpi_card_markup
+from dashboard.components.cards import commodity_card_markup, kpi_card_markup
+from dashboard.components.icons import render_icon
 from dashboard.components.page_header import ledger
-from dashboard.components.page_shell import render_page_header
+from dashboard.components.page_shell import render_page_header, story_section_heading_markup
 from dashboard.services import data_loader as load
 from dashboard.services.formatting import label_from_key
 
@@ -63,11 +64,6 @@ def _tip(term: str, tip: str) -> str:
     return f'<span class="tip" tabindex="0" data-tip="{_e(tip)}">{_e(term)}</span>'
 
 
-# ---- 1 · Hero ---------------------------------------------------------------
-render_page_header(copy["title"], copy["subtitle"], copy["eyebrow"], "hero-block anim")
-
-
-# ---- 2 · The business problem + challenge/response twin cards ----------------
 def _twin_card(card: dict, kind: str) -> str:
     bullets = "".join(f"<li>{_e(item)}</li>" for item in card["bullets"])
     return (
@@ -77,19 +73,6 @@ def _twin_card(card: dict, kind: str) -> str:
     )
 
 
-st.markdown(
-    f'<div class="landing-section anim d1">'
-    f'<div class="landing-heading">{_e(copy["problem_heading"])}</div>'
-    f'<p class="landing-prose">{_e(copy["problem_body"])}</p>'
-    f'<p class="landing-prose">{_e(copy["problem_body_2"])}</p>'
-    f'<div class="twin-grid">'
-    f'{_twin_card(copy["challenge_card"], "challenge")}'
-    f'{_twin_card(copy["response_card"], "response")}'
-    f"</div></div>",
-    unsafe_allow_html=True,
-)
-
-# ---- 3 · What this project does + commodity chips -----------------------------
 what_1 = _e(copy["what_body"].format(
     observations=observations, year_start=year_start, year_end=year_end,
     n_commodities=n_commodities,
@@ -97,22 +80,18 @@ what_1 = _e(copy["what_body"].format(
 # Inject the corridor-definition tooltip around the {corridor_term} placeholder.
 term_html = _tip(copy["corridor_term"], copy["tooltip_corridor"])
 what_2 = term_html.join(_e(part) for part in copy["what_body_2"].split("{corridor_term}"))
-chips = "".join(
-    f'<span class="chip"><span class="chip-dot">'
-    f"</span>{_e(family_names[fid])}</span>"
+commodity_icons = {
+    "crude_palm_oil": "droplet",
+    "refined_copper_cathodes": "layers",
+    "gold_unwrought": "package",
+}
+commodity_cards = "".join(
+    commodity_card_markup(
+        title=family_names[fid], family_id=fid, icon=commodity_icons[fid]
+    )
     for fid in content["family_short_labels"] if fid in family_names
 )
-st.markdown(
-    f'<div class="landing-section anim d2">'
-    f'<div class="landing-heading">{_e(copy["what_heading"])}</div>'
-    f'<p class="landing-prose">{what_1}</p>'
-    f'<div class="chip-row">{chips}</div>'
-    f'<p class="landing-prose">{what_2}</p>'
-    f"</div>",
-    unsafe_allow_html=True,
-)
 
-# ---- 4 · What stakeholders receive (stat band) --------------------------------
 deliverables = copy["deliverables"]
 tip_evidence = copy["tooltip_evidence"].format(
     evidence_per_case=evidence_per_case,
@@ -130,59 +109,128 @@ tiles = [
      deliverables["briefs"]["detail"]),
 ]
 KPI_ICONS = ["database", "checklist", "shield-check", "file-text"]
+KPI_CLASSES = ["outcome-teal", "outcome-blue", "outcome-amber", "outcome-navy"]
 tiles_html = "".join(
-    kpi_card_markup(value, label, detail, icon)
-    for (value, label, detail), icon in zip(tiles, KPI_ICONS)
-)
-st.markdown(
-    f'<div class="landing-section anim d3">'
-    f'<div class="landing-heading">{_e(copy["deliverables_heading"])}</div>'
-    f'<div class="stat-band">{tiles_html}</div>'
-    f"</div>",
-    unsafe_allow_html=True,
-)
-st.page_link("app_pages/review_queue.py", label=f"{copy['queue_cta']} →",
-             icon=":material/checklist:")
-ledger("panel", "review_queue", "evidence",
-       *(["analyst_briefs"] if briefs else []))
-
-# ---- 5 · Pipeline flow strip ---------------------------------------------------
-flow = '<span class="flow-arrow" aria-hidden="true">→</span>'.join(
-    f'<span class="flow-step">{_e(step)}</span>' for step in copy["pipeline_steps"]
-)
-st.markdown(
-    f'<div class="landing-section anim d4">'
-    f'<div class="landing-heading">{_e(copy["pipeline_heading"])}</div>'
-    f'<div class="flow-strip">{flow}</div>'
-    f"</div>",
-    unsafe_allow_html=True,
-)
-st.page_link("app_pages/from_data_to_review_queue.py", label=f"{copy['pipeline_cta']} →",
-             icon=":material/account_tree:")
-
-# ---- 6 · Why it matters --------------------------------------------------------
-st.markdown(
-    f'<div class="landing-section anim d5">'
-    f'<div class="landing-heading">{_e(copy["why_heading"])}</div>'
-    f'<div class="quote-grid">'
-    f'<div class="quote-card before"><div class="quote-label">{_e(copy["quote_before_label"])}</div>'
-    f'<div class="quote-text">“{_e(copy["quote_before"])}”</div></div>'
-    f'<div class="quote-card after"><div class="quote-label">{_e(copy["quote_after_label"])}</div>'
-    f'<div class="quote-text">“{_e(copy["quote_after"])}”</div></div>'
-    f"</div>"
-    f'<p class="landing-prose">{_e(copy["why_body"])}</p>'
-    f"</div>",
-    unsafe_allow_html=True,
+    kpi_card_markup(value, label, detail, icon, extra_classes=accent)
+    for (value, label, detail), icon, accent in zip(tiles, KPI_ICONS, KPI_CLASSES)
 )
 
-# ---- 7 · Bottom line -------------------------------------------------------------
+process_icons = ["database", "line-chart", "file-text", "shield-check"]
+process_flow = "".join(
+    f'<div class="story-process-stage process-stage-{index}">'
+    f'<div class="process-stage-meta"><span class="process-stage-number">{index}</span>'
+    f'{render_icon(icon, class_name="process-stage-icon")}</div>'
+    f'<div class="process-stage-title">{_e(step)}</div></div>'
+    for index, (step, icon) in enumerate(zip(copy["pipeline_steps"], process_icons), start=1)
+)
+
+STORY_TAB_KEY = "business_value_story_tab"
+story_tabs = [copy["what_heading"], copy["why_heading"], copy["pipeline_heading"]]
+if st.session_state.get(STORY_TAB_KEY) not in story_tabs:
+    st.session_state[STORY_TAB_KEY] = story_tabs[0]
+
+
+def _restore_story_tab() -> None:
+    if st.session_state.get(STORY_TAB_KEY) is None:
+        st.session_state[STORY_TAB_KEY] = story_tabs[0]
+
+
 bottom_line = copy["bottom_line"].format(observations=observations, queue_size=queue_size)
 value_chips = "".join(f'<span class="value-chip">{_e(chip)}</span>'
                       for chip in copy["value_chips"])
-st.markdown(
-    f'<div class="landing-section anim d6">'
-    f'<div class="bottom-line"><div class="bottom-line-text">{_e(bottom_line)}</div>'
-    f'<div class="value-chip-row">{value_chips}</div></div>'
-    f"</div>",
-    unsafe_allow_html=True,
-)
+
+
+with st.container(key="business_value_page"):
+    st.markdown('<span class="business-value-page" aria-hidden="true"></span>',
+                unsafe_allow_html=True)
+
+    # ---- 1 · Hero -----------------------------------------------------------
+    render_page_header(copy["title"], copy["subtitle"], copy["eyebrow"],
+                       "hero-block bv-entry")
+
+    # ---- 2–3 · Business problem + challenge/response -----------------------
+    st.markdown(
+        f'<section class="bv-section bv-problem bv-entry bv-d1">'
+        f'{story_section_heading_markup(copy["problem_heading"])}'
+        f'<div class="bv-readable">'
+        f'<p class="landing-prose">{_e(copy["problem_body"])}</p>'
+        f'<p class="landing-prose">{_e(copy["problem_body_2"])}</p></div>'
+        f'<div class="twin-grid">'
+        f'{_twin_card(copy["challenge_card"], "challenge")}'
+        f'{_twin_card(copy["response_card"], "response")}'
+        f'</div></section>',
+        unsafe_allow_html=True,
+    )
+
+    # ---- 4 · Stakeholder outcomes ------------------------------------------
+    with st.container(key="business_value_stakeholders"):
+        st.markdown(
+            f'<section class="bv-section bv-entry bv-d2">'
+            f'{story_section_heading_markup(copy["deliverables_heading"])}'
+            f'<div class="stat-band">{tiles_html}</div></section>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("app_pages/review_queue.py", label=f"{copy['queue_cta']} →",
+                     icon=":material/checklist:")
+        ledger("panel", "review_queue", "evidence",
+               *(["analyst_briefs"] if briefs else []))
+
+    # ---- 5 · Manual project story ------------------------------------------
+    st.markdown(
+        f'<section class="bv-section bv-explore bv-entry bv-d3">'
+        f'{story_section_heading_markup("Explore the project")}</section>',
+        unsafe_allow_html=True,
+    )
+    with st.container(key="business_value_story"):
+        selected_story = st.segmented_control(
+            "Explore the project",
+            story_tabs,
+            key=STORY_TAB_KEY,
+            on_change=_restore_story_tab,
+            label_visibility="collapsed",
+        ) or story_tabs[0]
+
+        if selected_story == story_tabs[0]:
+            st.markdown(
+                f'<section class="story-panel story-panel-what">'
+                f'<div class="story-panel-heading">{_e(copy["what_heading"])}</div>'
+                f'<p class="landing-prose">{what_1}</p>'
+                f'<div class="commodity-grid">{commodity_cards}</div>'
+                f'<p class="landing-prose">{what_2}</p></section>',
+                unsafe_allow_html=True,
+            )
+        elif selected_story == story_tabs[1]:
+            st.markdown(
+                f'<section class="story-panel story-panel-why">'
+                f'<div class="story-panel-heading">{_e(copy["why_heading"])}</div>'
+                f'<div class="quote-grid">'
+                f'<div class="quote-card before"><div class="quote-label">'
+                f'{_e(copy["quote_before_label"])}</div>'
+                f'<div class="quote-text">“{_e(copy["quote_before"])}”</div></div>'
+                f'<div class="quote-card after"><div class="quote-label">'
+                f'{_e(copy["quote_after_label"])}</div>'
+                f'<div class="quote-text">“{_e(copy["quote_after"])}”</div></div>'
+                f'</div><p class="landing-prose">{_e(copy["why_body"])}</p></section>',
+                unsafe_allow_html=True,
+            )
+        else:
+            with st.container(key="business_value_process_panel"):
+                st.markdown(
+                    f'<section class="story-panel story-panel-process">'
+                    f'<div class="story-panel-heading">{_e(copy["pipeline_heading"])}</div>'
+                    f'<div class="story-process-flow">{process_flow}</div></section>',
+                    unsafe_allow_html=True,
+                )
+                st.page_link(
+                    "app_pages/from_data_to_review_queue.py",
+                    label=f"{copy['pipeline_cta']} →",
+                    icon=":material/account_tree:",
+                )
+
+    # ---- 6 · Final value statement -----------------------------------------
+    st.markdown(
+        f'<section class="bv-section bv-final bv-entry bv-d4">'
+        f'<div class="bottom-line"><div class="bottom-line-text">{_e(bottom_line)}</div>'
+        f'<div class="value-chip-row">{value_chips}</div></div></section>',
+        unsafe_allow_html=True,
+    )
