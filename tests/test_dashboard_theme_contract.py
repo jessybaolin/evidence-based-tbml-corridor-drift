@@ -82,4 +82,9 @@ def test_boundary_footer_is_rendered_once_by_entry_point():
 
 def test_every_page_uses_the_shared_header_contract():
     for path, source in _page_sources().items():
+        if path.name == "landing.py":
+            # The welcome screen has no dashboard header by design; it must
+            # render through the shared landing component instead of ad-hoc UI.
+            assert "render_landing(" in source, path
+            continue
         assert "page_header(" in source or "render_page_header(" in source, path

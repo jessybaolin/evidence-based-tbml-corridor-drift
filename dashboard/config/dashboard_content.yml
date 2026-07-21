@@ -10,7 +10,23 @@ app:
   title: "Evidence-First TBML Triage System"
   short_title: "TBML Triage System"
   subtitle: "Turns official public trade data into a ranked queue of unusual corridor–product–year patterns for human review."
+  # Short sidebar descriptor. The full `subtitle` sentence is the landing hero's
+  # value line; the persistent sidebar carries only this compact tag so the nav
+  # stays scannable (and deep-linkers who skip the landing still get context).
+  tagline: "Review-priority analytics"
   icon: "🔎"
+
+# Full-screen welcome (landing) copy. The hero title spells the acronym out in
+# full — the compact "Evidence-First TBML Triage System" stays the sidebar
+# brand. title_lines are rendered as separate hero lines (semantic phrases), so
+# the break points are controlled here, not by the CSS.
+landing:
+  eyebrow: "Review-priority analytics"
+  title_lines:
+    - "Evidence-First"
+    - "Trade-Based Money Laundering (TBML)"
+    - "Triage System"
+  cta: "Enter the dashboard"
 
 boundary_label: "Human-review boundary"
 
@@ -32,8 +48,8 @@ evidence_type_labels:
 
 pages:
   executive_overview:
-    eyebrow: "Business Problem & Value"
-    title: "Evidence-Backed Trade Pattern Triage"
+    eyebrow: ""
+    title: "Evidence-First Trade Pattern Triage"
     subtitle: "Helping AFC analysts decide which unusual trade patterns to review first—and why."
     problem_heading: "The business problem"
     problem_body: >
@@ -71,7 +87,7 @@ pages:
       possible benign explanations behind each ranking.
     corridor_term: "exporter–importer–product–year"
     tooltip_corridor: "One exporter, one importer, one product and one calendar year, aggregated from public trade records."
-    deliverables_heading: "What stakeholders receive"
+    deliverables_heading: "What the system delivers"
     deliverables:
       observations:
         label: "observations"
@@ -114,15 +130,10 @@ pages:
     subtitle: "The top-ranked official observations — filter the queue, pick the current case, and export the view."
     caveat: "A high rank means the row shows unusual analytical signals; it is not a finding of wrongdoing."
     filters_heading: "Filters"
-    filters_caption: "Year, product family, exporter and importer scope the queue below; empty filters mean no restriction."
-    queue_size_label: "Queue size"
-    queue_size_options: ["Top 50", "Top 500"]
-    queue_size_note: "The analytical pipeline currently publishes the top {published} ranked observations, so both queue sizes show the same {published} rows."
-    advanced_label: "Advanced filters"
     reset_label: "Reset filters"
     results_heading: "Ranked official observations"
-    results_caption: "{shown} of {total} review candidates match the current filters. Select a row to make it the current case."
-    empty_message: "No review candidates match the current filters. Adjust the year, product family, exporter or importer selections, or widen the score range under Advanced filters."
+    results_caption: "Select a row to make it the current case."
+    empty_message: "No review candidates match the current filters. Adjust the year, product family, exporter or importer selections, or reset the filters."
     export_label: "Export current view (.csv)"
     export_help: "Downloads the rows currently shown, ordered by rank, with full-precision values and the observation ID for traceability."
     banner_default: "Default case #{rank}: {year} {exporter} → {importer} — {product}. Select another row to change it."
@@ -131,7 +142,7 @@ pages:
     # The score explainer is shown verbatim in the score column tooltip AND in
     # the note under the table (single YAML anchor so the two can never drift).
     score_note: &queue_score_note "The score combines several unusual-pattern signals to determine which observations should be reviewed first. A higher score means higher review priority—it is not the probability or a finding of financial crime."
-    table_caption_products: "Products: {mappings}."
+    table_caption_products: "Colored dots identify product families: {mappings}."
     table_caption_precision: "On-screen numbers are rounded for reading. The CSV export keeps full precision and is always ordered by rank — in-app column sorting reorders the view only, never the export."
     columns:
       rank:
@@ -145,7 +156,7 @@ pages:
         help: "Exporter → importer as the official three-letter codes (e.g. GBR → ITA); grouped partners keep their source code (e.g. S19 = Other Asia, nes). Full names appear in the case banner above and on Selected Case Review."
       product:
         label: "Product"
-        help: "Product family. {mappings}. Per-observation data-quality caveats appear on Selected Case Review."
+        help: "The colored dot identifies the product family. {mappings}. Per-observation data-quality caveats appear on Selected Case Review."
       trade_value_usd:
         label: "Trade value (USD)"
         help: "Annual aggregate trade value reported for this corridor-product-year, in US dollars."
@@ -153,8 +164,8 @@ pages:
         label: "Quantity (metric tons)"
         help: "Annual aggregate quantity in metric tons. Gold flows can be small fractions of a ton."
       unit_value_usd_per_metric_ton:
-        label: "Unit value (USD/t)"
-        help: "Implied aggregate unit value — trade value divided by quantity. An annual aggregate, not an invoice price."
+        label: "Unit value (USD/t) ⓘ"
+        help: "Implied unit value is the annual trade value divided by the reported quantity in metric tons. It is called implied because it is calculated from aggregate public data, not observed from an invoice or transaction price."
       benchmark_price_usd_per_metric_ton:
         label: "Benchmark price (USD/t)"
         help: "World Bank benchmark price for the same year — broad market context, not invoice-level fair value."
@@ -166,10 +177,13 @@ pages:
     title: "Selected Case Review"
     subtitle: "Understand why this official trade observation ranked highly by comparing it with the market, its own history and comparable trade corridors."
     caveat: "The implied unit value is an annual aggregate, not an invoice price."
-    tabs: ["Case Summary", "Why It Ranked High", "Limitations"]
+    tabs: ["Case Summary", "Why It Ranked High", "Caveats"]
     selector_label: "Change case"
     selector_help: "Pick a case here, or select a row on the Review Queue page."
     not_in_queue: "The selected observation is not in the review queue. Choose another case."
+    # Definition surfaced on hover from the highlighted word "corridor" in each
+    # comparison-view heading.
+    corridor_tip: "A corridor is a single exporter→importer trade route — one exporter shipping to one importer. Combined with a product and a year, it is the unit this dashboard ranks and reviews."
     # Runtime consistency gate: if any recomputed value disagrees with the
     # published artefacts the page shows this message INSTEAD of numbers.
     validation_error: >-
@@ -197,74 +211,44 @@ pages:
       vs_benchmark: "Unit value vs benchmark"
       vs_benchmark_value: "{multiple}× benchmark"
       quality: "Data quality"
-      valid_extreme_note: "Valid extreme retained (>5× or <0.2× benchmark)."
-      benchmark_caveat_label: "Benchmark caveat"
-    provenance:
-      label: "Data provenance"
-      obs_id: "Observation ID"
-      source_row: "Source row"
-      source_version: "Source version"
-      method_label: "Ranking method"
-      method_value: "Selected blended ranking method"
-      method_link: "How the method was selected — Model Evaluation & Controls"
+      valid_extreme_note: "An extreme multiple (over 5× or under 0.2× the benchmark) that was checked and kept as a valid observation, not treated as a data error."
     views:
       selector_label: "Comparison view"
-      labels: ["Market comparison", "Own history", "Peer position"]
-      indicator: "{n} of {total}"
-      prev_label: "← Prev"
-      next_label: "Next →"
+      labels: ["Market & history", "Peer position"]
       mode_label: "Display mode"
       mode_chart: "Chart"
       mode_table: "Table"
-      market:
-        title: "How did the corridor compare with the wider commodity market?"
-        takeaway: "In {year}, the corridor's implied unit value was {multiple}× the annual World Bank benchmark."
-        takeaway_unavailable: "A market comparison is unavailable for the selected year because the implied unit value or the benchmark cannot be computed from the official record."
-        note: "The World Bank benchmark provides broad market context; it is not invoice-level fair value."
+      combined:
+        title: "How did the corridor compare with the market and its own history?"
+        takeaway: "In {year}, the corridor's implied unit value was {market_multiple}× the annual World Bank benchmark and {history_multiple}× the median of its own {prior_years} earlier observed year(s)."
+        takeaway_market_only: "In {year}, the corridor's implied unit value was {market_multiple}× the annual World Bank benchmark; there is no earlier observed year to compare it with."
+        takeaway_unavailable: "A comparison is unavailable for the selected year because the implied unit value or the World Bank benchmark cannot be computed from the official record."
+        note: "Two references on one view: the World Bank benchmark is the world market price; the prior corridor median summarises this corridor's own earlier observed years. Both are context, not invoice-level fair value. Unobserved years stay blank — never filled in or interpolated."
         series_corridor: "Corridor implied unit value"
         series_benchmark: "World Bank benchmark"
+        series_prior: "Prior corridor median"
         y_title: "USD per metric ton"
         hover:
           trade_value: "Trade value"
           quantity: "Quantity"
           implied_uv: "Implied unit value"
           benchmark: "WB benchmark"
-          multiple: "Benchmark multiple"
+          market_multiple: "Benchmark multiple"
+          prior_median: "Prior corridor median"
+          history_multiple: "Prior-median multiple"
           quality: "Data quality"
         table:
           year: "Year"
-          trade_value: "Trade value (USD)"
-          quantity: "Quantity (metric tons)"
           implied_uv: "Implied unit value (USD/t)"
           benchmark: "WB benchmark (USD/t)"
-          multiple: "Benchmark multiple"
-          quality: "Data-quality status"
-      history:
-        title: "How did the corridor compare with its own prior behaviour?"
-        takeaway: "In {year}, the corridor's implied unit value was {multiple}× the median of its own earlier observed years ({prior_years} prior year(s) used)."
-        takeaway_no_baseline: "Prior corridor baseline unavailable — no earlier observed year for this corridor has a computable unit value."
-        note: "The prior corridor median summarises earlier observed years only. Years without observed trade stay blank; they are never filled in or interpolated."
-        series_corridor: "Corridor implied unit value"
-        series_prior: "Prior corridor median"
-        y_title: "USD per metric ton"
-        hover:
-          implied_uv: "Implied unit value"
-          prior_median: "Prior corridor median"
-          multiple: "Multiple vs prior median"
-          prior_years: "Prior years used"
-          quality: "Data quality"
-        table:
-          year: "Year"
-          implied_uv: "Implied unit value (USD/t)"
+          market_multiple: "Benchmark multiple"
           prior_median: "Prior corridor median (USD/t)"
-          multiple: "Multiple vs prior median"
-          prior_years: "Prior years used for median"
-          quality: "Data-quality status"
+          history_multiple: "Prior-median multiple"
       peers:
         title: "How unusual was the case among comparable corridors?"
         takeaway: "This observation sits at or above {percentile} of {peers} same-product corridors in {year}."
         takeaway_unavailable: "Peer position is unavailable — the selected case has no computable unit-value-to-benchmark multiple among its product-family peers for this year."
-        population_note: "Peers are corridors trading the same product family in {year} with a computable unit-value-to-benchmark multiple ({peers} corridors, including this case)."
+        population_note: "Peers are all other corridors — exporter→importer routes shipping the same product family ({family}) in {year} — each measured on the same unit-value-to-benchmark basis. For example, a different {family} route (another exporter→importer pair) counts as a peer, while a route in a different commodity does not. That gives {peers} peer corridors in {year}, including this case."
         outside_note: "{n} peer(s) with multiples outside the 0.01×–100× display range are not drawn in the histogram; they remain in the percentile calculation."
         x_title: "Implied unit value ÷ WB benchmark"
         y_title: "Peer corridors"
@@ -282,7 +266,6 @@ pages:
           at_or_above_3x: "Peers at or above 3× benchmark"
     why:
       heading: "Why this observation ranked highly"
-      caption: "Plain-English reasons and the measurable comparisons behind them — no generated conclusions."
       # Dynamic ranking summary: only the case's flagged evidence types appear.
       summary_prefix: "This observation ranked highly because "
       summary_join: ", "
@@ -301,11 +284,11 @@ pages:
         benchmark_adjusted_drift.decrease: "its gap to the benchmark narrowed"
         value_quantity_divergence.increase: "its reported value moved faster than its quantity"
         value_quantity_divergence.decrease: "its reported quantity moved faster than its value"
-      summary_note: "These comparisons explain the review priority. They are reasons to examine the pattern, not conclusions about wrongdoing."
+      summary_note: "These are reasons to review this pattern more closely — not a finding of wrongdoing."
       # Four comparison cards (2x2). {multiple} is exp() of the log feature to 1dp;
       # {z} is the robust z-score to 1dp. Cards show the real per-case value; the
       # unavailable line shows only when the underlying feature is genuinely missing.
-      cards_heading: "Supporting comparisons"
+      cards_heading: "The evidence behind the ranking"
       how_calculated_label: "How calculated"
       how_metric_label: "Technical metric"
       how_comparison_label: "Compared with"
@@ -450,35 +433,21 @@ pages:
           label: "Difference from wider benchmark movement"
           tooltip: "Whether the corridor moved differently from the wider commodity market. Near zero means the move is explained by the market."
           interpretation: "how differently the corridor moved from the wider market (near zero = market-explained)."
-          derived: "Compares this row's year-over-year change with the same year's benchmark change (documented in src/tbml_common.py)."
+          derived: "Compares this row's year-over-year change with the same year's benchmark change."
           time_safety: "Current-year benchmark change only"
-      # Collapsed technical audit section (replaces the old Evidence tab table).
-      audit_heading: "Audit details"
-      audit_caption: "Traceability for technical review — the raw evidence records behind the comparisons above."
-      audit_empty: "No evidence rows exist for this observation in the evidence table."
-      audit_columns:
-        evidence_id: "Evidence ID"
-        evidence_type: "Evidence type"
-        metric_name: "Technical metric"
-        observed_value: "Observed value"
-        comparison_value: "Comparison value"
-        comparison_group: "Comparison group"
-        threshold: "Threshold"
-        source_row_id: "Source row"
-        source_version: "Source version"
-        source_fields: "Source fields"
-        caveat: "Technical caveat"
     limitations:
       case_heading: "Case-specific caveats"
+      case_intro: "Things to keep in mind when reading this particular observation."
       project_heading: "Project-wide limitations"
-      no_caveats: "No evidence-specific caveats recorded for this case."
+      project_intro: "Boundaries that apply to the whole approach and its public data."
+      no_caveats: "No case-specific caveats were recorded for this observation."
       closing_suffix: "Human review remains necessary before any conclusion."
   portfolio_analytics:
     eyebrow: "Stakeholder analytics"
     title: "Trade Landscape and Patterns"
-    subtitle: "The context for reading the review queue: how large the trade is, how the corridors are built, and how far commodity prices moved on their own."
+    subtitle: ""
     # Skimmable objective, stated plainly at the top of the page.
-    objective: "Read this page before the queue. It sets the baseline. Once you know the scale of the trade, the shape of the corridors, and how much prices moved market-wide, a flagged case reads as unusual against that backdrop rather than just a large number."
+    objective: "This page shows what ordinary trade looks like across the three commodities: how much money moves, which routes carry it, and how world prices shifted over the years. It matters before the queue because a case there is called \"unusual\" only by comparison with this everyday picture. Read it first, and each flagged case on the next page reads as genuinely out of the ordinary rather than just a big number."
     # Context strip. Every figure is derived live from the official panel.
     strip:
       value_label: "Trade value covered"
@@ -489,13 +458,12 @@ pages:
       families_detail: "Gold, copper, palm oil"
       corridors_label: "Trading corridors"
       corridors_detail: "Exporter–importer routes across the window"
-    landscape_heading: "The trade landscape"
     scale:
       heading: "Scale: where the money is"
       toggle_label: "Show"
       toggle_value: "Trade value"
       toggle_quantity: "Quantity"
-      takeaway_value: "{family} carries about {share}% of the value covered. Because one family is that large, any value-weighted figure is mostly a statement about {family} unless you look at each family separately."
+      takeaway_value: "This chart is the total money that flows through each commodity every year. {family} carries about {share}% of it, so any value-weighted figure is mostly a statement about {family} unless you read each family on its own."
       takeaway_quantity: "By physical volume the ranking looks different. Gold's recent value growth came from price rather than tonnage, which is why value and quantity are kept apart."
       caption: "Each panel has its own scale, so heights are not comparable across panels. Figures are nominal USD, not adjusted for inflation. Scale tells you where the money is, not where the unusual behaviour is."
       y_value: "Trade value (USD)"
@@ -504,17 +472,17 @@ pages:
       heading: "Structure: a steady base, unevenly concentrated"
       takeaway: "The corridor base holds up year to year, with no year where coverage collapses. How concentrated it is differs by family. Palm oil leans on a few large routes, while gold spreads across a long tail of small ones, and small routes are where the most extreme unit values tend to come from."
       corridors_subhead: "Active corridors each year"
-      corridors_caption: "Steady counts matter here. A sudden coverage gap could look like a wave of drift that is really just missing data."
+      corridors_caption: "This chart matters because the number of active routes holds steady, with no year suddenly dropping out. A sudden drop would usually mean missing data, which is easy to mistake for a real change in trade."
       concentration_subhead: "Value carried by each family's ten largest corridors"
       caption: "Concentration describes how the market is built. It is not a control weakness or a finding about any country. A corridor is a country pair, not a customer or a bank relationship."
       y_corridors: "Active corridors"
       y_share: "Top-10 share of value (%)"
     market:
       heading: "Market context: prices moved on their own"
-      takeaway: "All three benchmarks moved sharply across the window. Palm oil roughly doubled into 2022 and then fell back, copper stepped up about 50% in 2021, and gold nearly doubled. A corridor's price level therefore says little by itself. What counts is how it moved relative to its benchmark."
+      takeaway: "This chart is the world price per tonne, not the money traded. All three prices moved sharply: palm oil roughly doubled into 2022 then fell back, copper rose about 50% in 2021, and gold nearly doubled. So a corridor's price rising can simply be the market rising — what counts is how it moved relative to its benchmark."
       caption: "The benchmark is broad market context, one series per family. It is not an invoice price, a landed cost, or a legal reference price. These are annual nominal averages."
       y_benchmark: "USD per metric ton"
-    patterns_heading: "How the flagged cases fall out"
+    patterns_heading: "What the fifty flagged cases look like"
     patterns_intro: "Now the fifty highest-priority cases the queue will list. This is their shape: when they occur, which families they sit in, and why they stand out from the market."
     by_year:
       heading: "Flagged cases by year"
@@ -530,17 +498,16 @@ pages:
       population_name: "All official observations"
       queue_name: "Review queue"
       x: "Log gap to benchmark"
-    handoff: "Next, the Top 50 Review Queue lists these cases in rank order, each with its evidence and caveats."
   from_data_to_review_queue:
     eyebrow: "Data coverage & trust"
     title: "From Trusted Public Data to Review-Ready Evidence"
-    subtitle: "Three institutional sources, one clearly defined unit of analysis, and a controlled separation between model evaluation and official findings."
+    subtitle: "Three institutional sources and one clearly defined unit of analysis, cleaned and put on a common footing before anything is scored."
     mental_model_stamp: "Mental model"
     mental_model: >-
-      Official trade data is verified, standardised and converted into
-      time-safe analytical signals. Synthetic scenarios are used only to test
-      and select the model; only real official observations enter the review
-      queue.
+      Official trade records are checked, cleaned and put on a common footing,
+      then each year is measured only against earlier years, never against the
+      future. Test scenarios are used only to check and choose the method; only
+      real trade records ever reach the review queue.
     # KPI strip — every number is derived live on the page; the {placeholders}
     # are filled from the loaded panel, never typed in here.
     kpis:
@@ -566,11 +533,13 @@ pages:
     scene_labels:
       - "1 · Sources & scope"
       - "2 · Prepare the data"
-      - "3 · Test, rank & explain"
-    scene_indicator: "Scene {n} of {total}"
     prev_label: "← Previous"
     next_label: "Next →"
     replay_label: "Replay scene"
+    # Wrap-up link on the final scene: the model-validation story is a separate,
+    # on-demand deep dive on the Model Evaluation & Controls page.
+    model_eval_cta: "How the ranking was tested — Model Evaluation & Controls"
+    model_eval_cta: "View model evaluation & controls"
     scene1:
       heading: "Three sources, each with one clearly separated role"
       hover_hint: "Hover or focus for a real sample"
@@ -608,7 +577,7 @@ pages:
             - "proof of suspicious activity"
       unit:
         heading: "What does one row represent?"
-        equation: "1 calendar year × 1 exporter × 1 importer × 1 HS6 product = 1 corridor-product-year observation"
+        equation: "Each row is one corridor–product–year observation. A corridor is a single exporter–importer pair; the row also fixes one product and one calendar year."
         year_label: "Calendar year {year}"
         row_label: "One annual aggregated row"
         exporter_label: "Exporter"
@@ -618,6 +587,14 @@ pages:
         is_not_label: "It is not"
         is_not_text: "An invoice, shipment, customer, payment, bank transaction or confirmed TBML case."
         closing: "A row can reveal an unusual pattern. It cannot identify a suspicious party or transaction."
+        record_caption: "One real row from the official data. Read it as an annual total for the whole route, not a single deal."
+        record_fields:
+          year: "Year"
+          exporter: "Exporter"
+          importer: "Importer"
+          product: "Product"
+          value: "Trade value"
+          quantity: "Quantity"
       families:
         heading: "Why these three product families"
         note: "The commodity itself is never treated as suspicious."
@@ -627,15 +604,15 @@ pages:
         roles:
           gold_unwrought:
             role: "Stress case"
-            body: "High value, compact and fungible. Strong relevance to established TBML typologies. Tests whether pronounced valuation patterns are ranked highly."
+            body: "High value, compact and fungible. Strong relevance to established TBML typologies."
             tests: "Sensitivity — pronounced valuation patterns should reach the top of the queue."
           refined_copper_cathodes:
             role: "Benchmark case"
-            body: "Standardised industrial commodity. Strong international market pricing. Tests whether the method works on conventional global commodity trade."
+            body: "Standardised industrial commodity. Strong international market pricing."
             tests: "Transferability — the method should hold on conventional, well-priced industrial trade."
           crude_palm_oil:
             role: "Scale and stability case"
-            body: "High-volume Southeast Asian commodity. Credible public benchmark. Tests whether the method avoids over-alerting on large, ordinary flows."
+            body: "High-volume Southeast Asian commodity. Credible public benchmark."
             tests: "Discipline — large, ordinary flows should not flood the queue."
         tags:
           - "Typology relevance"
@@ -648,42 +625,25 @@ pages:
       stages:
         - title: "Verify sources"
           body: "Confirm source version, file integrity, coverage period, expected fields and product codes."
-        - title: "Standardise units and codes"
-          body: "Convert reported values into consistent units and map country and product codes to readable names."
+        - title: "Standardise units"
+          body: "Convert reported trade values to USD and quantities to metric tons."
         - title: "Build one clean annual row"
           body: "Combine records into one traceable exporter–importer–product observation for each year."
         - title: "Apply usability controls"
-          body: "Keep every row; mark which rows can support implied unit-value analysis."
+          body: "Rows without a valid reported quantity are excluded from modelling."
         - title: "Create time-safe analytical signals"
           body: "Describe each observation using only information available at that point in time."
-      verify_panel:
-        file_label: "CEPII BACI extract · release {release}"
-        badge: "Verified"
-        body: "Version, integrity hash, row counts, coverage period, expected fields and product codes are all checked before any analysis runs."
-        provenance_cta: "View provenance"
-        provenance_note: "Recorded by the source-verification stage. Hashes let anyone confirm the exact files behind every number on this dashboard."
-      standardise_panel:
-        examples:
-          - "Trade value: thousand USD → USD"
-          - "Quantity: metric tons"
-          - "Gold benchmark: troy ounce → metric ton"
       row_panel:
-        raw_labels:
-          - "BACI trade record"
-          - "Country & product names"
-          - "Same-year benchmark"
-        clean_label: "One clean annual row"
-        caption: "Source identity and data version remain linked to every observation."
-      controls_panel:
-        body: "Rows without a valid reported quantity cannot support implied unit-value analysis — an implied price needs both value and quantity. They are excluded from modelling but retained for audit, never silently removed."
-        note: "A missing quantity is a data limitation, not a suspicion signal."
-        funnel_total: "{total} official observations"
-        funnel_eligible: "{eligible} eligible for scoring"
-        funnel_value: "Eligible rows represent {value_share}% of covered trade value."
-        eligibility_term: "Eligibility"
-        tip: "Eligibility means suitable for this analytical comparison—not guaranteed correctness at source."
+        record_caption: "One real prepared annual observation from the official panel."
+        record_fields:
+          observation_id: "Observation ID"
+          year: "Year"
+          corridor: "Corridor"
+          product: "Product"
+          trade_value: "Trade value (USD)"
+          quantity: "Quantity (metric tons)"
       timesafe_panel:
-        definition: "Time-safe features compare each observation only with information that would have been available at that point in time. Future years are never used to define what was normal in an earlier year."
+        definition: "Time-safe simply means no peeking into the future. When assessing a 2022 record, the system may use 2017–2021 to understand what was normal, but it cannot use 2023 or 2024. This keeps every comparison realistic for the date being assessed."
         chips:
           - name: "Own history"
             question: "Is this route different from how it behaved before?"
@@ -699,62 +659,8 @@ pages:
         year_compare_label: "compare"
         year_hidden_label: "hidden"
         year_caption: "Years {history_span} inform what was normal; {focus_year} is the observation under comparison; {hidden_span} remain hidden."
-    scene3:
-      heading: "Two data paths—with a strict wall between them"
-      top_node: "Clean official panel"
-      wall_label: "Evaluation boundary"
-      official:
-        kicker: "Official analysis lane"
-        sub: "Real official observations"
-        steps:
-          - "Clean official panel"
-          - "Time-safe features"
-          - "Selected model"
-          - "Top-{queue_size} review queue"
-      evaluation:
-        kicker: "Model evaluation copy"
-        label: "Controlled evaluation copy—not official findings"
-        steps:
-          - "Copy of the clean panel"
-          - "Inject controlled review patterns and benign look-alikes"
-          - "Chronological train ({train_span}) / validation ({validation_span}) / test ({test_span})"
-          - "Compare and select the ranking method"
-        return_note: "Only the selected method returns. Synthetic rows never cross."
-      supporting: "Public trade data contains no confirmed TBML labels. Controlled scenarios are therefore used to test whether a model recognises intended patterns and avoids unusual-but-benign examples. They are never presented as real cases."
-      resolution:
-        model_chip: "Selected model"
-        model_detail: "{selected_method}"
-        applied: "Applied to official observations only"
-        queue: "Official top-{queue_size} queue"
-      output:
-        heading: "From ranking to reviewable case"
-        step_case: "Top-ranked official observation"
-        step_evidence: "{evidence_per_case} recomputable evidence rows"
-        evidence_tip: "A recomputable evidence row records the observed metric, comparison, threshold, source reference and caveat."
-        step_brief: "Caveated analyst brief"
-        step_review: "Human review"
-        examples_intro: "Evidence checks drawn from"
-      fatf:
-        heading: "Two inputs, one brief — kept separate"
-        input_evidence: "Recomputable data evidence"
-        input_context: "FATF–Egmont context cards"
-        output_node: "Analyst brief"
-        note: "Typology context is never one of the evidence rows."
-        brief_structure_intro: "Each brief covers"
-        brief_structure:
-          - "Why this pattern ranked highly"
-          - "Possible benign explanations"
-          - "Information unavailable in public data"
-          - "Recommended human-review questions"
-          - "Conclusion boundary"
-        layers:
-          - ["Evidence rows", "Explain the quantitative ranking"]
-          - ["FATF–Egmont context", "Supports caveats and review framing"]
-          - ["Analyst brief", "Organises the evidence and identifies next checks"]
-          - ["Human analyst", "Investigates and decides"]
-        render_note: "Brief text lives in the pipeline outputs; the dashboard describes this structure and never renders brief text."
     closing:
-      statement: "The analysis is built from verified public trade and benchmark data at a clearly defined annual grain. The data is standardised, filtered for analytical usability and transformed using time-safe comparisons. Controlled synthetic scenarios are kept separate and used only to test the model; the final queue contains real official observations supported by recomputable evidence and caveated human-review guidance."
+      statement: "The data is now clean, comparable and time-safe — ready to read. Every figure traces back to verified public trade and benchmark records at one annual grain: one exporter, one importer, one product, one year. From here, each pattern the queue flags is measured against this prepared picture — how large the trade is, how its corridors are built, and how far its price moved on its own — so a case reads as genuinely unusual rather than merely large. Each one is carried forward with recomputable evidence and clear caveats, and every conclusion is left to accountable human review."
       reminder: "Annual public aggregates—not invoices, customers or bank exposure."
     companion:
       cta: "Open technical companion"
@@ -766,24 +672,52 @@ pages:
   model_and_controls:
     eyebrow: "Methodology"
     title: "Model Evaluation & Controls"
-    subtitle: "Can you trust the ranking that builds the queue, and what are its limits?"
-    objective: "This page explains, in plain terms, how the ranking was tested and what keeps it honest. Public trade data carries no confirmed cases to learn from, so the method is measured on controlled scenarios, chosen on a time-safe holdout, and held to firm limits on what it may claim."
-    # Retained for reuse; the scenario idea is now told plainly in the 'tested' section.
-    scenario_note: >
-      Model testing uses controlled synthetic scenarios and benign look-alikes
-      added to a copy of the data. These are evaluation constructs, not real
-      cases. The chosen method is then applied to the real official observations
-      to build the review queue.
+    subtitle: ""
+    objective: "This page shows how the ranking that builds the Top-50 queue works, end to end: how it is tested, whether it works, which methods were compared and why the blended one is used, and the limits it is held to. Public trade data has no confirmed cases to learn from, so the method is measured on controlled test scenarios, chosen on years it has never seen, and held to firm limits on what it may claim."
+    # Top-of-page pipeline overview: the four steps from official records to queue.
+    queue_build:
+      heading: "How the ranking queue is built"
+      caption: "From official trade records to the Top-50 review queue, in four steps."
+      steps:
+        - title: "Clean official records"
+          detail: "Verified public trade data — one row per corridor, product and year."
+        - title: "Time-safe features"
+          detail: "Each year is described using only earlier years, never the future."
+        - title: "Ranking score"
+          detail: "{blend} scores every record for review priority."
+        - title: "Top-{queue_size} review queue"
+          detail: "The highest-scoring official records become the queue."
     tested:
       heading: "How the ranking is tested"
       body: >
-        Because there are no confirmed cases to learn from, we test the method on
-        patterns we plant ourselves. We take a copy of the data, insert known
-        unusual patterns, and mix in benign look-alikes — routes that move a lot
-        for ordinary market reasons and should be left alone. A method earns trust
-        by finding the planted patterns while ignoring the look-alikes.
+        Public trade data has no confirmed cases to learn from, so the method is
+        tested on patterns we plant ourselves. On a copy of the real data we add
+        clear unusual patterns it should catch, plus ordinary-but-large movements
+        it should leave alone — then check how well it tells them apart.
       split_line: "It learns on {train}, the approach is chosen on {validation}, and it is judged once on {test}, so it never sees the years it is tested on."
       caveat: "These results measure how well the method ranks planted patterns in public data. They are not real-world detection rates."
+    # "Tested on a copy" visual: the planted patterns it must catch vs the benign
+    # look-alikes it must leave alone (replaces the old two-lane wall diagram).
+    scenarios:
+      subhead: "Tested on a copy of the data"
+      copy_from: "Real official records"
+      copy_to: "Test copy"
+      copy_note: "A copy is used — the real records that build the queue are never changed."
+      catch_heading: "Planted unusual patterns — the method must catch these"
+      catch_items:
+        - title: "Over-valuation"
+          detail: "Reported value scaled up 2–3× while quantity holds, so the unit value spikes."
+        - title: "Under-valuation"
+          detail: "Reported value cut to a fraction while quantity holds, so the unit value collapses."
+        - title: "Low volume, high value"
+          detail: "Value pushed up and quantity pulled down together — a small shipment reported as worth a lot."
+      ignore_heading: "Benign look-alikes — the method must leave these alone"
+      ignore_items:
+        - title: "Moves with the market"
+          detail: "A large move that stays in line with the same year's market benchmark."
+        - title: "Value and quantity grow together"
+          detail: "Both scale up in proportion, so the unit value barely changes."
+      separation_note: "Only the chosen method returns to score the real records. Test rows never mix into the queue."
     works:
       heading: "Does it work?"
       takeaway: "On the years it had never seen, the chosen method put about {selected_pct}% of the planted patterns into its top 50, roughly {lift} times better than reviewing cases at random."
@@ -796,12 +730,23 @@ pages:
     method:
       heading: "Why this method was chosen"
       body: >
-        Five approaches were compared, from simple fixed rules to a learned model.
-        The one in use is a blend: mostly the learned model, anchored by the
-        transparent rules. The pure learned model scored a little higher in
-        testing, and we say so plainly. The blend was chosen because it can be
-        explained and audited, which matters more than a small edge for a ranking
-        that people act on.
+        Five approaches were compared, from a transparent fixed-rule score to a
+        learned model (XGBoost) and an unsupervised outlier detector. Each bar
+        below is a method's precision on its top 50, on years it never saw.
+      comparison_caption: "Share of the top 50 that were genuinely planted patterns, per method — held-out test years."
+      comparison_x: "Share of the top 50 that were planted patterns (%)"
+      tradeoff: >
+        XGBoost alone actually scored a little higher than the blend on the
+        held-out test ({xgb_pct}% vs {hyb_pct}% of the top 50 correct). The blend
+        is used anyway, for two reasons that outweigh a small edge on a ranking
+        people act on:
+      tradeoff_reasons:
+        - "The method was locked on the validation years before the test was opened — re-picking it to chase the test score would be the exact leakage the design forbids."
+        - "Keeping {rule_pct}% transparent rules means every score breaks down into named, auditable signals, not a black box."
+      formula_heading: "How the blended score is built"
+      formula: "Ranking score  =  {challenger_pct}% × XGBoost  +  {rule_pct}% × rules"
+      blend_challenger_label: "{challenger_pct}% XGBoost"
+      blend_rule_label: "{rule_pct}% rules"
       score_note: "The score sets review order. A higher score means higher review priority. It is not a probability or a finding of financial crime."
     drivers:
       heading: "What makes the flagged cases different"
@@ -812,7 +757,6 @@ pages:
       caption: "Shown on a shared 0-to-100 scale so the four measures line up. This describes the flagged rows; the measures are related, so one price spike can lift several at once."
     honest:
       heading: "What keeps it honest"
-      integrity_pass: "All {n} live data checks pass. The queue carries only real official values, with no test scenarios mixed in."
       integrity_fail_intro: "A live data check did not pass:"
       allowed_label: "The dashboard may say"
       not_allowed_label: "The dashboard may not say"
@@ -834,102 +778,142 @@ pages:
   bank_implementation_pathway:
     eyebrow: "Future-state design"
     title: "Bank Implementation Pathway"
-    subtitle: "How this public-data triage prototype could support wholesale-banking AFC reviews when joined with governed bank records."
+    subtitle: "How public trade signals could help wholesale-banking AFC teams focus reviews, gather the right evidence and make better-informed human decisions."
     boundary:
       label: "Future-state boundary"
       body: "Future-state design only. Private bank-data integration, case-management connectivity, and production decisioning have not been built."
     role:
       heading: "Where the prototype could fit"
       body: >-
-        Inside a wholesale bank, the current review queue could sit at the
-        front of the review funnel as an external-intelligence layer. It could
-        add corridor and commodity context before an analyst examines
-        customers, transactions, documents and physical-trade records.
+        Today, the prototype can show which country-to-country trade patterns
+        look unusual and explain the public-data signals behind them. Inside a
+        wholesale bank, that queue could become an early triage input: a prompt
+        to identify relevant customers and transactions, then check whether the
+        activity fits the customer profile and whether the documents, movement
+        of goods and payments tell a consistent story.
       body_2: >-
         It would not replace transaction monitoring, sanctions screening,
-        case management or human investigation. The proposed extension is a
-        controlled joining exercise: retain the public-data analytical core,
-        then add bank-governed evidence around each prioritised pattern.
+        case management or human investigation. Its role would be narrower and
+        practical: add external corridor, product and market context at the
+        front of the review funnel, then let bank-governed evidence and an
+        accountable analyst determine what the pattern means.
+      steps:
+        - label: "Public signal"
+          question: "What changed in the corridor, product or market pattern?"
+          icon: "line-chart"
+        - label: "Bank context"
+          question: "Which customers, transactions and trade records could explain it?"
+          icon: "layers"
+        - label: "Human decision"
+          question: "Does the evidence resolve the pattern or justify deeper review?"
+          icon: "shield-check"
     architecture:
       heading: "From public-data prototype to a bank review workflow"
-      caption: "The analytical core remains an external signal; bank records and human judgement make a case decidable."
+      caption: "The prototype provides an external signal. Bank records help explain what happened, and an analyst decides what to do next."
       today:
         kicker: "Today"
         title: "Public-data prototype"
         nodes:
           - title: "Official trade data and benchmarks"
-            detail: "Annual corridor-product observations with broad market context."
+            detail: "Annual country-to-country product totals, compared with broad market prices."
           - title: "Review-priority queue"
-            detail: "Unusual patterns ordered for human attention."
+            detail: "The most unusual patterns are placed first for analyst attention."
           - title: "Evidence and analyst briefs"
-            detail: "Recomputable facts, caveats and suggested review questions."
+            detail: "Traceable facts, caveats and the questions a reviewer should ask next."
       bridge: "Extend with governed bank context"
       future:
         kicker: "Future"
         title: "Bank-integrated design"
         nodes:
           - title: "External-intelligence layer"
-            detail: "This project's queue and evidence enter the bank workflow."
+            detail: "The public-data queue and its evidence enter the review workflow as external context."
           - title: "Bank-governed enrichment"
-            detail: "Approved customer, document, shipment and payment context is joined."
+            detail: "Approved customer, document, shipment and payment records are brought together."
           - title: "Case management and human review"
-            detail: "An accountable analyst investigates, records a disposition and decides next steps."
+            detail: "An analyst checks the evidence, records the outcome and decides the next step."
           - title: "Governed feedback dataset"
-            detail: "Structured outcomes may support evaluation and calibration after quality and bias controls."
+            detail: "Quality-controlled review outcomes may later help evaluate and tune the triage process."
       feedback_note: "Analyst dispositions are not unquestioned ground-truth labels. Coverage, reviewer consistency and selective-label bias must be assessed before they are used for model evaluation or calibration."
     data_domains:
-      heading: "What a bank would add"
-      caption: "These records are structurally absent from the public-data prototype and remain subject to bank ownership, access and retention controls."
+      heading: "What the bank adds to make the signal reviewable"
+      caption: "Public data can show that a trade pattern is unusual. These bank-held records help an investigator understand who was involved, what was agreed, whether goods moved and how payment was made."
       items:
         - title: "KYC/CDD and expected activity"
-          detail: "Customer identity, risk profile, expected trade activity and relationship context."
+          detail: "Who is the customer, what activity is expected, and does this trade route fit the relationship?"
           icon: "landmark"
         - title: "Trade-finance documentation"
-          detail: "Contracts, invoices, instrument terms, Incoterms and goods descriptions."
+          detail: "Do contracts and invoices support the price, quantity, goods description, terms and Incoterms?"
           icon: "file-search"
         - title: "Shipment and customs records"
-          detail: "Bills of lading, customs declarations and evidence of physical movement."
+          detail: "Did the stated goods and quantity move as declared in shipping and customs records?"
           icon: "package"
         - title: "Payments and correspondent data"
-          detail: "Originators, beneficiaries, intermediaries, timing, currencies and amounts."
+          detail: "Who paid whom, through which banks, in what currency, amount and timing?"
           icon: "line-chart"
         - title: "Sanctions and adverse media"
-          detail: "Existing screening results and investigative context, governed separately from the ranking signal."
+          detail: "Do screened parties or connected entities require a separate sanctions or adverse-media review?"
           icon: "search"
         - title: "Beneficial ownership"
-          detail: "The natural persons who ultimately own or control the trading parties."
+          detail: "Who ultimately owns or controls the trading parties, and are the relationships expected?"
           icon: "shield-check"
     value:
-      heading: "Potential value to wholesale-banking AFC"
+      heading: "How this could help a wholesale-banking AFC team"
       caption: "Proposed benefits to test in a controlled pilot, not measured production outcomes."
       items:
-        - title: "Better-scoped triage"
-          detail: "Use corridor, product and market context to focus limited analyst attention."
+        - title: "Choose where to look first"
+          detail: "Use corridor, product and market context to direct limited analyst time toward stronger patterns."
           icon: "checklist"
-        - title: "Contextual review"
-          detail: "Test a public aggregate anomaly against the customer profile, documents, payments and physical trade."
+        - title: "Test the pattern against bank facts"
+          detail: "Compare the public signal with expected customer activity, documents, payments and physical trade."
           icon: "layers"
-        - title: "Traceable rationale"
-          detail: "Carry recomputable evidence, caveats and missing-information questions into the review record."
+        - title: "Start with a traceable case pack"
+          detail: "Carry source-linked evidence, caveats and missing-information questions into the review record."
           icon: "file-text"
-        - title: "Governed learning loop"
-          detail: "Use quality-controlled review outcomes to evaluate ranking performance and revisit calibration."
+        - title: "Learn from controlled outcomes"
+          detail: "Use quality-checked review outcomes to evaluate whether the queue is useful and revisit its calibration."
           icon: "rotate-cw"
+    ai_extension:
+      heading: "Where AI could help: prepare the case, not decide it"
+      caption: "A bounded AI assistant could organise approved evidence into a faster-to-read case pack. It would not create evidence, assign criminal intent, close a case or make an escalation decision."
+      steps:
+        - kicker: "Grounded inputs"
+          title: "Retrieve approved evidence"
+          detail: "Use validated public evidence rows and only the bank records the reviewer is entitled to access."
+          icon: "database"
+        - kicker: "AI-assisted preparation"
+          title: "Draft and connect"
+          detail: "Summarise why the pattern ranked highly, cite the supporting records, surface benign explanations and list what is still missing."
+          icon: "brain"
+        - kicker: "Accountable review"
+          title: "Verify and decide"
+          detail: "The analyst checks every source, edits the case narrative and remains responsible for the next step."
+          icon: "shield-check"
+      uses_heading: "Practical extensions"
+      uses:
+        - "Evidence-grounded case summaries with source IDs"
+        - "Source-backed questions across corridor and customer history"
+        - "Automatic missing-information and inconsistency checklists"
+      guardrail_heading: "Required AI guardrails"
+      guardrails:
+        - "No unsupported facts or numbers"
+        - "Citations back to approved records"
+        - "Schema validation and deterministic fallback"
+        - "Prompt, input and output audit logs"
     adoption:
-      heading: "A controlled adoption pathway"
-      caption: "Each stage adds evidence and governance before operational reliance increases."
+      heading: "How a bank could start safely"
+      caption: "A short pathway is enough: prove the review value offline before adding workflow integration or operational reliance."
       stages:
         - number: "1"
-          title: "Offline enrichment pilot"
-          detail: "Join a limited sample of queued patterns to approved internal records in a segregated environment. No automated decisions or customer action."
+          title: "Test offline"
+          detail: "Compare a small queue sample with approved internal records. No automated decisions or customer action."
         - number: "2"
-          title: "Controlled workflow integration"
-          detail: "Send evidence packages to case management, capture structured analyst questions and dispositions, and preserve end-to-end lineage."
+          title: "Assist the review"
+          detail: "Send traceable case packs into a controlled analyst workflow and capture structured feedback."
         - number: "3"
-          title: "Validated operational use"
-          detail: "Proceed only after independent validation, access-control approval, monitoring design and performance review on fresh periods."
+          title: "Validate before use"
+          detail: "Add operational reliance only after independent validation, access approval and monitoring on fresh data."
     controls:
-      heading: "Controls required before operational use"
+      heading: "What must stay controlled"
       items:
         - title: "Private-data governance"
           detail: "Purpose limitation, entitlements, retention, lineage and audit logging for every internal record used."
@@ -940,13 +924,13 @@ pages:
         - title: "Human accountability"
           detail: "A named analyst remains responsible for every review decision; the score never establishes suspicion or criminal intent."
     closing:
-      statement: "The credible extension is the operating discipline: prioritise unusual patterns, expose recomputable evidence, state the caveats, join the private records a bank already governs, and leave every conclusion to accountable human review."
-      chips: ["External intelligence", "Governed enrichment", "Human decision"]
-    design_basis: "Design basis: references/DOMAIN_GUIDE.md · references/evidence_first_tbml_project_explainer.md · references/feature_typology_crosswalk.md · supplied project brief section 10"
+      statement: "The bank value is not a public-data score on its own. It is the combination of an external trade signal, governed customer and transaction evidence, a traceable case pack and an accountable human decision."
+      chips: ["External trade context", "Bank-governed evidence", "AI-assisted preparation", "Human decision"]
+    design_basis: "Design basis: references/DOMAIN_GUIDE.md | references/evidence_first_tbml_project_explainer.md | references/feature_typology_crosswalk.md | references/post-core-project-improvement.md | reports/analyst_briefs.md"
   appendix:
     eyebrow: "Appendix"
     title: "Data Dictionary"
-    subtitle: "Definitions, analytical fields, and official data sources."
+    subtitle: ""
 
 overview_kpis:
   observations: "Official BACI observations"
@@ -967,11 +951,11 @@ navigation_steps:
 
 # Verbatim from reports/final_analysis_report.md — Key limitations.
 limitations:
-  - "The public BACI panel is annual and aggregate. It is not invoice, shipment, customer, payment, vessel, customs-document, or beneficial-ownership data."
-  - "Commodity benchmarks are macro context and not invoice-level fair value."
-  - "Synthetic review-priority scenarios are for ML evaluation only; they are not real TBML labels."
-  - "FATF-Egmont materials are typology and caveat context only. They are not model features, row-level evidence, labels, or proof."
-  - "Model scores are review-priority scores, not calibrated probabilities or legal findings."
+  - "The data is yearly, country-to-country totals — not individual invoices, shipments, customers, payments, or company ownership."
+  - "The world-price benchmark is broad market context, not a fair price for any single deal."
+  - "Test scenarios are used only to check the method; they are never treated as real cases."
+  - "Typology references (FATF–Egmont) add context and caveats only — never evidence or proof."
+  - "A score sets the review order. It is not a probability, and not a legal finding."
 
 interpretation_language:
   allowed:
@@ -980,11 +964,6 @@ interpretation_language:
   not_allowed:
     - "The model detected money laundering."
     - "The World Bank benchmark proves that an invoice was mispriced."
-
-provenance_note: >
-  The dashboard uses official or official-derived public data. Source URLs
-  document dataset provenance and do not constitute evidence that any
-  individual observation reflects financial crime.
 
 empty_state: >
   This panel is unavailable because the required project output has not been

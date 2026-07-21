@@ -92,11 +92,13 @@ def test_page_shows_landscape_then_patterns_with_objective():
     at = _run()
     assert not at.exception
     text = _text(at)
-    # Skimmable objective + the two-part structure.
-    assert "Read this page before the queue" in text
-    for heading in ("The trade landscape", "Scale: where the money is",
+    # Skimmable objective + the two-part structure. The "The trade landscape"
+    # divider was dropped — the page title (with its landmark icon) names that
+    # half — so the landscape sections start straight away.
+    assert "what ordinary trade looks like" in text
+    for heading in ("Scale: where the money is",
                     "Structure: a steady base", "Market context: prices moved on their own",
-                    "How the flagged cases fall out"):
+                    "What the fifty flagged cases look like"):
         assert heading in text, heading
     # The value/quantity toggle exists.
     assert len(at.segmented_control) == 1
@@ -115,7 +117,6 @@ def test_landscape_guardrails_present():
         "heights are not comparable across panels",
         "not a control weakness",
         "It is not an invoice price",
-        "not simply the largest",
     ):
         assert guardrail in text, guardrail
 

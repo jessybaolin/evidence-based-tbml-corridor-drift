@@ -35,7 +35,6 @@ def apply_global_styles() -> None:
     kpi = theme["components"]["kpi"]
     source_roles = theme["source_roles"]
     selection = theme["selection"]
-    ev_op = float(ev.get("receded_opacity", 0.90))
     # Teal has two roles: `accent` (bright) for fills/borders/icons/focus/chart
     # emphasis; `at` (deeper teal_hover) for small teal TEXT on light, for AA.
     at = p.get("teal_hover", p["accent"])
@@ -55,13 +54,15 @@ def apply_global_styles() -> None:
     standard_ms = int(motion.get("standard_ms", hover_ms))
     landing_entry_ms = int(motion.get("landing_entry_ms", 260))
     landing_stagger_ms = int(motion.get("landing_stagger_ms", 45))
+    reveal_ms = int(motion.get("business_reveal_ms", 720))
     motion_easing = motion.get("easing", "ease-out")
     scene_ms = int(motion.get("scene_step_ms", 120))
-    travel_ms = int(motion.get("travel_ms", 600))
     family_colors = theme["families"]
     challenge_accent = theme["status"]["severity"]["high"]["color"]
     outcome_blue = source_roles["official"]["accent"]
     outcome_amber = source_roles["typology"]["accent"]
+    case_maroon = theme["chart"].get("case_corridor", "#A62E4E")
+    context_violet = theme["chart"].get("case_prior", "#7C5CA6")
     css = f"""
     <style>
     html,
@@ -152,6 +153,29 @@ def apply_global_styles() -> None:
     .brand-rule {{
         border-top: 1px solid rgba(234, 240, 248, 0.22);
         margin: 0.35rem 0 0.5rem 0;
+    }}
+
+    /* Quiet 'main page' link at the FOOT of the nav: smaller and dimmer than
+       the primary items, set off by a hairline rule so it reads as a return
+       action, not another page. Its transition is already covered by the
+       reduced-motion kill-list (it is a sidebar stPageLink). */
+    .st-key-sidebar_home {{
+        margin: 1.1rem 0 0.2rem 0;
+        padding-top: 0.55rem;
+        border-top: 1px solid rgba(234, 240, 248, 0.16);
+    }}
+    .st-key-sidebar_home [data-testid="stPageLink"] a {{
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+        opacity: 0.7;
+        transition: opacity {hover_ms}ms ease-out, background {hover_ms}ms ease-out;
+    }}
+    .st-key-sidebar_home [data-testid="stPageLink"] a p {{
+        font-size: 0.84rem;
+        font-weight: 600;
+    }}
+    .st-key-sidebar_home [data-testid="stPageLink"] a:hover {{
+        opacity: 1;
     }}
 
     /* Custom navigation. Streamlit's built-in auto-nav is hidden (it injects a
@@ -281,6 +305,14 @@ def apply_global_styles() -> None:
         line-height: 1.12;
         font-weight: 750;
         margin: 0;
+    }}
+    /* Optional leading icon on a page title (Trade Landscape keeps its landmark). */
+    .page-title-icon {{
+        width: 1.7rem;
+        height: 1.7rem;
+        color: {p["accent"]};
+        vertical-align: -0.18em;
+        margin-right: 0.55rem;
     }}
     .page-subtitle {{
         color: {p["muted"]};
@@ -465,6 +497,21 @@ def apply_global_styles() -> None:
         white-space: nowrap;
     }}
     .boundary-icon {{ width: 1.2rem; height: 1.2rem; color: {b["accent"]}; flex: none; }}
+    @media (max-width: {int(theme["breakpoints"]["narrow_px"])}px) {{
+        .boundary-ribbon {{
+            display: grid;
+            grid-template-columns: 1rem 1fr;
+            justify-content: start;
+            align-items: center;
+            gap: 0.2rem 0.45rem;
+            padding: 0.42rem 0.75rem;
+            font-size: 0.68rem;
+            line-height: 1.3;
+        }}
+        .boundary-ribbon .boundary-icon {{ width: 1rem; height: 1rem; }}
+        .boundary-ribbon .stamp {{ margin-right: 0; }}
+        .boundary-ribbon > span:last-child {{ grid-column: 1 / -1; }}
+    }}
     /* The ribbon's own element wrapper must not add flex-gap spacing to the
        page flow (its only child is position:fixed). :has() degrades to a
        harmless no-op gap on very old browsers. */
@@ -622,7 +669,8 @@ def apply_global_styles() -> None:
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        max-width: 1000px;
+        width: 100%;
+        box-sizing: border-box;
         padding: 0.58rem 0.75rem;
         color: {p["ink"]};
         background: color-mix(in srgb, {p["accent_soft"]} 68%, white);
@@ -656,11 +704,6 @@ def apply_global_styles() -> None:
         margin-top: 0;
         font-size: 1rem;
     }}
-    .st-key-dashboard_filter_panel .section-caption {{
-        margin: 0.05rem 0 0;
-        font-size: 0.8rem;
-        line-height: 1.35;
-    }}
     .st-key-queue_reset_filters button {{
         min-height: 38px;
         padding: 0.35rem 0.65rem;
@@ -688,39 +731,6 @@ def apply_global_styles() -> None:
     .st-key-dashboard_filter_panel [data-testid="stMultiSelect"] svg {{
         color: {navy7};
     }}
-    .st-key-dashboard_filter_panel [data-testid="stButtonGroup"] {{ width: fit-content; }}
-    .st-key-dashboard_filter_panel [role="radiogroup"] {{ max-width: none; }}
-    .st-key-dashboard_filter_panel [role="radio"] {{ min-height: 38px; }}
-    .queue-size-helper {{
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        margin-top: 1.15rem;
-        color: {p["muted"]};
-        font-size: 0.78rem;
-    }}
-    .queue-size-helper svg {{ width: 0.95rem; height: 0.95rem; color: {p["accent"]}; }}
-    .queue-filter-result {{
-        margin-top: 1.15rem;
-        color: {p["muted"]};
-        font-size: 0.82rem;
-        text-align: right;
-        white-space: nowrap;
-    }}
-    .queue-filter-result strong {{ color: {p["ink"]}; font-size: 0.98rem; }}
-    .st-key-dashboard_filter_panel [data-testid="stExpander"] {{
-        background: color-mix(in srgb, {p["table_stripe"]} 74%, white);
-        border: 1px solid {p["border"]};
-        border-radius: 8px;
-    }}
-    .st-key-dashboard_filter_panel [data-testid="stExpander"] summary {{
-        min-height: 38px;
-        color: {p["ink"]};
-        font-weight: 650;
-    }}
-    .st-key-dashboard_filter_panel [data-testid="stSlider"] {{ padding-bottom: 0.2rem; }}
-    .st-key-queue_clear_advanced button {{ width: fit-content; min-height: 34px; }}
-
     .st-key-queue_results_header {{ margin-top: 0.2rem; }}
     .st-key-queue_results_header .section-heading {{ margin-top: 0; }}
     .st-key-queue_results_header .section-icon {{ color: {outcome_blue}; }}
@@ -730,20 +740,6 @@ def apply_global_styles() -> None:
         margin-bottom: 0;
         line-height: 1.4;
     }}
-    .queue-result-count {{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 44px;
-        color: {p["muted"]};
-        background: color-mix(in srgb, {outcome_blue} 8%, white);
-        border: 1px solid color-mix(in srgb, {outcome_blue} 25%, white);
-        border-radius: 8px;
-        line-height: 1.05;
-    }}
-    .queue-result-count strong {{ color: {outcome_blue}; font-size: 1.05rem; }}
-    .queue-result-count span {{ font-size: 0.7rem; text-transform: uppercase; }}
     [data-testid="stMain"] .st-key-queue_results_header [data-testid="stDownloadButton"] button {{
         min-height: 42px;
         border-color: {p["accent"]};
@@ -751,7 +747,7 @@ def apply_global_styles() -> None:
     }}
 
     .st-key-queue_case_banner {{
-        background: color-mix(in srgb, {sel_bg} 58%, white);
+        background: {sel_bg};
         border: 1px solid color-mix(in srgb, {sel_acc} 72%, white);
         border-left: 4px solid {source_roles["typology"]["accent"]};
         border-radius: 8px;
@@ -760,6 +756,19 @@ def apply_global_styles() -> None:
         margin: 0.35rem 0 0.65rem;
         transition: background-color {standard_ms}ms {motion_easing},
                     border-color {standard_ms}ms {motion_easing};
+    }}
+    .st-key-queue_case_banner [data-testid="stHorizontalBlock"] {{
+        align-items: stretch;
+        min-height: 58px;
+    }}
+    .st-key-queue_case_banner [data-testid="stColumn"] {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
+    .st-key-queue_case_banner [data-testid="stMarkdownContainer"],
+    .st-key-queue_score_guidance [data-testid="stMarkdownContainer"] {{
+        margin-bottom: 0 !important;
     }}
     .current-case-label {{
         color: {source_roles["typology"]["text"]};
@@ -771,21 +780,6 @@ def apply_global_styles() -> None:
     }}
     .case-banner-text {{ font-size: 0.93rem; animation: none; }}
 
-    .queue-state-summary {{
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.55rem 1.25rem;
-        min-height: 38px;
-        margin: 0 0 0.45rem;
-        padding: 0.45rem 0.7rem;
-        color: {p["muted"]};
-        background: color-mix(in srgb, {p["table_stripe"]} 64%, white);
-        border-top: 1px solid {p["border"]};
-        border-bottom: 1px solid {p["border"]};
-        font-size: 0.82rem;
-    }}
-    .queue-state-summary strong {{ color: {p["ink"]}; font-variant-numeric: tabular-nums; }}
     .st-key-queue_filter_chips {{ margin: 0 0 0.45rem; }}
     .st-key-queue_filter_chips button {{
         min-height: 34px;
@@ -799,16 +793,30 @@ def apply_global_styles() -> None:
         animation: rise-in {landing_entry_ms}ms {motion_easing} both;
     }}
     .st-key-queue_table_region div[data-testid="stDataFrame"] {{
+        position: relative;
         border: 1px solid color-mix(in srgb, {btn2b} 62%, white);
         border-radius: 8px;
         box-shadow: 0 4px 14px {shadow};
         background: {p["panel_bg"]};
     }}
+    /* The interactive grid's header can't be recoloured directly (Streamlit hands
+       glide-data-grid an explicit theme, and the overlay can only darken — never
+       lighten to white). A lighter blue band + a firm bottom border marks the
+       header row while keeping the grid's dark header text readable. */
+    .st-key-queue_table_region div[data-testid="stDataFrame"]::before {{
+        content: "";
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 40px;
+        z-index: 2;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        background: color-mix(in srgb, {outcome_blue} 32%, transparent);
+        border-bottom: 2px solid color-mix(in srgb, {outcome_blue} 80%, transparent);
+    }}
 
     .st-key-queue_score_guidance {{
-        display: flex;
-        align-items: flex-start;
-        gap: 0.7rem;
+        min-height: 82px;
         margin: 0.75rem 0 0.55rem;
         padding: 0.75rem 0.9rem;
         color: {p["ink"]};
@@ -816,6 +824,12 @@ def apply_global_styles() -> None:
         border: 1px solid color-mix(in srgb, {outcome_blue} 26%, white);
         border-left: 3px solid {outcome_blue};
         border-radius: 8px;
+    }}
+    .queue-guidance-content {{
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        min-height: 56px;
     }}
     .queue-guidance-icon {{
         display: grid;
@@ -837,34 +851,33 @@ def apply_global_styles() -> None:
         margin-bottom: 0.15rem;
     }}
     .queue-guidance-text {{ color: {p["ink"]}; font-size: 0.9rem; line-height: 1.45; }}
-    .st-key-queue_table_notes [data-testid="stExpander"] {{
-        background: transparent;
+    .st-key-queue_table_notes {{ margin: 0 0 0.55rem; }}
+    .queue-technical-notes {{
+        color: {p["muted"]};
+        background: color-mix(in srgb, {p["panel_bg"]} 82%, {p["page_bg"]});
         border: 1px solid {p["border"]};
         border-radius: 8px;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.82rem;
+        line-height: 1.45;
     }}
-    .st-key-queue_table_notes [data-testid="stExpander"] summary {{ min-height: 40px; }}
-    .queue-technical-notes {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.45; }}
     .queue-technical-notes p {{ margin: 0 0 0.45rem; }}
     .queue-technical-notes p:last-child {{ margin-bottom: 0; }}
 
     @media (max-width: 1100px) {{
         .st-key-dashboard_filter_panel [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
-        .st-key-queue_results_header .queue-result-count {{ align-items: flex-start; padding-left: 0.65rem; }}
     }}
     @media (max-width: 780px) {{
         .st-key-dashboard_filter_panel {{ padding: 0.75rem; }}
-        .queue-filter-result {{ text-align: left; margin-top: 0.35rem; }}
-        .queue-size-helper {{ margin-top: 0.35rem; }}
         .st-key-queue_case_banner [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
-        .queue-state-summary {{ align-items: flex-start; flex-direction: column; gap: 0.25rem; }}
         .st-key-queue_filter_chips [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
         .st-key-queue_score_guidance {{ padding: 0.7rem; }}
     }}
 
     /* ---- Selected Case Review: compact selected-case strip. Same muted-amber
        selection role as the Review Queue banner — "the case you are carrying",
-       never an alarm. Facts + score + quality + the change-case control sit on
-       one wash; ink text carries the identity, amber only marks selection. ---- */
+       never an alarm. Facts + score + the change-case control sit on one wash;
+       ink text carries the identity, amber only marks selection. ---- */
     .st-key-case_strip {{
         background: {sel_bg};
         border: 1px solid {sel_acc};
@@ -875,8 +888,9 @@ def apply_global_styles() -> None:
     }}
     .case-strip-facts {{
         color: {p["ink"]};
-        font-size: 1.02rem;
-        line-height: 1.45;
+        font-size: 1.3rem;
+        font-weight: 600;
+        line-height: 1.4;
         overflow-wrap: anywhere;
     }}
     .case-strip-facts strong {{ font-weight: 800; }}
@@ -948,6 +962,41 @@ def apply_global_styles() -> None:
         line-height: 1.45;
         margin: 0.1rem 0 0.3rem 0;
     }}
+    /* Trade Landscape: push the value/quantity toggle to the right corner. */
+    .st-key-pa_scale_mode {{ width: fit-content; margin-left: auto; }}
+    .st-key-pa_scale_mode [data-testid="stSegmentedControl"] {{ margin-left: auto; }}
+    /* Chart sub-headings clear the takeaway above them. */
+    .chart-subhead {{
+        color: {p["ink"]};
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin: 0.9rem 0 0.25rem 0;
+    }}
+    /* Trade Landscape: each Scale / Structure / Market section is a subtle card
+       that lifts off the plane, so the three read as distinct blocks on scroll.
+       Each fades up on entrance, staggered. */
+    .st-key-pa_card_scale,
+    .st-key-pa_card_structure,
+    .st-key-pa_card_market,
+    .st-key-pa_card_patterns {{
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 12px;
+        box-shadow: 0 4px 14px {shadow};
+        padding: 1.1rem 1.4rem 0.7rem 1.4rem;
+        margin-bottom: 1.1rem;
+        animation: rise-in {entry_ms}ms ease-out both;
+    }}
+    .st-key-pa_card_structure {{ animation-delay: {step_ms}ms; }}
+    .st-key-pa_card_market {{ animation-delay: {step_ms * 2}ms; }}
+    /* Breathing room between each section title and the subtitle line under it,
+       across all four landscape cards (scale / structure / market / patterns). */
+    .st-key-pa_card_scale .case-takeaway,
+    .st-key-pa_card_structure .case-takeaway,
+    .st-key-pa_card_market .case-takeaway,
+    .st-key-pa_card_patterns .case-takeaway {{
+        margin-top: 0.6rem;
+    }}
 
     /* ---- Why It Ranked High: summary · comparison cards · signals table ---- */
     .why-summary {{
@@ -959,6 +1008,14 @@ def apply_global_styles() -> None:
         font-size: 1.1rem;
         line-height: 1.5;
         margin: 0.1rem 0 0.35rem 0;
+    }}
+    /* Governed "reasons, not a finding" note, riding inside the summary banner. */
+    .why-summary-note {{
+        color: {navy7};
+        font-size: 0.85rem;
+        font-weight: 600;
+        line-height: 1.45;
+        margin-top: 0.5rem;
     }}
     .compare-card {{
         background: {p["panel_bg"]};
@@ -1014,6 +1071,52 @@ def apply_global_styles() -> None:
         line-height: 1.45;
         margin-top: auto;
     }}
+    /* Why It Ranked High — four distinct category accents (not one green hue),
+       reusing the case-chart palette so the page reads as one system. A shared
+       min-height keeps the two cards in each row the same height, and top margin
+       gives the "evidence behind the ranking" heading room to breathe. */
+    .st-key-why_cards {{ margin-top: 0.85rem; }}
+    .st-key-why_cards .compare-card {{ border-top-width: 4px; min-height: 11.5rem; }}
+    .st-key-why_cards .compare-card-a {{ border-top-color: {p["accent"]}; }}
+    .st-key-why_cards .compare-card-b {{ border-top-color: {theme["chart"]["case_benchmark"]}; }}
+    .st-key-why_cards .compare-card-c {{ border-top-color: {theme["chart"]["case_prior"]}; }}
+    .st-key-why_cards .compare-card-d {{ border-top-color: {theme["chart"]["case_corridor"]}; }}
+    /* Uniform height for the "How calculated" drawers so an open row reads evenly. */
+    .st-key-why_cards [data-testid="stExpanderDetails"] {{ min-height: 11.5rem; }}
+
+    /* Caveats tab — each category in its own white, bordered card with a coloured
+       top accent + icon, so the caveats read as organised blocks, not a flat list. */
+    .caveat-card {{
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 4px solid {p["accent"]};
+        border-radius: 12px;
+        box-shadow: 0 4px 14px {shadow};
+        padding: 1.05rem 1.35rem 1.15rem 1.35rem;
+        margin-bottom: 1.1rem;
+    }}
+    .caveat-card-case {{ border-top-color: {theme["families"]["gold_unwrought"]}; }}
+    .caveat-card-project {{ border-top-color: {p["accent"]}; }}
+    .caveat-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        color: {p["ink"]};
+        font-size: 1.08rem;
+        font-weight: 750;
+    }}
+    .caveat-icon {{ width: 1.3rem; height: 1.3rem; flex: none; }}
+    .caveat-card-case .caveat-icon {{ color: {theme["families"]["gold_unwrought"]}; }}
+    .caveat-card-project .caveat-icon {{ color: {p["accent"]}; }}
+    .caveat-intro {{
+        color: {p["muted"]};
+        font-size: 0.9rem;
+        line-height: 1.45;
+        margin: 0.4rem 0 0.7rem 0;
+    }}
+    .caveat-list {{ margin: 0; padding-left: 1.15rem; color: {p["ink"]}; }}
+    .caveat-list li {{ font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.45rem; }}
+    .caveat-list li:last-child {{ margin-bottom: 0; }}
     .signals-scroll {{ max-height: 460px; overflow-y: auto; }}
     table.data-table td.mono {{
         font-family: "Consolas", "SFMono-Regular", monospace;
@@ -1261,6 +1364,33 @@ def apply_global_styles() -> None:
         font-weight: 500;
         max-width: 90ch;
     }}
+    /* Data-trust closing: the navy wrap-up panel that also holds the model-
+       evaluation link, so the bottom line and its next step read as one block. */
+    .st-key-dtrq_closing {{
+        background: {p["sidebar_bg"]};
+        border-radius: 12px;
+        padding: 1.15rem 1.35rem 1.3rem 1.35rem;
+        margin-top: 0.4rem;
+        animation: rise-in {entry_ms}ms ease-out both;
+    }}
+    [data-testid="stMain"] .st-key-dtrq_closing [data-testid="stPageLink"] a {{
+        background: transparent;
+        border-color: {p["sidebar_muted"]};
+        width: fit-content;
+        margin-top: 0.3rem;
+    }}
+    [data-testid="stMain"] .st-key-dtrq_closing [data-testid="stPageLink"] a p {{
+        color: #FFFFFF !important;
+    }}
+    [data-testid="stMain"] .st-key-dtrq_closing [data-testid="stPageLink"] a span[data-testid="stIconMaterial"] {{
+        color: {p["accent"]};
+    }}
+    [data-testid="stMain"] .st-key-dtrq_closing [data-testid="stPageLink"] a:hover {{
+        background: rgba(255, 255, 255, 0.08);
+        border-color: {p["accent"]};
+        box-shadow: none;
+        transform: translateY(-1px);
+    }}
     .value-chip-row {{
         display: flex;
         flex-wrap: wrap;
@@ -1307,7 +1437,10 @@ def apply_global_styles() -> None:
         font-size: 2.55rem;
         line-height: 1.1;
         letter-spacing: 0;
-        max-width: 29ch;
+        /* No measure cap: "Evidence-First Trade Pattern Triage" stays on one
+           line, bounded only by the 1220px page column, and still wraps
+           naturally on narrow screens where that column shrinks. */
+        max-width: none;
     }}
     .st-key-business_value_page .hero-block .page-subtitle {{
         max-width: 72ch;
@@ -1656,6 +1789,19 @@ def apply_global_styles() -> None:
     .st-key-business_value_page .bv-d3 {{ animation-delay: {landing_stagger_ms * 3}ms; }}
     .st-key-business_value_page .bv-d4 {{ animation-delay: {landing_stagger_ms * 4}ms; }}
 
+    /* Generic scroll-reveal hidden state (shared across content pages; driver
+       is components/scroll_reveal.py). Each section fades + rises as ONE block
+       as it enters view, over a FIXED {reveal_ms}ms — clearly visible at any
+       scroll SPEED and in every browser, and it re-triggers on scroll back.
+       The observer applies the transition INLINE, so a markdown section or a
+       keyed container both fade uniformly; this class only holds the hidden
+       state. Sections default to visible, so the page is never blank if the
+       script is blocked, and reduced motion is forced visible below. */
+    .reveal-off {{
+        opacity: 0 !important;
+        transform: translateY(28px) !important;
+    }}
+
     @media (max-width: 1100px) {{
         .st-key-business_value_page .stat-band {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
         .st-key-business_value_story .story-process-flow {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
@@ -1687,7 +1833,7 @@ def apply_global_styles() -> None:
     }}
 
     /* ---- Bank Implementation Pathway: future-state operating model. ---- */
-    .bank-section-heading {{ margin-bottom: 0.7rem; max-width: 82ch; }}
+    .bank-section-heading {{ margin-bottom: 0.85rem; max-width: none; }}
     .bank-section-title {{
         color: {p["ink"]};
         font-size: 1.26rem;
@@ -1704,31 +1850,120 @@ def apply_global_styles() -> None:
     }}
     .bank-section-caption {{
         color: {p["muted"]};
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin-top: 0.25rem;
+        font-size: 0.96rem;
+        line-height: 1.55;
+        margin-top: 0.3rem;
     }}
-    .bank-role .landing-prose {{ max-width: 84ch; }}
+    .bank-role .landing-prose {{
+        max-width: none;
+        font-size: 1.04rem;
+        line-height: 1.66;
+        margin-bottom: 0.75rem;
+    }}
+
+    /* Scroll-driven reveal: each bank section fades and rises in as it scrolls
+       into view (pure CSS — no JS). Deliberately clear on this text-heavy page,
+       so scrolling has a sense of progression. Browsers without animation-timeline
+       simply show the sections; reduced-motion users are pinned visible below. */
+    @keyframes bank-scroll-reveal {{
+        from {{ opacity: 0; transform: translateY(30px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    @supports (animation-timeline: view()) {{
+        .bank-reveal {{
+            animation-name: bank-scroll-reveal;
+            animation-duration: 1ms;
+            animation-timing-function: ease-out;
+            animation-fill-mode: both;
+            animation-timeline: view();
+            animation-range: entry 0% cover 34%;
+        }}
+        /* Inner cards/steps lag their section slightly for a layered reveal. */
+        .bank-reveal .bank-icon-card,
+        .bank-reveal .bank-fit-step,
+        .bank-reveal .bank-ai-step,
+        .bank-reveal .bank-stage,
+        .bank-reveal .bank-control-item {{
+            animation-name: bank-scroll-reveal;
+            animation-duration: 1ms;
+            animation-timing-function: ease-out;
+            animation-fill-mode: both;
+            animation-timeline: view();
+            animation-range: entry 0% cover 42%;
+        }}
+    }}
+
+    .bank-fit-rail {{
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.05rem;
+    }}
+    .bank-fit-step {{
+        --bank-tone: {outcome_blue};
+        --bank-soft: {source_roles["official"]["soft"]};
+        position: relative;
+        display: grid;
+        grid-template-columns: 2.55rem minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+        min-height: 6.4rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid var(--bank-tone);
+        border-radius: 8px;
+        padding: 0.85rem;
+        box-shadow: 0 4px 14px {shadow};
+    }}
+    .bank-fit-step-2 {{ --bank-tone: {outcome_amber}; --bank-soft: {source_roles["typology"]["soft"]}; }}
+    .bank-fit-step-3 {{ --bank-tone: {p["accent"]}; --bank-soft: {p["accent_soft"]}; }}
+    .bank-fit-step:not(:last-child)::after {{
+        content: "→";
+        position: absolute;
+        z-index: 2;
+        right: -0.83rem;
+        top: calc(50% - 0.7rem);
+        color: {p["muted"]};
+        font-size: 1.25rem;
+        font-weight: 700;
+    }}
+    .bank-fit-icon {{ background: var(--bank-soft); color: var(--bank-tone); }}
+    .bank-fit-copy {{ min-width: 0; }}
+    .bank-fit-label {{
+        color: var(--bank-tone);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }}
+    .bank-fit-question {{
+        color: {p["ink"]};
+        font-size: 0.9rem;
+        font-weight: 650;
+        line-height: 1.45;
+        margin-top: 0.2rem;
+    }}
 
     .bank-architecture {{
         display: grid;
-        grid-template-columns: minmax(0, 0.9fr) 9rem minmax(0, 1.1fr);
+        grid-template-columns: minmax(0, 1fr) 7.5rem minmax(0, 1fr);
         gap: 1rem;
-        align-items: center;
+        align-items: stretch;
         margin-top: 0.9rem;
     }}
     .bank-state {{
         min-width: 0;
+        height: 100%;
         padding: 1rem;
-        background: {p.get("table_stripe", "#EFF3FA")};
-        border-top: 3px solid {theme["chart"]["context_gray"]};
+        background: {source_roles["official"]["soft"]};
+        border-top: 3px solid {outcome_blue};
     }}
     .bank-state-future {{
         background: {p["accent_soft"]};
         border-top-color: {p["accent"]};
     }}
     .bank-state-kicker {{
-        color: {p["muted"]};
+        color: {source_roles["official"]["text"]};
         font-size: 0.7rem;
         font-weight: 800;
         letter-spacing: 0.1em;
@@ -1758,12 +1993,13 @@ def apply_global_styles() -> None:
         width: 1.65rem;
         height: 1.65rem;
         border-radius: 50%;
-        background: {p["accent_soft"]};
+        background: {source_roles["official"]["soft"]};
         border: 1px solid {p["border"]};
-        color: {at};
+        color: {source_roles["official"]["text"]};
         font-size: 0.76rem;
         font-weight: 800;
     }}
+    .bank-state-future .bank-node-index {{ background: {p["accent_soft"]}; color: {at}; }}
     .bank-node-copy {{ min-width: 0; }}
     .bank-node-title {{
         color: {p["ink"]};
@@ -1789,7 +2025,8 @@ def apply_global_styles() -> None:
         flex-direction: column;
         align-items: center;
         gap: 0.45rem;
-        color: {at};
+        align-self: center;
+        color: {source_roles["typology"]["text"]};
         font-size: 0.78rem;
         font-weight: 750;
         line-height: 1.35;
@@ -1802,14 +2039,14 @@ def apply_global_styles() -> None:
         gap: 0.55rem;
         color: {p["muted"]};
         background: {p["panel_bg"]};
-        border-left: 3px solid {sel_acc};
+        border-left: 3px solid {outcome_amber};
         padding: 0.75rem 0.9rem;
         margin-top: 0.75rem;
         font-size: 0.82rem;
         line-height: 1.45;
     }}
     .bank-feedback-note svg {{
-        color: {sel_acc};
+        color: {source_roles["typology"]["text"]};
         width: 1.05rem;
         height: 1.05rem;
         flex: none;
@@ -1820,19 +2057,35 @@ def apply_global_styles() -> None:
     .bank-domain-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
     .bank-value-grid {{ grid-template-columns: repeat(4, minmax(0, 1fr)); }}
     .bank-icon-card {{
+        --bank-tone: {p["accent"]};
+        --bank-soft: {p["accent_soft"]};
         display: flex;
         gap: 0.75rem;
         align-items: flex-start;
         min-width: 0;
         background: {p["panel_bg"]};
         border: 1px solid {p["border"]};
-        border-top: 3px solid {p["accent"]};
+        border-top: 3px solid var(--bank-tone);
         border-radius: 8px;
         padding: 0.85rem;
         box-shadow: 0 4px 14px {shadow};
+        transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
-    .bank-icon-card.value {{ border-top-color: {navy7}; }}
-    .bank-card-icon {{ background: {p["accent_soft"]}; color: {at}; flex: none; }}
+    .bank-icon-card:hover {{
+        transform: translateY(-2px);
+        box-shadow: {surfaces["shadow_hover"]};
+    }}
+    .bank-icon-card.domain.bank-card-1,
+    .bank-icon-card.value.bank-card-1 {{ --bank-tone: {outcome_blue}; --bank-soft: {source_roles["official"]["soft"]}; }}
+    .bank-icon-card.domain.bank-card-2,
+    .bank-icon-card.value.bank-card-3 {{ --bank-tone: {outcome_amber}; --bank-soft: {source_roles["typology"]["soft"]}; }}
+    .bank-icon-card.domain.bank-card-3,
+    .bank-icon-card.value.bank-card-2 {{ --bank-tone: {p["accent"]}; --bank-soft: {p["accent_soft"]}; }}
+    .bank-icon-card.domain.bank-card-4 {{ --bank-tone: {case_maroon}; --bank-soft: color-mix(in srgb, {case_maroon} 10%, white); }}
+    .bank-icon-card.domain.bank-card-5,
+    .bank-icon-card.value.bank-card-4 {{ --bank-tone: {context_violet}; --bank-soft: color-mix(in srgb, {context_violet} 11%, white); }}
+    .bank-icon-card.domain.bank-card-6 {{ --bank-tone: {navy7}; --bank-soft: color-mix(in srgb, {navy7} 10%, white); }}
+    .bank-card-icon {{ background: var(--bank-soft); color: var(--bank-tone); flex: none; }}
     .bank-card-copy {{ min-width: 0; }}
     .bank-card-title {{
         color: {p["ink"]};
@@ -1848,16 +2101,95 @@ def apply_global_styles() -> None:
         overflow-wrap: anywhere;
     }}
 
+    /* AI is deliberately violet rather than teal: it reads as an assistive
+       layer, not another model score or primary action. */
+    .bank-ai-shell {{
+        background: color-mix(in srgb, {context_violet} 7%, white);
+        border-left: 4px solid {context_violet};
+        padding: 1rem;
+    }}
+    .bank-ai-flow {{
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 1.15fr) 2.5rem minmax(0, 1fr);
+        gap: 0.65rem;
+        align-items: stretch;
+    }}
+    .bank-ai-step {{
+        --ai-tone: {outcome_blue};
+        --ai-soft: {source_roles["official"]["soft"]};
+        display: grid;
+        grid-template-columns: 2.65rem minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+        min-width: 0;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid var(--ai-tone);
+        border-radius: 8px;
+        padding: 0.85rem;
+    }}
+    .bank-ai-step-2 {{ --ai-tone: {context_violet}; --ai-soft: color-mix(in srgb, {context_violet} 11%, white); }}
+    .bank-ai-step-3 {{ --ai-tone: {outcome_amber}; --ai-soft: {source_roles["typology"]["soft"]}; }}
+    .bank-ai-icon {{ background: var(--ai-soft); color: var(--ai-tone); }}
+    .bank-ai-copy {{ min-width: 0; }}
+    .bank-ai-kicker {{
+        color: var(--ai-tone);
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }}
+    .bank-ai-title {{ color: {p["ink"]}; font-size: 0.94rem; font-weight: 750; margin-top: 0.12rem; }}
+    .bank-ai-detail {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.48; margin-top: 0.22rem; }}
+    .bank-ai-arrow {{
+        display: grid;
+        place-items: center;
+        color: {context_violet};
+        font-size: 1.35rem;
+        font-weight: 750;
+    }}
+    .bank-ai-support {{
+        display: grid;
+        grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+        gap: 1rem;
+        margin-top: 0.9rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid color-mix(in srgb, {context_violet} 22%, white);
+    }}
+    .bank-ai-support-title {{ color: {p["ink"]}; font-size: 0.8rem; font-weight: 750; }}
+    .bank-ai-uses ul {{
+        margin: 0.35rem 0 0 1.05rem;
+        padding: 0;
+        color: {p["muted"]};
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }}
+    .bank-ai-guardrail-grid {{ display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.4rem; }}
+    .bank-ai-guardrail {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: {navy7};
+        background: {p["panel_bg"]};
+        border: 1px solid color-mix(in srgb, {context_violet} 30%, white);
+        border-radius: 999px;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.74rem;
+        font-weight: 650;
+        line-height: 1.25;
+    }}
+    .bank-ai-guardrail svg {{ width: 0.85rem; height: 0.85rem; color: {context_violet}; flex: none; }}
+
     .bank-adoption {{
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
-        margin-top: 0.75rem;
+        margin-top: 0.6rem;
     }}
     .bank-stage {{
         position: relative;
         min-width: 0;
-        padding: 0.1rem 1.25rem 0.25rem 0;
+        padding: 0.1rem 1.25rem 0.1rem 0;
     }}
     .bank-stage:not(:last-child)::after {{
         content: "";
@@ -1877,12 +2209,14 @@ def apply_global_styles() -> None:
         width: 2rem;
         height: 2rem;
         border-radius: 50%;
-        background: {p["accent"]};
+        background: {outcome_blue};
         color: white;
         font-size: 0.82rem;
         font-weight: 800;
         margin-bottom: 0.55rem;
     }}
+    .bank-stage:nth-child(2) .bank-stage-number {{ background: {outcome_amber}; color: {source_roles["typology"]["text"]}; }}
+    .bank-stage:nth-child(3) .bank-stage-number {{ background: {p["accent"]}; }}
     .bank-stage-title {{ color: {p["ink"]}; font-size: 0.92rem; font-weight: 750; line-height: 1.35; }}
     .bank-stage-detail {{
         color: {p["muted"]};
@@ -1908,11 +2242,14 @@ def apply_global_styles() -> None:
         min-width: 0;
     }}
     .bank-control-item > svg {{
-        color: {at};
+        color: {outcome_blue};
         width: 1.05rem;
         height: 1.05rem;
         margin-top: 0.12rem;
     }}
+    .bank-control-item:nth-child(2) > svg {{ color: {p["accent"]}; }}
+    .bank-control-item:nth-child(3) > svg {{ color: {context_violet}; }}
+    .bank-control-item:nth-child(4) > svg {{ color: {outcome_amber}; }}
     .bank-control-title {{ color: {p["ink"]}; font-size: 0.86rem; font-weight: 750; }}
     .bank-control-detail {{
         color: {p["muted"]};
@@ -1921,14 +2258,31 @@ def apply_global_styles() -> None:
         margin-top: 0.15rem;
         overflow-wrap: anywhere;
     }}
+    .bank-closing .bottom-line {{
+        border-left: 4px solid {outcome_amber};
+        border-radius: 8px;
+    }}
+    .bank-closing .bottom-line-text {{ max-width: none; }}
 
     @media (max-width: 1050px) {{
         .bank-domain-grid, .bank-value-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .bank-ai-flow {{ grid-template-columns: 1fr; }}
+        .bank-ai-arrow {{ transform: rotate(90deg); min-height: 1.6rem; }}
     }}
     @media (max-width: 780px) {{
         .bank-architecture {{ grid-template-columns: 1fr; }}
         .bank-bridge {{ flex-direction: row; justify-content: center; padding: 0.2rem 0; }}
         .bank-bridge svg {{ transform: rotate(90deg); }}
+        .bank-fit-rail {{ grid-template-columns: 1fr; }}
+        .bank-fit-step {{ min-height: 0; }}
+        .bank-fit-step:not(:last-child)::after {{
+            right: auto;
+            left: calc(50% - 0.35rem);
+            top: auto;
+            bottom: -1.15rem;
+            transform: rotate(90deg);
+        }}
+        .bank-ai-support {{ grid-template-columns: 1fr; }}
         .bank-adoption {{ grid-template-columns: 1fr; gap: 0.9rem; }}
         .bank-stage {{ padding-right: 0; padding-left: 2.8rem; }}
         .bank-stage-number {{ position: absolute; left: 0; top: 0; }}
@@ -1944,6 +2298,9 @@ def apply_global_styles() -> None:
     @media (max-width: 560px) {{
         .bank-domain-grid, .bank-value-grid, .bank-controls {{ grid-template-columns: 1fr; }}
         .bank-icon-card {{ padding: 0.75rem; }}
+        .bank-ai-shell {{ padding: 0.75rem; }}
+        .bank-ai-step {{ grid-template-columns: 2.35rem minmax(0, 1fr); padding: 0.75rem; }}
+        .bank-ai-guardrail {{ width: 100%; }}
     }}
 
     /* ================================================================
@@ -2000,18 +2357,6 @@ def apply_global_styles() -> None:
     @media (max-width: 1250px) {{ .stat-band.five {{ grid-template-columns: repeat(3, 1fr); }} }}
     @media (max-width: 900px) {{ .stat-band.five {{ grid-template-columns: repeat(2, 1fr); }} }}
     @media (max-width: 560px) {{ .stat-band.five {{ grid-template-columns: 1fr; }} }}
-
-    /* Scene indicator pill next to the stage controls. */
-    .scene-indicator {{
-        display: inline-block;
-        color: {p["muted"]};
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 0.3rem 0;
-        white-space: nowrap;
-    }}
 
     /* Storyboard beats: one fade-up, staggered so each scene reads as a
        sequence on entry and on Replay (the page remounts the scene DOM by
@@ -2203,14 +2548,15 @@ def apply_global_styles() -> None:
 
     /* Unit of analysis: equation + corridor visual. */
     .unit-eq {{
-        display: inline-block;
-        background: {p["accent_soft"]};
+        display: block;
+        background: {p["panel_bg"]};
         border: 1px solid {p["border"]};
+        border-left: 4px solid {p["accent"]};
         border-radius: 8px;
         color: {p["ink"]};
         font-size: 0.95rem;
         font-weight: 650;
-        padding: 0.5rem 0.95rem;
+        padding: 0.6rem 1rem;
         margin: 0.2rem 0 0.65rem 0;
     }}
     .corridor-visual {{
@@ -2299,10 +2645,38 @@ def apply_global_styles() -> None:
         position: relative;
         background: {p["panel_bg"]};
         border: 1px solid {p["border"]};
+        border-top: 3px solid {p["border"]};
         border-radius: 10px;
         padding: 0.8rem 0.95rem;
         box-shadow: 0 4px 14px {shadow};
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
+    }}
+    /* Family cards carry their family colour (top rule + dot), matching the
+       commodity cards on the Business Problem & Value page. */
+    /* Each family card takes its family colour: top rule, dot, and the role
+       label. Gold and palm are lightened hues, so the role text is deepened
+       toward ink for legibility while staying recognisably the family colour. */
+    .fam-card.fam-gold_unwrought {{ border-top-color: {family_colors["gold_unwrought"]}; }}
+    .fam-card.fam-gold_unwrought .chip-dot {{ background: {family_colors["gold_unwrought"]}; }}
+    .fam-card.fam-gold_unwrought .fam-role {{
+        color: color-mix(in srgb, {family_colors["gold_unwrought"]} 70%, {p["ink"]});
+    }}
+    .fam-card.fam-refined_copper_cathodes {{ border-top-color: {family_colors["refined_copper_cathodes"]}; }}
+    .fam-card.fam-refined_copper_cathodes .chip-dot {{ background: {family_colors["refined_copper_cathodes"]}; }}
+    .fam-card.fam-refined_copper_cathodes .fam-role {{ color: {family_colors["refined_copper_cathodes"]}; }}
+    .fam-card.fam-crude_palm_oil {{ border-top-color: {family_colors["crude_palm_oil"]}; }}
+    .fam-card.fam-crude_palm_oil .chip-dot {{ background: {family_colors["crude_palm_oil"]}; }}
+    .fam-card.fam-crude_palm_oil .fam-role {{
+        color: color-mix(in srgb, {family_colors["crude_palm_oil"]} 82%, {p["ink"]});
+    }}
+    /* Record-example table (What does one row represent?): match the label
+       column to the navigation panel so the field/value split is immediate. */
+    table.data-table td.rec-k {{
+        color: {p["sidebar_ink"]};
+        background: {p["sidebar_bg"]};
+        font-weight: 650;
+        white-space: nowrap;
+        width: 34%;
     }}
     .fam-card:hover {{
         transform: translateY(-2px);
@@ -2422,150 +2796,33 @@ def apply_global_styles() -> None:
         line-height: 1.45;
         margin-top: 0.35rem;
     }}
-    .file-card {{
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+    /* One real prepared observation: horizontal on desktop, scrollable on
+       narrow screens without forcing the page itself to overflow. */
+    .prep-record-panel {{
+        margin-top: 0.75rem;
+        margin-bottom: 1.35rem;
+    }}
+    .prep-record-table {{ margin: 0.15rem 0 0.35rem; }}
+    .prep-record-table table {{ min-width: 980px; }}
+    .prep-record-table table.data-table thead th {{
         background: {p.get("table_stripe", "#EFF3FA")};
-        border: 1px solid {p["border"]};
-        border-radius: 8px;
-        padding: 0.5rem 0.7rem;
-        margin-bottom: 0.45rem;
-    }}
-    .file-doc {{
-        flex: none;
-        width: 24px;
-        height: 30px;
-        border: 2px solid {p["accent"]};
-        border-radius: 3px;
-        background:
-            repeating-linear-gradient(
-                to bottom,
-                transparent 0 5px,
-                {p["border"]} 5px 7px
-            ) center / 60% 60% no-repeat,
-            {p["panel_bg"]};
-    }}
-    .file-name {{ color: {p["ink"]}; font-size: 0.84rem; font-weight: 650; }}
-    .verify-badge {{
-        display: inline-block;
-        color: {theme["status"]["quality"]["fully_usable"]["color"]};
-        border: 1px solid currentColor;
-        border-radius: 999px;
-        background: {p["panel_bg"]};
+        color: {p["muted"]};
+        border-bottom: 2px solid {p["accent"]};
         font-size: 0.72rem;
-        font-weight: 800;
-        padding: 0.08rem 0.5rem;
-        margin-left: auto;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }}
+    .prep-record-table table.data-table tbody td {{
+        color: {p["ink"]};
+        font-size: 0.84rem;
+        font-weight: 600;
         white-space: nowrap;
     }}
-    .conv-row {{
-        display: block;
-        background: {p["accent_soft"]};
-        border: 1px solid {p["border"]};
-        border-radius: 8px;
-        color: {p["ink"]};
-        font-size: 0.86rem;
-        font-weight: 600;
-        padding: 0.42rem 0.7rem;
-        margin: 0.3rem 0;
-    }}
-    /* Records merging into one clean row (plays on scene entry / Replay). */
-    .merge-tiles {{
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.45rem;
-        margin: 0.2rem 0;
-    }}
-    .merge-tile {{
-        background: {p.get("table_stripe", "#EFF3FA")};
-        border: 1px solid {p["border"]};
-        border-radius: 6px;
-        color: {p["muted"]};
-        font-size: 0.74rem;
-        font-weight: 650;
-        padding: 0.28rem 0.55rem;
-    }}
-    .merge-tile.ma {{ animation: merge-a {entry_ms}ms ease-out {scene_ms * 2}ms both; }}
-    .merge-tile.mb {{ animation: merge-b {entry_ms}ms ease-out {scene_ms * 3}ms both; }}
-    .merge-tile.mc {{ animation: merge-c {entry_ms}ms ease-out {scene_ms * 4}ms both; }}
-    .merge-arrow {{
-        text-align: center;
-        color: {p["accent"]};
-        font-weight: 700;
-        line-height: 1.1;
-    }}
-    .merge-row {{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.45rem;
-        background: {p["panel_bg"]};
-        border: 1px solid {p["accent"]};
-        border-left: 3px solid {p["accent"]};
-        border-radius: 8px;
-        color: {p["ink"]};
-        font-size: 0.85rem;
-        font-weight: 650;
-        padding: 0.42rem 0.75rem;
-        animation: rise-in {entry_ms}ms ease-out {scene_ms * 6}ms both;
-    }}
-    .merge-row .lineage {{
+    .prep-record-table table.data-table td.mono {{
         color: {p["ledger_ink"]};
         font-family: "Consolas", "SFMono-Regular", monospace;
-        font-size: 0.8rem;
+        font-size: 0.76rem;
     }}
-    @keyframes merge-a {{
-        from {{ opacity: 0; transform: translateX(-18px); }}
-        to   {{ opacity: 1; transform: none; }}
-    }}
-    @keyframes merge-b {{
-        from {{ opacity: 0; transform: translateY(-12px); }}
-        to   {{ opacity: 1; transform: none; }}
-    }}
-    @keyframes merge-c {{
-        from {{ opacity: 0; transform: translateX(18px); }}
-        to   {{ opacity: 1; transform: none; }}
-    }}
-
-    /* Usability funnel — bar widths carry the derived share. */
-    .funnel {{
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        margin: 0.45rem 0 0.25rem 0;
-    }}
-    .funnel-bar {{
-        border-radius: 7px;
-        font-size: 0.86rem;
-        font-weight: 650;
-        padding: 0.42rem 0.8rem;
-        white-space: nowrap;
-        width: fit-content;
-        min-width: 40%;
-    }}
-    .funnel-bar.f1 {{
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-        width: 100%;
-    }}
-    .funnel-bar.f2 {{
-        background: {p["accent"]};
-        color: {p["panel_bg"]};
-    }}
-    .funnel-drop {{
-        color: {p["accent"]};
-        font-weight: 700;
-        margin-left: 1.1rem;
-        line-height: 1;
-    }}
-    .funnel-note {{
-        color: {p["ink"]};
-        font-size: 0.86rem;
-        margin-top: 0.15rem;
-    }}
-
     /* Time-safety year strip. Final state = what reduced-motion users see:
        history lit, focus framed, later years greyed with a hidden tag. */
     .year-strip {{
@@ -2627,247 +2884,197 @@ def apply_global_styles() -> None:
     }}
     .sig-name {{ color: {p["ink"]}; font-size: 0.84rem; font-weight: 750; }}
     .sig-q {{ color: {p["muted"]}; font-size: 0.78rem; line-height: 1.4; }}
+    .year-section-heading {{ margin-top: 1.1rem; }}
 
-    /* ---- Scene 3: the fork — official lane vs controlled evaluation copy.
-       The wall is structural (dashed divider + label), never colour alone. ---- */
-    .fork {{
-        display: grid;
-        grid-template-columns: 1fr 42px 1fr;
-        gap: 0.75rem;
-        align-items: stretch;
-        margin: 0.55rem 0 0.4rem 0;
-    }}
-    .fork-top {{
-        grid-column: 1 / -1;
-        justify-self: center;
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-        border-radius: 9px;
-        font-weight: 750;
-        font-size: 0.95rem;
-        padding: 0.45rem 1.15rem;
-    }}
-    .fork-split {{
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: 1fr 42px 1fr;
-        color: {p["accent"]};
-        font-weight: 700;
-        text-align: center;
-        line-height: 1;
-        user-select: none;
-    }}
-    .lane {{
-        border-radius: 10px;
-        padding: 0.8rem 0.95rem;
-    }}
-    .lane.official {{
-        background: {p["panel_bg"]};
-        border: 1px solid {p["accent"]};
-        border-top: 3px solid {p["accent"]};
-        box-shadow: 0 6px 16px rgba(35, 53, 77, 0.10);
-    }}
-    .lane.eval {{
-        background: {ev["tint"]};
-        border: 2px dashed {ev["border"]};
-    }}
-    .lane-kicker {{
-        font-size: 0.68rem;
-        font-weight: 800;
-        letter-spacing: 0.11em;
-        text-transform: uppercase;
-        margin-bottom: 0.1rem;
-    }}
-    .lane.official .lane-kicker {{ color: {at}; }}
-    .lane.eval .lane-kicker {{ color: {ev["label_ink"]}; }}
-    .lane-sub {{ color: {p["muted"]}; font-size: 0.8rem; margin-bottom: 0.45rem; }}
-    .eval-label {{
-        display: inline-block;
-        color: {ev["label_ink"]};
-        border: 1px dashed {ev["border"]};
-        border-radius: 999px;
-        font-size: 0.76rem;
-        font-weight: 750;
-        padding: 0.14rem 0.6rem;
-        margin-bottom: 0.5rem;
-    }}
-    .lane-step {{
+    /* ---- Model Evaluation & Controls: the queue-build flow (top of page), the
+       "tested on a copy" scenario groups, and the blend split bar. ---- */
+    .mc-flow {{
         display: flex;
-        gap: 0.5rem;
-        align-items: baseline;
-        border-top: 1px solid rgba(35, 53, 77, 0.10);
-        padding: 0.34rem 0;
-        color: {p["ink"]};
-        font-size: 0.86rem;
-        line-height: 1.45;
+        align-items: stretch;
+        gap: 0.4rem;
+        margin: 0.45rem 0 0.6rem 0;
     }}
-    .lane-step:first-of-type {{ border-top: none; }}
-    .lane-step .n {{
-        flex: none;
+    .mc-flow-step {{
+        flex: 1 1 0;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 10px;
+        box-shadow: 0 4px 14px {shadow};
+        padding: 0.7rem 0.8rem 0.8rem 0.8rem;
+    }}
+    .mc-flow-num {{
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 20px;
-        height: 20px;
+        width: 1.5rem;
+        height: 1.5rem;
         border-radius: 50%;
-        font-size: 0.7rem;
+        background: {p["accent_soft"]};
+        color: {at};
+        font-size: 0.78rem;
         font-weight: 800;
+        margin-bottom: 0.4rem;
     }}
-    .lane.official .lane-step .n {{ background: {p["accent_soft"]}; color: {at}; }}
-    .lane.eval .lane-step .n {{
-        background: transparent;
-        border: 1px dashed {ev["border"]};
-        color: {ev["label_ink"]};
-    }}
-    .lane-note {{
-        color: {ev["label_ink"]};
-        font-size: 0.76rem;
-        font-weight: 650;
-        margin-top: 0.4rem;
-    }}
-    .wall {{ position: relative; }}
-    .wall::before {{
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 50%;
-        border-left: 2px dashed {ev["border"]};
-    }}
-    .wall span {{
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(90deg);
-        white-space: nowrap;
-        background: {p["page_bg"]};
-        color: {p["muted"]};
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        padding: 0 0.55rem;
-    }}
-    /* The one travelling element: the SELECTED MODEL chip returns from the
-       evaluation lane into the official lane. Keyframes end at the natural
-       position, so reduced-motion users simply see it in place. */
-    .model-chip {{
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        background: {p["accent"]};
-        color: {p["panel_bg"]};
-        border-radius: 999px;
-        font-size: 0.86rem;
-        font-weight: 750;
-        padding: 0.3rem 0.85rem;
-        box-shadow: 0 6px 14px rgba(35, 53, 77, 0.24);
-    }}
-    .s3-chip {{ animation: model-return {travel_ms}ms cubic-bezier(0.2, 0.7, 0.3, 1) {scene_ms * 8}ms both; }}
-    @keyframes model-return {{
-        from {{ opacity: 0; transform: translateX(200px) translateY(-8px); }}
-        to   {{ opacity: 1; transform: none; }}
-    }}
-    .res-detail {{ color: {p["muted"]}; font-size: 0.76rem; margin: 0.18rem 0 0 0.2rem; }}
-    .s3-late1 {{ animation: rise-in {entry_ms}ms ease-out {scene_ms * 8 + travel_ms}ms both; }}
-    .s3-late2 {{ animation: rise-in {entry_ms}ms ease-out {scene_ms * 8 + travel_ms + 150}ms both; }}
-    .queue-node {{
-        display: inline-block;
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 750;
-        padding: 0.4rem 0.85rem;
-    }}
-    /* Entrance + end-state emphasis drop for the evaluation lane (opacity
-       {ev_op} verified AA for its label/ink/muted text over the plane). */
-    .s3-eval {{
-        animation: rise-in {entry_ms}ms ease-out {scene_ms * 4}ms both,
-                   recede 450ms ease-out {scene_ms * 8 + travel_ms + 300}ms forwards;
-    }}
-    @keyframes recede {{
-        from {{ opacity: 1; }}
-        to   {{ opacity: {ev_op}; }}
+    .mc-flow-title {{ color: {p["ink"]}; font-size: 0.92rem; font-weight: 750; line-height: 1.3; }}
+    .mc-flow-detail {{ color: {p["muted"]}; font-size: 0.8rem; line-height: 1.4; margin-top: 0.2rem; }}
+    .mc-flow-arrow {{
+        flex: 0 0 auto;
+        align-self: center;
+        color: {p["accent"]};
+        font-size: 1.15rem;
+        font-weight: 700;
+        user-select: none;
     }}
 
-    /* Final output stage + FATF separation. */
-    .out-flow {{
-        display: flex;
-        flex-direction: column;
-        gap: 0.22rem;
-        margin: 0.4rem 0 0.3rem 0;
-    }}
-    .out-node {{
-        width: fit-content;
-        max-width: 100%;
+    .scenario {{
         background: {p["panel_bg"]};
         border: 1px solid {p["border"]};
-        border-left: 3px solid {p["accent"]};
+        border-radius: 12px;
+        box-shadow: 0 4px 14px {shadow};
+        padding: 1rem 1.25rem 1.1rem 1.25rem;
+        margin: 0.3rem 0 0.5rem 0;
+    }}
+    .scenario-copy {{
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-bottom: 0.85rem;
+    }}
+    .scenario-copy-real {{
+        background: {p["accent_soft"]};
+        color: {at};
         border-radius: 8px;
-        color: {p["ink"]};
+        font-weight: 750;
         font-size: 0.9rem;
+        padding: 0.35rem 0.75rem;
+    }}
+    .scenario-copy-arrow {{ color: {p["accent"]}; font-weight: 800; font-size: 1.05rem; }}
+    .scenario-copy-test {{
+        background: {ev["tint"]};
+        color: {ev["label_ink"]};
+        border: 1px dashed {ev["border"]};
+        border-radius: 8px;
+        font-weight: 750;
+        font-size: 0.9rem;
+        padding: 0.32rem 0.72rem;
+    }}
+    .scenario-copy-note {{ color: {p["muted"]}; font-size: 0.82rem; }}
+    .scenario-groups {{
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 1rem;
+    }}
+    .scenario-group {{ border-radius: 10px; padding: 0.75rem 0.9rem; }}
+    .scenario-group.catch {{
+        background: {ev["tint"]};
+        border: 1px solid {ev["border"]};
+    }}
+    .scenario-group.ignore {{ background: {p["page_bg"]}; border: 1px solid {p["border"]}; }}
+    .scenario-group-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        margin-bottom: 0.55rem;
+    }}
+    .scenario-group.catch .scenario-group-head {{ color: {ev["label_ink"]}; }}
+    .scenario-group.ignore .scenario-group-head {{ color: {p["muted"]}; }}
+    .scenario-ic {{ width: 1.05rem; height: 1.05rem; flex: none; }}
+    .scenario-item {{ border-top: 1px solid {p["table_stripe"]}; padding: 0.42rem 0; }}
+    .scenario-item:first-of-type {{ border-top: none; }}
+    .scenario-item-title {{ color: {p["ink"]}; font-size: 0.9rem; font-weight: 700; }}
+    .scenario-item-detail {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.4; margin-top: 0.05rem; }}
+    .scenario-note {{
+        margin-top: 0.85rem;
+        padding-top: 0.7rem;
+        border-top: 1px dashed {p["border"]};
+        color: {p["ink"]};
+        font-size: 0.88rem;
         font-weight: 650;
-        padding: 0.42rem 0.85rem;
     }}
-    .out-node.review {{
-        background: {p["sidebar_bg"]};
-        border-color: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-    }}
-    .out-arrow {{
-        color: {p["accent"]};
+
+    .blend {{ margin: 0.25rem 0 0.5rem 0; }}
+    .blend-eq {{
+        font-family: "Consolas", "SFMono-Regular", monospace;
+        font-size: 1.0rem;
         font-weight: 700;
-        margin-left: 1.05rem;
-        line-height: 1;
-        user-select: none;
+        color: {p["ink"]};
+        background: {p["accent_soft"]};
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        margin-bottom: 0.6rem;
     }}
-    .fatf-grid {{
+    .blend-bar {{
+        display: flex;
+        height: 2.4rem;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid {p["border"]};
+    }}
+    .blend-seg {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: {p["panel_bg"]};
+        font-size: 0.85rem;
+        font-weight: 750;
+        white-space: nowrap;
+        overflow: hidden;
+    }}
+    .blend-challenger {{ background: {p["accent"]}; }}
+    .blend-rule {{ background: {navy7}; }}
+
+    /* "What keeps it honest" — allowed vs not-allowed language as two equal-height
+       cards (grid stretch), coloured blue (may say) and rose (may not say) so the
+       page is not another stack of green boxes. */
+    .say-grid {{
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.7rem;
-        max-width: 720px;
-        margin: 0.45rem 0 0.2rem 0;
+        gap: 1rem;
+        align-items: stretch;
+        margin: 0.3rem 0 0.5rem 0;
     }}
-    .fatf-input {{
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-radius: 8px;
-        padding: 0.5rem 0.8rem;
-        color: {p["ink"]};
-        font-size: 0.86rem;
-        font-weight: 650;
-        text-align: center;
+    .say-card {{ border-radius: 10px; padding: 0.8rem 1rem 0.9rem 1rem; }}
+    .say-allowed {{
+        background: color-mix(in srgb, {theme["chart"]["case_benchmark"]} 9%, white);
+        border: 1px solid color-mix(in srgb, {theme["chart"]["case_benchmark"]} 34%, white);
     }}
-    .fatf-input.evidence {{ border-top: 3px solid {p["accent"]}; }}
-    .fatf-input.context {{ border-top: 3px solid {theme["chart"]["context_gray"]}; }}
-    .fatf-input small {{
-        display: block;
-        color: {p["muted"]};
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin-bottom: 0.1rem;
+    .say-notallowed {{
+        background: color-mix(in srgb, {theme["chart"]["case_corridor"]} 7%, white);
+        border: 1px solid color-mix(in srgb, {theme["chart"]["case_corridor"]} 30%, white);
     }}
-    .fatf-join {{
-        grid-column: 1 / -1;
-        text-align: center;
-        color: {p["accent"]};
-        font-weight: 700;
-        line-height: 1;
-        user-select: none;
+    .say-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.92rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
     }}
-    .fatf-out {{
-        grid-column: 1 / -1;
-        justify-self: center;
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 750;
-        padding: 0.4rem 1rem;
+    .say-allowed .say-head {{ color: {theme["chart"]["case_benchmark"]}; }}
+    .say-notallowed .say-head {{ color: {theme["chart"]["case_corridor"]}; }}
+    .say-mark {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 50%;
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: {p["panel_bg"]};
+        flex: none;
     }}
+    .say-allowed .say-mark {{ background: {theme["chart"]["case_benchmark"]}; }}
+    .say-notallowed .say-mark {{ background: {theme["chart"]["case_corridor"]}; }}
+    .say-list {{ margin: 0; padding-left: 1.1rem; color: {p["ink"]}; }}
+    .say-list li {{ font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.35rem; }}
+    .say-list li:last-child {{ margin-bottom: 0; }}
     .bl-reminder {{
         color: {p["sidebar_muted"]};
         font-size: 0.84rem;
@@ -2881,10 +3088,9 @@ def apply_global_styles() -> None:
         .fam-card .src-preview {{ margin-top: 0.5rem; }}
     }}
     @media (max-width: 900px) {{
-        .fork, .fork-split {{ grid-template-columns: 1fr; }}
-        .wall {{ display: none; }}
-        .fork-split span:nth-child(2) {{ display: none; }}
-        .fatf-grid {{ grid-template-columns: 1fr; }}
+        .mc-flow {{ flex-direction: column; }}
+        .mc-flow-arrow {{ transform: rotate(90deg); align-self: center; }}
+        .scenario-groups {{ grid-template-columns: 1fr; }}
     }}
 
     /* ---- CSS-only tooltips (no JS executes inside st.markdown HTML). The
@@ -2895,6 +3101,13 @@ def apply_global_styles() -> None:
         text-decoration: underline dotted;
         text-decoration-thickness: 1px;
         text-underline-offset: 3px;
+    }}
+    /* Highlighted glossary term inside a heading ("corridor"): accent colour on
+       top of the .tip dotted-underline, signalling a hoverable definition. */
+    .section-label .corridor-term {{
+        color: {p["accent"]};
+        font-weight: 800;
+        text-decoration-color: {p["accent"]};
     }}
     .tip:focus-visible {{
         outline: 2px solid {p["accent"]};
@@ -2971,10 +3184,10 @@ def apply_global_styles() -> None:
 
     /* ---- Reduced motion: kill EVERY transition/animation/transform declared
        above (sidebar nav, main CTAs, cards, tiles, tooltips, entrances, the
-       methodology-scene storyboard, merge/year/model-return keyframes, hover
-       previews). Every keyframe above runs FROM an offset TO the natural
-       state, so with animation disabled the final layout is what renders.
-       Kept LAST in the sheet, with !important, so it always wins. ---- */
+       methodology-scene storyboard, merge/year keyframes, hover previews).
+       Every keyframe above runs FROM an offset TO the natural state, so with
+       animation disabled the final layout is what renders. Kept LAST in the
+       sheet, with !important, so it always wins. ---- */
     @media (prefers-reduced-motion: reduce) {{
         [data-testid="stSidebar"] [data-testid="stPageLink"] a,
         [data-testid="stSidebar"] [data-testid="stPageLink"] a:hover,
@@ -2983,36 +3196,323 @@ def apply_global_styles() -> None:
         [data-testid="stMain"] [data-testid="stButton"] button,
         [data-testid="stMain"] [data-testid="stBaseButton-primary"]:hover,
         [data-testid="stMain"] [data-testid="stBaseButton-secondary"]:hover,
-        .anim, .twin-card, .stat-tile, .flow-step,
+        .anim, .bank-reveal, .bank-icon-card, .bank-ai-arrow,
+        .bank-fit-step:not(:last-child)::after,
+        .bank-fit-step, .bank-ai-step, .bank-stage, .bank-control-item,
+        .twin-card, .stat-tile, .flow-step,
         .bv-entry, .story-panel, .commodity-card, .commodity-icon,
         .story-process-stage,
         .sb, .src-card, .fam-card,
-        .merge-tile.ma, .merge-tile.mb, .merge-tile.mc, .merge-row,
         .yr.lit.yl1, .yr.lit.yl2, .yr.lit.yl3, .yr.lit.yl4, .yr.lit.yl5,
         .yr.focus.ylf,
-        .s3-chip, .s3-late1, .s3-late2,
         .case-banner-text,
         .queue-interpretation-boundary,
         .st-key-dashboard_filter_panel,
         .st-key-queue_case_banner,
         .st-key-queue_table_region,
+        .st-key-pa_card_scale, .st-key-pa_card_structure, .st-key-pa_card_market,
+        .st-key-pa_card_patterns, .st-key-dtrq_closing,
+        .welcome-accent, .welcome-eyebrow, .welcome-title, .welcome-sub,
+        .st-key-welcome_cta,
+        .st-key-welcome_cta [data-testid="stIconMaterial"],
         .tip::after, .tip::before {{
             animation: none !important;
             transition: none !important;
             transform: none !important;
         }}
-        /* The receding evaluation lane must not carry transform:none blindly —
-           its recede is opacity-only. Disable both of its animations and pin
-           the readable full-emphasis end state. */
-        .s3-eval {{
-            animation: none !important;
-            opacity: 1 !important;
-        }}
         .src-preview {{
             transition: none !important;
+            transform: none !important;
+        }}
+        /* Never leave a reveal section hidden under reduced motion, even if the
+           observer added .reveal-off before checking the media query. */
+        .reveal-off {{
+            opacity: 1 !important;
             transform: none !important;
         }}
     }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
+
+
+def apply_landing_styles() -> None:
+    """Welcome-screen sheet, injected AFTER the global sheet on the root route only.
+
+    Turns the frame into a full-viewport institutional navy hero: sidebar space
+    and collapse control hidden, ribbon clearance gone, the hero centred with
+    margin-auto (so short viewports degrade to normal scrolling instead of
+    clipping), a restrained staggered entrance, and one teal CTA. Reduced motion
+    for the .welcome-* elements is killed by the consolidated block in the
+    global sheet — it loads first but wins through !important.
+    """
+    theme = load_theme()
+    p = theme["palette"]
+    b = theme["boundary"]
+    layout = theme["layout"]
+    motion = theme.get("motion", {})
+    # Welcome-specific pacing: deliberately slower than the dashboard pages'
+    # entry_ms/entry_step_ms so the hero reads as a curtain-up, not a blink.
+    entry_ms = int(motion.get("welcome_entry_ms", 640))
+    step_ms = int(motion.get("welcome_stagger_ms", 130))
+    hover_ms = int(motion.get("hover_ms", 180))
+    easing = motion.get("easing", "ease-out")
+    teal500 = p.get("teal_500", p["accent"])
+    narrow = int(theme["breakpoints"]["narrow_px"])
+    css = f"""
+    <style>
+    /* ---- Welcome screen: the only route without the dashboard chrome. ---- */
+    [data-testid="stSidebar"],
+    [data-testid="stSidebarCollapsedControl"] {{
+        display: none !important;
+    }}
+
+    /* Deep institutional navy with a very subtle tonal lift toward the top. */
+    html, body, .stApp {{
+        background: {b["border"]};
+    }}
+    [data-testid="stAppViewContainer"] {{
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, {p["navy_700"]} 34%, {p["sidebar_bg"]}) 0%,
+            {p["sidebar_bg"]} 46%,
+            {b["border"]} 100%);
+    }}
+    [data-testid="stMain"],
+    [data-testid="stHeader"] {{
+        background: transparent;
+    }}
+    [data-testid="stHeader"] [data-testid="stToolbar"] {{
+        color: {p["sidebar_muted"]};
+    }}
+
+    /* Viewport-centred hero column. margin-auto centring (not justify-content)
+       keeps the top reachable when the viewport is short. */
+    [data-testid="stMain"] {{
+        display: flex;
+        flex-direction: column;
+    }}
+    [data-testid="stMain"] .block-container {{
+        margin-top: auto;
+        margin-bottom: auto;
+        max-width: 900px;
+        width: 100%;
+        padding: 3rem {int(layout["desktop_padding_px"])}px 3.5rem;
+    }}
+
+    .welcome-hero {{
+        text-align: center;
+        color: {p["sidebar_ink"]};
+    }}
+    /* Streamlit appends a heading-anchor element inside markdown h1; on the
+       hero it renders as a phantom third line plus link chrome on hover. */
+    .welcome-hero [data-testid="stHeaderActionElements"] {{
+        display: none;
+    }}
+    /* Style-only markdown containers each cost one flex-gap slot above the
+       hero. Collapse them — on this route every <style> carrier is style-only
+       (same pattern as the ribbon wrapper) — so the hero sits at optical
+       centre instead of ~20px low. */
+    [data-testid="stMain"] [data-testid="stElementContainer"]:has(style) {{
+        position: absolute;
+        height: 0;
+        overflow: hidden;
+    }}
+    .welcome-accent {{
+        width: 62px;
+        height: 3px;
+        border-radius: 999px;
+        margin: 0 auto 32px;
+        background: {teal500};
+    }}
+    .welcome-eyebrow {{
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.19em;
+        text-transform: uppercase;
+        color: {p["sidebar_muted"]};
+        margin-bottom: 26px;
+    }}
+    /* Element+class selectors: Streamlit styles markdown h1/p through
+       [data-testid="stMarkdownContainer"] rules; these must outrank them or
+       the hero loses its margins (auto-centring) and type scale. The size is
+       capped so the longest phrase line ("Trade-Based Money Laundering
+       (TBML)") stays on one line within the 900px column; per-line wrapping
+       still kicks in on narrow viewports. */
+    .welcome-hero h1.welcome-title {{
+        margin: 0 0 30px;
+        padding: 0; /* Streamlit gives markdown h1 default block padding */
+        font-size: clamp(30px, 4vw, 44px);
+        font-weight: 800;
+        letter-spacing: -0.008em;
+        line-height: 1.2;
+        color: {p["sidebar_ink"]};
+    }}
+    .welcome-title-line {{
+        display: block;
+    }}
+    .welcome-hero p.welcome-sub {{
+        margin: 0 auto;
+        max-width: 33em;
+        font-size: clamp(16px, 2vw, 19px);
+        line-height: 1.66;
+        color: color-mix(in srgb, {p["sidebar_muted"]} 78%, {p["sidebar_ink"]});
+    }}
+
+    /* The one primary action: real Streamlit button, centred. Styled as a
+       quiet ghost pill — frost outline on navy, no heavy fill or glow — with
+       the arrow nudging right on hover as the single micro-interaction. The
+       keyed container is a flex column (stVerticalBlock): centring at that
+       level works whatever width the inner wrappers take. */
+    .st-key-welcome_cta {{
+        margin-top: 40px;
+        align-items: center;
+    }}
+    .st-key-welcome_cta [data-testid="stElementContainer"],
+    .st-key-welcome_cta [data-testid="stButton"] {{
+        display: flex;
+        justify-content: center;
+        width: auto;
+    }}
+    /* Label first, arrow after — Streamlit renders the icon before the label
+       inside the button's inner flex span. */
+    .st-key-welcome_cta [data-testid="stButton"] button [data-has-shortcut] {{
+        flex-direction: row-reverse;
+    }}
+    .st-key-welcome_cta [data-testid="stButton"] button {{
+        min-height: 50px;
+        padding: 0 30px;
+        border-radius: 999px;
+        font-size: 15.5px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        background: color-mix(in srgb, {p["sidebar_ink"]} 5%, transparent);
+        border: 1px solid color-mix(in srgb, {p["sidebar_ink"]} 30%, transparent);
+        color: {p["sidebar_ink"]};
+        box-shadow: none;
+        transition: border-color {hover_ms}ms {easing},
+                    background {hover_ms}ms {easing},
+                    box-shadow {hover_ms}ms {easing},
+                    transform {hover_ms}ms {easing};
+    }}
+    .st-key-welcome_cta [data-testid="stButton"] button [data-testid="stIconMaterial"] {{
+        transition: transform {hover_ms}ms {easing};
+    }}
+    /* Hover/active must out-rank the global stMain primary rules (same trick
+       as the Replay variant): the ghost warms toward teal and the arrow leads
+       the eye forward — never the global light-surface hover that recedes on
+       navy. */
+    [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:hover:not(:disabled) {{
+        background: color-mix(in srgb, {teal500} 14%, transparent);
+        border-color: {teal500};
+        color: {p["sidebar_ink"]};
+        transform: translateY(-1px);
+        box-shadow: 0 10px 26px color-mix(in srgb, {b["border"]} 55%, transparent);
+    }}
+    [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:hover:not(:disabled) [data-testid="stIconMaterial"] {{
+        transform: translateX(3px);
+    }}
+    [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:active:not(:disabled) {{
+        transform: translateY(0);
+        background: color-mix(in srgb, {teal500} 22%, transparent);
+    }}
+    .st-key-welcome_cta [data-testid="stButton"] button:focus-visible {{
+        outline: 3px solid {teal500};
+        outline-offset: 3px;
+    }}
+
+    /* Restrained entrance: accent+eyebrow, then title, description, CTA.
+       Slightly longer travel suits the slower welcome pacing. */
+    @keyframes welcome-rise {{
+        from {{ opacity: 0; transform: translateY(14px); }}
+        to   {{ opacity: 1; transform: translateY(0); }}
+    }}
+    .welcome-accent,
+    .welcome-eyebrow,
+    .welcome-title,
+    .welcome-sub,
+    .st-key-welcome_cta {{
+        animation: welcome-rise {entry_ms}ms {easing} both;
+    }}
+    .welcome-title {{ animation-delay: {step_ms}ms; }}
+    .welcome-sub {{ animation-delay: {step_ms * 2}ms; }}
+    .st-key-welcome_cta {{ animation-delay: {step_ms * 3}ms; }}
+
+    @media (max-width: {narrow}px) {{
+        [data-testid="stMain"] .block-container {{
+            padding-left: 24px;
+            padding-right: 24px;
+        }}
+        .st-key-welcome_cta {{
+            align-items: stretch;
+        }}
+        .st-key-welcome_cta [data-testid="stElementContainer"],
+        .st-key-welcome_cta [data-testid="stButton"],
+        .st-key-welcome_cta [data-testid="stButton"] button {{
+            width: 100%;
+        }}
+    }}
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+
+def apply_dashboard_entry_styles() -> None:
+    """One-shot dashboard entrance for the render right after the landing CTA.
+
+    Injected for that single run (the session flag is consumed), so widget
+    reruns never replay it: content fades up ~8px while the sidebar slides in
+    from the left at desktop widths only — never fighting Streamlit's own
+    collapse transform on narrow viewports. The sheet is transient, so it
+    carries its own reduced-motion guard; the sidebar needs animation-only
+    killing (a blanket transform: none would break collapse positioning).
+    """
+    theme = load_theme()
+    motion = theme.get("motion", {})
+    ms = int(motion.get("dashboard_entry_ms", 340))
+    delay_ms = int(motion.get("dashboard_entry_delay_ms", 160))
+    sidebar_ms = int(motion.get("dashboard_sidebar_ms", 560))
+    easing = motion.get("easing", "ease-out")
+    sidebar_min = int(theme["breakpoints"]["sidebar_px"])
+    css = f"""
+    <style>
+    /* Choreography: the navigation slides fully in from the left edge first,
+       and the page content fades up under it a beat later — the shell visibly
+       "arrives" around the story. Opacity-only on the content column: the
+       boundary ribbon lives INSIDE .block-container and is position: fixed —
+       any transform on an ancestor would re-root it away from the viewport.
+       The slide lives on the sidebar, which contains no fixed descendants. */
+    @keyframes dash-enter {{
+        from {{ opacity: 0; }}
+        to   {{ opacity: 1; }}
+    }}
+    @keyframes dash-enter-side {{
+        from {{ transform: translateX(-100%); }}
+        to   {{ transform: translateX(0); }}
+    }}
+    [data-testid="stMain"] .block-container {{
+        animation: dash-enter {ms}ms {easing} {delay_ms}ms both;
+    }}
+    @media (min-width: {sidebar_min}px) {{
+        [data-testid="stSidebar"] {{
+            animation: dash-enter-side {sidebar_ms}ms {easing} both;
+        }}
+    }}
+    /* This sheet's own wrapper must not cost a flex-gap slot for one render
+       (it would nudge the whole page down 16px, then snap on the next rerun).
+       The flex child is the layout wrapper AROUND the keyed block, so collapse
+       that; a <style> keeps applying from inside a display:none subtree. */
+    [data-testid="stLayoutWrapper"]:has(.st-key-dash_entry_sheet),
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-dash_entry_sheet) {{
+        display: none;
+    }}
+    @media (prefers-reduced-motion: reduce) {{
+        [data-testid="stMain"] .block-container,
+        [data-testid="stSidebar"] {{
+            animation: none !important;
+        }}
+    }}
+    </style>
+    """
+    with st.container(key="dash_entry_sheet"):
+        st.markdown(css, unsafe_allow_html=True)

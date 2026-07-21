@@ -110,20 +110,23 @@ def bar_single(frame: pd.DataFrame, x: str, y: str, y_title: str = "",
 
 def small_multiples_by_family(frame: pd.DataFrame, value_col: str,
                               hover_label: str, value_prefix: str = "",
-                              value_suffix: str = "", value_fmt: str = ".3s") -> go.Figure:
+                              value_suffix: str = "", value_fmt: str = ".3s",
+                              y_title: str = "") -> go.Figure:
     """One panel per family over year, each on its OWN scale.
 
     Gold dwarfs the others (value and benchmark alike), so a shared y-axis would
     flatten palm oil and copper to the baseline — the panels are deliberately not
-    comparable in height. Line colour follows the family entity.
+    comparable in height. Line colour follows the family entity. `y_title` names
+    the unit (shown once, on the leftmost panel) so the numbers are never read
+    without their units; "Year" is labelled once under the centre panel.
     """
     fig = px.line(
         frame, x="year", y=value_col, facet_col="family_label",
         color="family_label", color_discrete_map=family_color_map(),
         markers=True, facet_col_wrap=3, facet_col_spacing=0.07,
     )
-    fig.update_yaxes(matches=None, showticklabels=True, title_text="")
-    fig.update_xaxes(dtick=1, title_text="")
+    fig.update_yaxes(matches=None, showticklabels=True, title_text="", automargin=True)
+    fig.update_xaxes(dtick=1, title_text="", automargin=True)
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig.update_traces(
         line=dict(width=2.5), marker=dict(size=6),
@@ -131,6 +134,14 @@ def small_multiples_by_family(frame: pd.DataFrame, value_col: str,
                        f"%{{y:{value_fmt}}}{value_suffix}<extra></extra>"),
     )
     fig.update_layout(showlegend=False)
+    if y_title:
+        # The unit, once, on the leftmost panel's y-axis.
+        fig.update_layout(yaxis_title=y_title)
+    # "Year" once, under the centre panel (three families -> xaxis2 is the middle).
+    if fig.layout.xaxis2 is not None:
+        fig.layout.xaxis2.title.text = "Year"
+    else:
+        fig.update_xaxes(title_text="Year")
     return fig
 
 
@@ -321,12 +332,20 @@ def _add_case_diamond(fig: go.Figure, x, y, text: str | None = None) -> None:
     )
 
 
-def case_market_view(frame: pd.DataFrame, family_id: str, copy: dict) -> go.Figure:
-    """View 1 — corridor implied unit value vs the annual World Bank benchmark."""
+def case_combined_view(market: pd.DataFrame, own: pd.DataFrame, copy: dict) -> go.Figure:
+    """Combined comparison — the corridor's implied unit value against BOTH the
+    World Bank benchmark (the world market) and its own prior-year median (its own
+    history), on one chart. The references share the low ground while the corridor
+    line stands apart, so a single view answers "unusual vs the market?" and
+    "unusual vs its own past?" at once. `own` supplies the prior-median series
+    (already exponentiated by case_summary); the frames align on year.
+    """
     theme = load_theme()
     chart = theme["chart"]
-    family_color = theme["families"].get(family_id, chart["emphasis"])
     hover = copy["hover"]
+    frame = market.merge(
+        own[["year", "prior_median", "multiple_vs_prior"]], on="year", how="left"
+    )
     quality = frame["quality_status"].map(lambda s: _dash(s, quality_label))
     custom = list(zip(
         frame["trade_value_usd"].map(lambda v: _dash(v, fm.money)),
@@ -334,6 +353,8 @@ def case_market_view(frame: pd.DataFrame, family_id: str, copy: dict) -> go.Figu
         frame["unit_value"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
         frame["benchmark"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
         frame["multiple"].map(lambda v: _dash(v, lambda x: f"{x:,.2f}×")),
+        frame["prior_median"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
+        frame["multiple_vs_prior"].map(lambda v: _dash(v, lambda x: f"{x:,.2f}×")),
         quality,
     ))
     template = (
@@ -342,71 +363,35 @@ def case_market_view(frame: pd.DataFrame, family_id: str, copy: dict) -> go.Figu
         f"<br>{hover['quantity']}: %{{customdata[1]}}"
         f"<br>{hover['implied_uv']}: %{{customdata[2]}}"
         f"<br>{hover['benchmark']}: %{{customdata[3]}}"
-        f"<br>{hover['multiple']}: %{{customdata[4]}}"
-        f"<br>{hover['quality']}: %{{customdata[5]}}"
+        f"<br>{hover['market_multiple']}: %{{customdata[4]}}"
+        f"<br>{hover['prior_median']}: %{{customdata[5]}}"
+        f"<br>{hover['history_multiple']}: %{{customdata[6]}}"
+        f"<br>{hover['quality']}: %{{customdata[7]}}"
         "<extra></extra>"
     )
     fig = go.Figure()
+    # World Bank benchmark — the world-market reference (blue, dotted).
     fig.add_scatter(
         x=frame["year"], y=frame["benchmark"], mode="lines+markers",
-        name=copy["series_benchmark"], connectgaps=False,
-        line=dict(color=chart["context_gray"], width=2, dash="dot"),
+        name=copy["series_benchmark"], connectgaps=False, legendrank=2,
+        line=dict(color=chart["case_benchmark"], width=2, dash="dot"),
         marker=dict(size=6),
         hovertemplate="%{x} · " + copy["series_benchmark"] + " $%{y:,.0f}/mt<extra></extra>",
     )
-    fig.add_scatter(
-        x=frame["year"], y=frame["unit_value"], mode="lines+markers",
-        name=copy["series_corridor"], connectgaps=False,
-        line=dict(color=family_color, width=2.5), marker=dict(size=7),
-        customdata=custom, hovertemplate=template,
-    )
-    focus = frame[frame["is_case_year"] & frame["unit_value"].notna()]
-    if not focus.empty:
-        _add_case_diamond(fig, focus["year"], focus["unit_value"])
-    fig.update_layout(yaxis_title=copy["y_title"], xaxis_title="",
-                      xaxis=dict(dtick=1), yaxis=dict(rangemode="tozero"))
-    return fig
-
-
-def case_history_view(frame: pd.DataFrame, family_id: str, copy: dict) -> go.Figure:
-    """View 2 — corridor implied unit value vs its own prior-year median.
-
-    `prior_median` arrives already exponentiated (case_summary owns the log→
-    level conversion); missing medians and unobserved years stay as gaps.
-    """
-    theme = load_theme()
-    chart = theme["chart"]
-    family_color = theme["families"].get(family_id, chart["emphasis"])
-    hover = copy["hover"]
-    quality = frame["quality_status"].map(lambda s: _dash(s, quality_label))
-    custom = list(zip(
-        frame["unit_value"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
-        frame["prior_median"].map(lambda v: _dash(v, lambda x: fm.money(x) + "/mt")),
-        frame["multiple_vs_prior"].map(lambda v: _dash(v, lambda x: f"{x:,.2f}×")),
-        frame["prior_years_used"].map(lambda v: _dash(v, lambda x: f"{int(x)}")),
-        quality,
-    ))
-    template = (
-        "<b>%{x}</b>"
-        f"<br>{hover['implied_uv']}: %{{customdata[0]}}"
-        f"<br>{hover['prior_median']}: %{{customdata[1]}}"
-        f"<br>{hover['multiple']}: %{{customdata[2]}}"
-        f"<br>{hover['prior_years']}: %{{customdata[3]}}"
-        f"<br>{hover['quality']}: %{{customdata[4]}}"
-        "<extra></extra>"
-    )
-    fig = go.Figure()
+    # Prior corridor median — the corridor's own-history reference (violet, dashed).
     fig.add_scatter(
         x=frame["year"], y=frame["prior_median"], mode="lines+markers",
-        name=copy["series_prior"], connectgaps=False,
-        line=dict(color=theme["palette"]["navy_700"], width=2, dash="dash"),
+        name=copy["series_prior"], connectgaps=False, legendrank=3,
+        line=dict(color=chart["case_prior"], width=2, dash="dash"),
         marker=dict(size=6),
         hovertemplate="%{x} · " + copy["series_prior"] + " $%{y:,.0f}/mt<extra></extra>",
     )
+    # Corridor implied unit value — the emphasis line (maroon), drawn on top but
+    # ranked first in the legend.
     fig.add_scatter(
         x=frame["year"], y=frame["unit_value"], mode="lines+markers",
-        name=copy["series_corridor"], connectgaps=False,
-        line=dict(color=family_color, width=2.5), marker=dict(size=7),
+        name=copy["series_corridor"], connectgaps=False, legendrank=1,
+        line=dict(color=chart["case_corridor"], width=2.7), marker=dict(size=7),
         customdata=custom, hovertemplate=template,
     )
     focus = frame[frame["is_case_year"] & frame["unit_value"].notna()]
@@ -437,7 +422,7 @@ def case_peer_view(position: dict, copy: dict) -> go.Figure:
     fig = go.Figure(go.Bar(
         x=bins["log_center"], y=bins["count"],
         width=(bins["log_right"] - bins["log_left"]) * 0.92,
-        marker_color=chart["context_gray"], marker_line_width=0,
+        marker_color=chart["peer_bars"], marker_line_width=0,
         customdata=custom,
         hovertemplate=("%{customdata[0]}×–%{customdata[1]}× · %{customdata[2]} "
                        + copy["bar_hover_suffix"] + "<extra></extra>"),

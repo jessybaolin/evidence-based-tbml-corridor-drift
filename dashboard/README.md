@@ -94,7 +94,7 @@ python -m pytest tests/ -q
 7. **Bank Implementation Pathway** — a clearly labelled future-state design
    for joining the external-intelligence layer to bank-governed records and
    case-management workflows.
-8. **Data Dictionary** — searchable analytical definitions (documented + schema-inferred,
+8. **Data Dictionary** — searchable key analytical fields and official source references,
    with definition provenance) and official source cards with clickable URLs.
 
 ## How case selection works

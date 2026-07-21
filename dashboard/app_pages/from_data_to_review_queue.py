@@ -1,37 +1,33 @@
 """From Data to Review Queue — the interactive "Data Coverage & Trust" story.
 
-One page, three scenes, one mental model kept in view throughout:
+One page, two scenes, one mental model kept in view throughout:
 official trade data is verified, standardised and converted into time-safe
 analytical signals; synthetic scenarios only test and select the model; only
 real official observations enter the review queue.
 
 Scene 1 — the three institutional sources and the unit of analysis.
 Scene 2 — how official records become comparable analytical observations.
-Scene 3 — the official-analysis lane vs the controlled evaluation copy, and
-          how a ranked row becomes a reviewable, evidence-backed case.
 
-Every number is derived live from the loaded artefacts (never typed in), all
-copy lives in dashboard_content.yml, and the detailed material (pipeline PNGs,
-raw BACI field names, checksums) sits in the technical companion expander at
-the bottom. The human-review boundary rides on this page as the fixed footer
-ribbon rendered by streamlit_app.py.
+How the ranking is then tested and chosen is a model-validation story; it lives
+on the Model Evaluation & Controls page, linked from the end of this one.
+
+Every number is derived live from the loaded artefacts (never typed in), and all
+stakeholder copy lives in dashboard_content.yml. The human-review boundary
+rides on this page as the fixed footer ribbon rendered by streamlit_app.py.
 """
 
 from __future__ import annotations
 
 import html
 
-import pandas as pd
 import streamlit as st
 
-from dashboard.components.empty_states import missing_figure
 from dashboard.components.banners import render_info_banner
 from dashboard.components.cards import kpi_card_markup, source_card_markup
+from dashboard.components.scroll_reveal import render_scroll_reveal
 from dashboard.components.page_header import ledger, page_header
-from dashboard.components.tables import plain_table
 from dashboard.services import data_loader as load
 from dashboard.services import formatting as fm
-from dashboard.services.dashboard_metrics import selected_method_label
 
 content = load.load_content()
 copy = content["pages"]["from_data_to_review_queue"]
@@ -43,11 +39,6 @@ panel = load.load_panel(columns=(
     "model_eligible", "benchmark_price_original", "benchmark_unit_original",
 ))
 queue = load.load_review_queue()
-evidence = load.load_evidence()
-project_config = load.load_project_config()
-selection = load.load_model_selection()
-manifest = load.load_source_manifest()          # optional
-source_notes = load.load_data_source_notes()    # optional
 benchmark_series = load.load_benchmark_series_config() or []
 
 total_rows = len(panel)
@@ -85,22 +76,6 @@ _gold = panel[
 ]
 gold_bench = _gold.loc[_gold["year"].idxmax()] if not _gold.empty else None
 
-per_case = evidence.groupby("obs_id").size()
-evidence_per_case = (
-    f"{int(per_case.iloc[0])}" if per_case.nunique() == 1 else f"{per_case.mean():.1f}"
-)
-type_labels = content.get("evidence_type_labels", {})
-evidence_types = [
-    type_labels.get(kind, fm.label_from_key(kind))
-    for kind in evidence["evidence_type"].value_counts().index
-]
-
-train_span = fm.year_span(project_config["train_years"])
-validation_span = fm.year_span(project_config["validation_years"])
-test_span = fm.year_span(project_config["test_years"])
-queue_size = len(queue)
-selected_method = selected_method_label(selection)
-
 
 def _e(text: object) -> str:
     return html.escape(str(text), quote=True)
@@ -114,7 +89,7 @@ def _tip(term: str, tip: str) -> str:
 # ---- Page frame: header · sticky mental model · trust KPI strip --------------
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 
-render_info_banner(copy["mental_model_stamp"], copy["mental_model"])
+render_info_banner(copy["mental_model_stamp"], copy["mental_model"], icon="shield-check")
 
 kpis = copy["kpis"]
 tiles = [
@@ -176,12 +151,8 @@ def _on_bar() -> None:
         st.session_state[_REPLAY] += 1
 
 
-def _replay() -> None:
-    st.session_state[_REPLAY] += 1
-
-
-bar_col, ind_col, prev_col, next_col, replay_col = st.columns(
-    [4.4, 1.25, 1.2, 1.05, 1.35], vertical_alignment="center"
+bar_col, prev_col, next_col = st.columns(
+    [5.5, 1.2, 1.05], vertical_alignment="center"
 )
 with bar_col:
     st.segmented_control(
@@ -189,13 +160,6 @@ with bar_col:
         label_visibility="collapsed",
     )
 scene_idx = int(st.session_state[_SCENE])
-with ind_col:
-    st.markdown(
-        f'<div class="scene-indicator">'
-        f'{_e(copy["scene_indicator"].format(n=scene_idx + 1, total=len(SCENE_LABELS)))}'
-        f"</div>",
-        unsafe_allow_html=True,
-    )
 with prev_col:
     st.button(copy["prev_label"], key="dtrq_prev", on_click=_go, args=(-1,),
               type="secondary", disabled=scene_idx == 0, width="stretch")
@@ -204,11 +168,6 @@ with next_col:
     st.button(copy["next_label"], key="dtrq_next", on_click=_go, args=(1,),
               type="primary", disabled=scene_idx == len(SCENE_LABELS) - 1,
               width="stretch")
-with replay_col:
-    # Secondary type; the keyed wrapper (.st-key-dtrq_replay_btn) restyles it as
-    # the pale-navy Replay utility variant.
-    st.button(copy["replay_label"], key="dtrq_replay_btn", on_click=_replay,
-              type="secondary", width="stretch")
 
 _replay_stamp = int(st.session_state[_REPLAY])
 
@@ -235,7 +194,9 @@ def _pv_rows(pairs: list[tuple[str, str]]) -> str:
 def _scene_sources() -> None:
     s1 = copy["scene1"]
     cards = s1["cards"]
-    hint = f'<div class="src-hint">{_e(s1["hover_hint"])}</div>'
+    # The "hover for a sample" prompt was removed; source cards keep the reveal
+    # on hover/focus but no longer advertise it.
+    hint = ""
 
     baci = cards["baci"]
     baci_preview = (
@@ -315,28 +276,31 @@ def _scene_sources() -> None:
     )
 
     _block(
-        f'<div class="landing-section sb b1">'
+        f'<div class="landing-section sb reveal b1">'
         f'<div class="landing-heading">{_e(s1["heading"])}</div></div>'
         f'<div class="src-grid">{card_1}{card_2}{card_3}</div>'
     )
 
-    # Unit of analysis: real corridor, twin It-is / It-is-not cards.
+    # Unit of analysis: one real record shown as a plain table, plus the twin
+    # It-is / It-is-not cards.
     unit = s1["unit"]
+    rf = unit["record_fields"]
+    record_rows = [
+        (rf["year"], str(int(sample["year"]))),
+        (rf["exporter"], _e(sample["exporter_name"])),
+        (rf["importer"], _e(sample["importer_name"])),
+        (rf["product"], f'HS6 {_e(sample["hs6"])} · {_e(sample["product_name"])}'),
+        (rf["value"], _e(fm.money(sample["trade_value_usd"]))),
+        (rf["quantity"], _e(fm.quantity_mt(sample["quantity_metric_ton"]))),
+    ]
+    record_body = "".join(
+        f'<tr><td class="rec-k">{_e(label)}</td><td>{value}</td></tr>'
+        for label, value in record_rows
+    )
     corridor = (
-        f'<div class="corridor-visual">'
-        f'<div class="cv-lane">'
-        f'<div class="cv-node"><span class="cv-role">{_e(unit["exporter_label"])}</span>'
-        f'<span class="cv-name">{_e(sample["exporter_name"])}</span></div>'
-        f'<div class="cv-link"><span>HS6 {_e(sample["hs6"])} · {_e(sample["product_name"])}</span></div>'
-        f'<div class="cv-node"><span class="cv-role">{_e(unit["importer_label"])}</span>'
-        f'<span class="cv-name">{_e(sample["importer_name"])}</span></div>'
-        f"</div>"
-        f'<div class="cv-year">{_e(unit["year_label"].format(year=int(sample["year"])))}</div>'
-        f'<div class="cv-arrow" aria-hidden="true">↓</div>'
-        f'<div class="cv-row-chip">{_e(unit["row_label"])} — '
-        f'value {_e(fm.compact_usd(sample["trade_value_usd"]))} · '
-        f'quantity {_e(fm.quantity_mt(sample["quantity_metric_ton"]))}</div>'
-        f"</div>"
+        f'<div class="data-table-wrap"><table class="data-table"><tbody>'
+        f"{record_body}</tbody></table></div>"
+        f'<div class="mini-note">{_e(unit["record_caption"])}</div>'
     )
     twin = (
         f'<div class="twin-grid">'
@@ -347,7 +311,7 @@ def _scene_sources() -> None:
         f"</div>"
     )
     _block(
-        f'<div class="landing-section sb b5">'
+        f'<div class="landing-section sb reveal b5">'
         f'<div class="landing-heading">{_e(unit["heading"])}</div>'
         f'<div class="unit-eq">{_e(unit["equation"])}</div>'
         f"{corridor}{twin}"
@@ -355,7 +319,8 @@ def _scene_sources() -> None:
         f"</div>"
     )
 
-    # Why these three product families.
+    # Why these three product families: each card carries its family colour, and
+    # the copy is shown directly (no hover reveal).
     fams = s1["families"]
     order = ["gold_unwrought", "refined_copper_cathodes", "crude_palm_oil"]
     fam_cards = []
@@ -363,27 +328,17 @@ def _scene_sources() -> None:
         if fid not in family_hs6:
             continue
         role = fams["roles"][fid]
-        reveal = (
-            f'<div class="src-preview">'
-            f'<div class="pv-title">{_e(short_labels.get(fid, fid))} · {_e(family_product.get(fid, fid))}</div>'
-            + _pv_rows([
-                (fams["hs6_label"], str(family_hs6[fid])),
-                (fams["unit_label"], family_bench_unit.get(fid, "—")),
-                (fams["tests_label"], str(role["tests"])),
-            ])
-            + f'<div class="pv-cap">{_e(fams["note"])}</div></div>'
-        )
         fam_cards.append(
-            f'<div class="fam-card sb {beat}" tabindex="0">'
+            f'<div class="fam-card sb {beat} fam-{fid}">'
             f'<div class="fam-head"><span class="chip-dot"></span>'
             f'<span class="fam-name">{_e(short_labels.get(fid, fid))}</span></div>'
             f'<div class="fam-role">{_e(role["role"])}</div>'
             f'<div class="fam-body">{_e(role["body"])}</div>'
-            f"{hint}{reveal}</div>"
+            f"</div>"
         )
     tags = "".join(f'<span class="tag">{_e(tag)}</span>' for tag in fams["tags"])
     _block(
-        f'<div class="landing-section sb b6">'
+        f'<div class="landing-section sb reveal b6">'
         f'<div class="landing-heading">{_e(fams["heading"])}</div></div>'
         f'<div class="fam-grid">{"".join(fam_cards)}</div>'
         f'<div class="sb b8"><div class="tag-row">{tags}</div>'
@@ -409,100 +364,37 @@ def _scene_prepare() -> None:
                 f'<span class="pipe-arrow sb b{min(i + 1, 8)}" aria-hidden="true">→</span>'
             )
     _block(
-        f'<div class="landing-section sb b1">'
+        f'<div class="landing-section sb reveal b1">'
         f'<div class="landing-heading">{_e(s2["heading"])}</div></div>'
         f'<div class="pipe-strip">{"".join(stage_cards)}</div>'
     )
 
-    verify = s2["verify_panel"]
-    release = "not recorded"
-    if source_notes:
-        release = str(source_notes.get("baci_release", "not recorded"))
-    left, right = st.columns(2)
-    with left:
-        _block(
-            f'<div class="prep-panel sb b3">'
-            f'<div class="prep-kicker">1 · {_e(s2["stages"][0]["title"])}</div>'
-            f'<div class="file-card"><span class="file-doc" aria-hidden="true"></span>'
-            f'<span class="file-name">{_e(verify["file_label"].format(release=release))}</span>'
-            f'<span class="verify-badge">✓ {_e(verify["badge"])}</span></div>'
-            f'<p class="prep-body">{_e(verify["body"])}</p>'
-            f"</div>"
-        )
-        with st.expander(verify["provenance_cta"]):
-            st.markdown(verify["provenance_note"])
-            rows = []
-            if manifest:
-                confirmed = manifest.get("baci_source_confirmed", {})
-                if confirmed.get("sha256"):
-                    rows.append({"Artefact": "Filtered BACI extract (parquet)",
-                                 "SHA-256": confirmed["sha256"]})
-            if source_notes:
-                checksums = source_notes.get("checksums", {})
-                for label, key in [
-                    ("BACI country codes", "country_codes_sha256"),
-                    ("BACI product codes", "product_codes_sha256"),
-                    ("World Bank CMO workbook", "world_bank_workbook_sha256"),
-                ]:
-                    if checksums.get(key):
-                        rows.append({"Artefact": label, "SHA-256": checksums[key]})
-            if rows:
-                plain_table(pd.DataFrame(rows))
-            else:
-                st.markdown("Provenance records have not been generated for this run.")
-            ledger("source_manifest", "data_source_notes")
-    with right:
-        conv_rows = "".join(
-            f'<span class="conv-row">{_e(example)}</span>'
-            for example in s2["standardise_panel"]["examples"]
-        )
-        _block(
-            f'<div class="prep-panel sb b4">'
-            f'<div class="prep-kicker">2 · {_e(s2["stages"][1]["title"])}</div>'
-            f"{conv_rows}"
-            f'<div class="mini-note">{_e(s2["stages"][1]["body"])}</div>'
-            f"</div>"
-        )
-
-    build_col, controls_col = st.columns(2)
-    with build_col:
-        row_panel = s2["row_panel"]
-        tiles = "".join(
-            f'<span class="merge-tile {cls}">{_e(label)}</span>'
-            for cls, label in zip(("ma", "mb", "mc"), row_panel["raw_labels"])
-        )
-        _block(
-            f'<div class="prep-panel sb b5">'
-            f'<div class="prep-kicker">3 · {_e(s2["stages"][2]["title"])}</div>'
-            f'<div class="merge-tiles">{tiles}</div>'
-            f'<div class="merge-arrow" aria-hidden="true">↓</div>'
-            f'<div class="merge-row"><span class="lineage" aria-hidden="true">⌂</span>'
-            f'{_e(row_panel["clean_label"])}</div>'
-            f'<div class="mini-note">{_e(row_panel["caption"])}</div>'
-            f"</div>"
-        )
-    with controls_col:
-        controls = s2["controls_panel"]
-        funnel = (
-            f'<div class="funnel">'
-            f'<div class="funnel-bar f1">{_e(controls["funnel_total"].format(total=f"{total_rows:,}"))}</div>'
-            f'<div class="funnel-drop" aria-hidden="true">↓</div>'
-            f'<div class="funnel-bar f2" style="width:{eligible_pct:.1f}%;">'
-            f'{_e(controls["funnel_eligible"].format(eligible=f"{eligible_rows:,}"))}</div>'
-            f'<div class="funnel-drop" aria-hidden="true">↓</div>'
-            f'<div class="funnel-note">'
-            f'{_e(controls["funnel_value"].format(value_share=f"{value_share:.1f}"))}</div>'
-            f"</div>"
-        )
-        _block(
-            f'<div class="prep-panel sb b6">'
-            f'<div class="prep-kicker">4 · {_e(s2["stages"][3]["title"])}</div>'
-            f'<p class="prep-body">{_e(controls["body"])}</p>'
-            f"{funnel}"
-            f'<div class="mini-note">{_tip(controls["eligibility_term"], controls["tip"])}'
-            f' · {_e(controls["note"])}</div>'
-            f"</div>"
-        )
+    row_panel = s2["row_panel"]
+    row_fields = row_panel["record_fields"]
+    record_cells = [
+        (row_fields["observation_id"], sample["obs_id"], "mono"),
+        (row_fields["year"], str(int(sample["year"])), "num"),
+        (row_fields["corridor"],
+         f'{sample["exporter_name"]} → {sample["importer_name"]}', ""),
+        (row_fields["product"],
+         f'HS6 {sample["hs6"]} · {sample["product_name"]}', ""),
+        (row_fields["trade_value"], fm.money(sample["trade_value_usd"]), "num"),
+        (row_fields["quantity"], fm.quantity_mt(sample["quantity_metric_ton"]), "num"),
+    ]
+    record_headers = "".join(f"<th>{_e(label)}</th>" for label, _, _ in record_cells)
+    record_values = "".join(
+        f'<td class="{css_class}">{_e(value)}</td>'
+        for _, value, css_class in record_cells
+    )
+    _block(
+        f'<div class="prep-panel prep-record-panel sb b5">'
+        f'<div class="prep-kicker">3 · {_e(s2["stages"][2]["title"])}</div>'
+        f'<div class="data-table-wrap prep-record-table"><table class="data-table">'
+        f'<thead><tr>{record_headers}</tr></thead>'
+        f'<tbody><tr>{record_values}</tr></tbody></table></div>'
+        f'<div class="mini-note">{_e(row_panel["record_caption"])}</div>'
+        f"</div>"
+    )
 
     timesafe = s2["timesafe_panel"]
     chips = "".join(
@@ -534,7 +426,8 @@ def _scene_prepare() -> None:
         f'<div class="prep-kicker">5 · {_e(s2["stages"][4]["title"])}</div>'
         f'<p class="prep-body">{_e(timesafe["definition"])}</p>'
         f'<div class="sig-chip-row">{chips}</div>'
-        f'<div class="mini-note">{_e(timesafe["year_heading"].format(focus_year=focus_year))}</div>'
+        f'<div class="mini-note year-section-heading">'
+        f'{_e(timesafe["year_heading"].format(focus_year=focus_year))}</div>'
         f'<div class="year-strip">{"".join(year_chips)}</div>'
         f'<div class="mini-note">{_e(year_caption)}</div>'
         f"</div>"
@@ -542,180 +435,25 @@ def _scene_prepare() -> None:
     ledger("panel", "source_manifest", "features")
 
 
-# ---- Scene 3 · Test, rank & explain ----------------------------------------------
-def _scene_wall() -> None:
-    s3 = copy["scene3"]
-    official = s3["official"]
-    evaluation = s3["evaluation"]
-    resolution = s3["resolution"]
-
-    official_steps = [str(step).format(queue_size=queue_size) for step in official["steps"]]
-    official_rows = (
-        f'<div class="lane-step"><span class="n">1</span><span>{_e(official_steps[0])}</span></div>'
-        f'<div class="lane-step"><span class="n">2</span><span>{_e(official_steps[1])}</span></div>'
-        f'<div class="lane-step"><span class="n">3</span><div>'
-        f'<span class="model-chip s3-chip">{_e(official_steps[2])}</span>'
-        f'<div class="res-detail">{_e(resolution["model_detail"].format(selected_method=selected_method))}</div>'
-        f'<div class="res-detail s3-late1">{_e(resolution["applied"])}</div>'
-        f"</div></div>"
-        f'<div class="lane-step"><span class="n">4</span>'
-        f'<span class="queue-node s3-late2">{_e(official_steps[3])}</span></div>'
-    )
-    eval_steps = [
-        str(step).format(train_span=train_span, validation_span=validation_span,
-                         test_span=test_span)
-        for step in evaluation["steps"]
-    ]
-    eval_rows = "".join(
-        f'<div class="lane-step"><span class="n">{i}</span><span>{_e(step)}</span></div>'
-        for i, step in enumerate(eval_steps, start=1)
-    )
-    fork = (
-        f'<div class="fork">'
-        f'<div class="fork-top sb b2">{_e(s3["top_node"])}</div>'
-        f'<div class="fork-split sb b2"><span aria-hidden="true">▼</span><span></span>'
-        f'<span aria-hidden="true">▼</span></div>'
-        f'<div class="lane official sb b3">'
-        f'<div class="lane-kicker">{_e(official["kicker"])}</div>'
-        f'<div class="lane-sub">{_e(official["sub"])}</div>'
-        f"{official_rows}</div>"
-        f'<div class="wall"><span>{_e(s3["wall_label"])}</span></div>'
-        f'<div class="lane eval s3-eval">'
-        f'<div class="lane-kicker">{_e(evaluation["kicker"])}</div>'
-        f'<div class="eval-label">{_e(evaluation["label"])}</div>'
-        f"{eval_rows}"
-        f'<div class="lane-note">{_e(evaluation["return_note"])}</div>'
-        f"</div></div>"
-    )
-    _block(
-        f'<div class="landing-section sb b1">'
-        f'<div class="landing-heading">{_e(s3["heading"])}</div></div>'
-        f"{fork}"
-        f'<p class="landing-prose sb b5">{_e(s3["supporting"])}</p>'
-    )
-
-    output = s3["output"]
-    evidence_step = output["step_evidence"].format(evidence_per_case=evidence_per_case)
-    example_tags = "".join(f'<span class="tag">{_e(label)}</span>' for label in evidence_types)
-    _block(
-        f'<div class="landing-section sb b6">'
-        f'<div class="landing-heading">{_e(output["heading"])}</div>'
-        f'<div class="out-flow">'
-        f'<div class="out-node">{_e(output["step_case"])}</div>'
-        f'<div class="out-arrow" aria-hidden="true">↓</div>'
-        f'<div class="out-node">{_tip(evidence_step, output["evidence_tip"])}</div>'
-        f'<div class="out-arrow" aria-hidden="true">↓</div>'
-        f'<div class="out-node">{_e(output["step_brief"])}</div>'
-        f'<div class="out-arrow" aria-hidden="true">↓</div>'
-        f'<div class="out-node review">{_e(output["step_review"])}</div>'
-        f"</div>"
-        f'<div class="mini-note">{_e(output["examples_intro"])}:</div>'
-        f'<div class="tag-row">{example_tags}</div>'
-        f"</div>"
-    )
-
-    fatf = s3["fatf"]
-    brief_items = "".join(f"<li>{_e(item)}</li>" for item in fatf["brief_structure"])
-    _block(
-        f'<div class="landing-section sb b7">'
-        f'<div class="landing-heading">{_e(fatf["heading"])}</div>'
-        f'<div class="fatf-grid">'
-        f'<div class="fatf-input evidence"><small>Input</small>{_e(fatf["input_evidence"])}</div>'
-        f'<div class="fatf-input context"><small>Input</small>{_e(fatf["input_context"])}</div>'
-        f'<div class="fatf-join" aria-hidden="true">▼</div>'
-        f'<div class="fatf-out">{_e(fatf["output_node"])}</div>'
-        f"</div>"
-        f'<div class="mini-note">{_e(fatf["note"])}</div>'
-        f'<p class="landing-prose" style="margin-bottom:0.25rem;">{_e(fatf["brief_structure_intro"])}:</p>'
-        f'<ul class="landing-prose" style="margin-top:0;">{brief_items}</ul>'
-        f"</div>"
-    )
-    layers = pd.DataFrame([list(row) for row in fatf["layers"]], columns=["Layer", "Role"])
-    plain_table(layers)
-    st.markdown(f'<div class="mini-note">{_e(fatf["render_note"])}</div>',
-                unsafe_allow_html=True)
-    ledger("review_queue", "evidence", "model_selection", "analyst_briefs")
-
-
 if scene_idx == 0:
     _scene_sources()
-elif scene_idx == 1:
-    _scene_prepare()
 else:
-    _scene_wall()
+    _scene_prepare()
 
-# ---- Closing statement (persistent, below the scenes) --------------------------
-closing = copy["closing"]
-st.markdown(
-    f'<div class="landing-section anim">'
-    f'<div class="bottom-line"><div class="bottom-line-text">{_e(closing["statement"])}</div>'
-    f'<div class="bl-reminder">{_e(closing["reminder"])}</div></div></div>',
-    unsafe_allow_html=True,
-)
+# ---- Closing statement + validation deep-dive link: only on the final scene ----
+if scene_idx == len(SCENE_LABELS) - 1:
+    closing = copy["closing"]
+    # One navy wrap-up panel holds the bottom line AND the on-demand link to the
+    # model-validation deep dive, so the close reads as a single block. How the
+    # ranking is tested is a separate story — a link here, not a mandatory scene.
+    with st.container(key="dtrq_closing"):
+        st.markdown(
+            f'<div class="bottom-line-text">{_e(closing["statement"])}</div>'
+            f'<div class="bl-reminder">{_e(closing["reminder"])}</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("app_pages/model_and_controls.py",
+                     label=f'{copy["model_eval_cta"]} →', icon=":material/verified_user:")
 
-# ---- Technical companion (everything detailed lives here, not on the canvas) ---
-companion = copy["companion"]
-with st.expander(companion["cta"]):
-    st.markdown(companion["intro"])
-
-    st.markdown(f"**{companion['figures_heading']}**")
-    FIGURES = [
-        ("official_data_pipeline_architecture", "official_data_pipeline_architecture.png",
-         "The official-data pipeline architecture diagram"),
-        ("source_to_report_data_flow", "source_to_report_data_flow.png",
-         "The source-to-output data-flow diagram"),
-        ("time_safe_feature_construction_flow", "time_safe_feature_construction_flow.png",
-         "The time-safe feature-construction diagram"),
-        ("train_validation_test_ml_workflow", "train_validation_test_ml_workflow.png",
-         "The train / validation / test workflow diagram"),
-    ]
-    fig_cols = st.columns(2)
-    for i, (key, name, label) in enumerate(FIGURES):
-        with fig_cols[i % 2]:
-            figure = load.figure_path(key)
-            if figure:
-                st.image(str(figure), width="stretch",
-                         caption=f"Source: reports/figures/{name}")
-            else:
-                missing_figure(f"reports/figures/{name}", label)
-
-    st.markdown(f"**{companion['fields_heading']}**")
-    st.markdown(companion["fields_note"])
-    if source_notes:
-        definitions = source_notes.get("column_definitions", {})
-        unit_notes = source_notes.get("important_unit_notes", {})
-        fields = pd.DataFrame([
-            {"Field": field, "Meaning": meaning, "Unit note": unit_notes.get(field, "")}
-            for field, meaning in definitions.items()
-        ])
-        plain_table(fields)
-    else:
-        st.markdown("The BACI provenance notes file has not been generated for this run.")
-
-    st.markdown(f"**{companion['provenance_heading']}**")
-    prov_rows = []
-    if manifest:
-        confirmed = manifest.get("baci_source_confirmed", {})
-        if confirmed.get("sha256"):
-            prov_rows.append({"Artefact": "Filtered BACI extract (parquet)",
-                              "SHA-256": confirmed["sha256"]})
-        created = str(manifest.get("created_at", ""))[:10]
-    else:
-        created = ""
-    if source_notes:
-        checksums = source_notes.get("checksums", {})
-        for label, key in [
-            ("BACI country codes", "country_codes_sha256"),
-            ("BACI product codes", "product_codes_sha256"),
-            ("World Bank CMO workbook", "world_bank_workbook_sha256"),
-        ]:
-            if checksums.get(key):
-                prov_rows.append({"Artefact": label, "SHA-256": checksums[key]})
-    if prov_rows:
-        plain_table(pd.DataFrame(prov_rows))
-        if created:
-            st.caption(f"Source verification recorded {created}.")
-    else:
-        st.markdown("Checksum records have not been generated for this run.")
-    ledger("source_manifest", "data_source_notes",
-           note="figures: reports/figures (pipeline-generated)")
+# Reveal the story sections (and the closing panel) as they scroll into view.
+render_scroll_reveal(".reveal, .st-key-dtrq_closing")

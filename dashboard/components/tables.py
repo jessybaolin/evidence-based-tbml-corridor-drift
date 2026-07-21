@@ -22,8 +22,8 @@ from dashboard.services.data_loader import load_content, load_theme
 def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = None,
                 mappings: str = "", height: int = 520):
     # Renders the frame produced by dashboard_metrics.queue_display_frame
-    # (nine columns, fixed order). Single-row selection is Streamlit's row-pick
-    # affordance and feeds Selected Case Review via session state; the current
+    # (nine analytical columns, fixed order). A read-only checkbox marks the
+    # current case while single-cell selection lets any cell pick its row; the
     # case row is tinted amber through a pandas Styler (per-row CSS cannot
     # reach st.dataframe's canvas grid, but Styler backgrounds can). Numbers
     # are rounded by st.column_config only — the underlying values stay exact.
@@ -34,18 +34,29 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     stripe = theme["components"]["table"]["stripe_bg"]
     selected_bg = theme["selection"]["background"]
     selected_border = theme["selection"]["border"]
-    family_styles = {
-        content["family_short_labels"][family_id]: color
-        for family_id, color in theme["families"].items()
+    families = theme["families"]
+    family_colors = {
+        content["family_short_labels"]["gold_unwrought"]: families["gold_unwrought"],
+        content["family_short_labels"]["crude_palm_oil"]: families["crude_palm_oil"],
+        content["family_short_labels"]["refined_copper_cathodes"]: families["refined_copper_cathodes"],
     }
 
     frame = display.reset_index(drop=True)
+    frame.insert(
+        0,
+        "current_case",
+        [highlight_row is not None and row == highlight_row for row in frame.index],
+    )
+    # Flat family dot (no glossy emoji "shadow"): a plain "●" glyph coloured per
+    # family through the Styler below — the whole product cell takes the colour.
+    product_colors = frame["product"].map(lambda label: family_colors.get(str(label), ""))
+    frame["product"] = frame["product"].map(lambda label: f"●  {label}")
     style_frame = pd.DataFrame("", index=frame.index, columns=frame.columns)
     for row_index, row in frame.iterrows():
         selected = highlight_row is not None and row_index == highlight_row
         if selected:
             selected_style = (
-                f"background-color: color-mix(in srgb, {selected_bg} 58%, white); "
+                f"background-color: {selected_bg}; "
                 f"color: {theme['selection']['text']}"
             )
             style_frame.loc[row_index, :] = selected_style
@@ -61,13 +72,12 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
         elif rank <= 3:
             style_frame.loc[row_index, "rank"] += "; font-weight: 700"
 
-        if not selected:
-            family_color = family_styles.get(str(row["product"]))
-            if family_color:
-                style_frame.loc[row_index, "product"] += (
-                    f"; background-color: color-mix(in srgb, {family_color} 10%, white); "
-                    f"color: {family_color}; font-weight: 700"
-                )
+        # Flat family colour on the product cell (the "●" dot + label) — skipped on
+        # the amber selected row so the selection ink keeps its contrast.
+        if not selected and product_colors.iloc[row_index]:
+            style_frame.loc[row_index, "product"] += (
+                f"; color: {product_colors.iloc[row_index]}; font-weight: 650"
+            )
 
     def _copy(column: str, **fmt) -> dict:
         entry = columns_copy[column]
@@ -78,16 +88,28 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     corridor_copy = _copy("corridor")
     product_copy = _copy("product", mappings=mappings)
     score_copy = _copy("selected_review_priority_score")
+    # Column headers match the reference tables (data dictionary): navy + frost.
+    styled_frame = frame.style.apply(lambda _: style_frame, axis=None).set_table_styles([
+        {
+            "selector": "th",
+            "props": [
+                ("background-color", palette["sidebar_bg"]),
+                ("color", palette["sidebar_ink"]),
+                ("font-weight", "700"),
+            ],
+        },
+    ])
     return st.dataframe(
-        frame.style.apply(lambda _: style_frame, axis=None),
+        styled_frame,
         hide_index=True,
         width="stretch",
         height=height,
         row_height=42,
         on_select="rerun",
-        selection_mode="single-row",
+        selection_mode="single-cell",
         key=key,
         column_config={
+            "current_case": st.column_config.CheckboxColumn("", width=38),
             "rank": st.column_config.NumberColumn(
                 rank_copy["label"], format="%d", width=62, pinned=True,
                 help=rank_copy["help"],
@@ -99,7 +121,7 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
                 corridor_copy["label"], width=108, help=corridor_copy["help"],
             ),
             "product": st.column_config.TextColumn(
-                product_copy["label"], width=112, help=product_copy["help"],
+                product_copy["label"], width=126, help=product_copy["help"],
             ),
             "trade_value_usd": st.column_config.NumberColumn(
                 _copy("trade_value_usd")["label"], format="localized", width=128,
@@ -110,7 +132,7 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
                 help=_copy("quantity_metric_ton")["help"],
             ),
             "unit_value_usd_per_metric_ton": st.column_config.NumberColumn(
-                _copy("unit_value_usd_per_metric_ton")["label"], format="dollar", width=130,
+                _copy("unit_value_usd_per_metric_ton")["label"], format="dollar", width=145,
                 help=_copy("unit_value_usd_per_metric_ton")["help"],
             ),
             "benchmark_price_usd_per_metric_ton": st.column_config.NumberColumn(

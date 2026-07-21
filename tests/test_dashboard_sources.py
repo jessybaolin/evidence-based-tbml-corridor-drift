@@ -27,6 +27,18 @@ def test_cepii_url_comes_from_project_metadata():
     assert "fatf-gafi.org" in REGISTRY_URLS["fatf_2020"]
 
 
+def test_source_card_copy_keeps_transformations_and_releases_concise():
+    cards = {card.key: card for card in build_source_cards(
+        load.load_data_source_notes(), load.load_source_manifest()
+    )}
+    assert cards["cepii_baci"].transformation == (
+        "Rows were filtered to the three selected HS6 codes only."
+    )
+    assert "Column k" not in cards["cepii_baci"].transformation
+    assert "no edition date recorded" not in cards["worldbank_cmo"].release
+    assert "pinned by SHA-256" not in cards["worldbank_cmo"].release
+
+
 def test_source_cards_survive_missing_metadata():
     # The appendix must stay functional when optional metadata is absent.
     cards = build_source_cards(None, None)
@@ -64,3 +76,29 @@ def test_dictionary_build_covers_key_fields(panel, features, queue, evidence, co
     inferred = table[table["definition_source"] == "schema-inferred"]
     assert not inferred.empty
     assert (inferred["definition"] == "").all()
+
+
+def test_stakeholder_dictionary_fields_have_definitions(panel, features, queue, evidence, comparison):
+    schemas = {
+        "corridor_product_year_panel.parquet": panel,
+        "corridor_features.parquet": features,
+        "top_ranked_corridors.csv": queue,
+        "evidence_table.csv": evidence,
+        "model_comparison.csv": comparison,
+    }
+    table = dictionary.build_dictionary(
+        schemas, load.load_feature_explanations(), load.load_data_dictionary_md()
+    )
+    stakeholder = table[
+        table["category"].astype(str).isin(
+            ["Derived financial metrics", "Time-safe features", "Model scores"]
+        )
+    ].drop_duplicates("field")
+
+    assert stakeholder["field"].nunique() == 25
+    displayed_columns = [
+        "definition", "derivation", "unit", "time_safety_rule", "quality_caveat",
+    ]
+    assert stakeholder[displayed_columns].apply(
+        lambda column: column.fillna("").str.strip().ne("").all()
+    ).all()

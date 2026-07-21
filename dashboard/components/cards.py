@@ -81,14 +81,17 @@ def render_fact_list(rows: list[tuple[str, str]]) -> None:
 
 def comparison_card_markup(*, title: str, value_html: str, support: str,
                            caveat_tip_html: str, secondary_html: str = "",
-                           available: bool = True) -> str:
+                           available: bool = True, extra_classes: str = "") -> str:
     """A stakeholder comparison card (Why It Ranked High, 2x2 grid).
 
     title/support are plain strings (escaped here); value_html, secondary_html
     and caveat_tip_html are pre-built fragments (the caller embeds the info-icon
     .tip and any emphasis). An unavailable card is muted and carries no support.
+    extra_classes lets the caller add a per-card accent and entrance-animation.
     """
     klass = "compare-card" if available else "compare-card compare-card-muted"
+    if extra_classes:
+        klass = f"{klass} {extra_classes}"
     secondary = (
         f'<div class="compare-secondary">{secondary_html}</div>' if secondary_html else ""
     )

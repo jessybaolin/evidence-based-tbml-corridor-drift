@@ -46,12 +46,13 @@ CURATED: dict[str, dict[str, str]] = {
                                       "pages": "Selected Case Review"},
     "benchmark_price_usd_per_metric_ton": {"category": "Derived financial metrics", "unit": "USD per metric ton",
                                            "pages": "Selected Case Review"},
-    "log_unit_value": {"category": "Time-safe features"},
+    "log_unit_value": {"category": "Time-safe features", "unit": "log-transformed USD per metric ton"},
     "benchmark_residual": {"category": "Time-safe features", "unit": "log difference",
                            "pages": "Selected Case Review, Trade Landscape and Patterns"},
-    "shifted_corridor_history_median": {"category": "Time-safe features"},
-    "shifted_corridor_history_mad": {"category": "Time-safe features"},
-    "robust_historical_z": {"category": "Time-safe features", "pages": "Selected Case Review"},
+    "shifted_corridor_history_median": {"category": "Time-safe features", "unit": "log unit value"},
+    "shifted_corridor_history_mad": {"category": "Time-safe features", "unit": "log-unit-value spread"},
+    "robust_historical_z": {"category": "Time-safe features", "unit": "robust standardized score",
+                              "pages": "Selected Case Review"},
     "same_family_year_peer_percentile": {"category": "Time-safe features", "unit": "percentile (0–1)",
                                          "pages": "Selected Case Review"},
     "trade_value_yoy_change": {"category": "Time-safe features", "unit": "log change"},
@@ -65,8 +66,10 @@ CURATED: dict[str, dict[str, str]] = {
     "value_quantity_divergence": {"category": "Time-safe features", "unit": "log change",
                                   "pages": "Selected Case Review"},
     "corridor_activity_history": {"category": "Time-safe features", "unit": "count of prior years"},
-    "corridor_novelty_flag": {"category": "Time-safe features", "pages": "Selected Case Review"},
-    "corridor_reactivation_flag": {"category": "Time-safe features", "pages": "Selected Case Review"},
+    "corridor_novelty_flag": {"category": "Time-safe features", "unit": "binary flag (0 or 1)",
+                               "pages": "Selected Case Review"},
+    "corridor_reactivation_flag": {"category": "Time-safe features", "unit": "binary flag (0 or 1)",
+                                    "pages": "Selected Case Review"},
     "missing_quantity_flag": {"category": "Quality fields"},
     "missing_benchmark_flag": {"category": "Quality fields"},
     "missing_history_flag": {"category": "Quality fields"},
@@ -79,7 +82,8 @@ CURATED: dict[str, dict[str, str]] = {
     "model_eligible": {"category": "Quality fields", "pages": "Business Problem & Value"},
     "valid_extreme_flag": {"category": "Quality fields", "pages": "Selected Case Review"},
     "exclusion_reason": {"category": "Quality fields"},
-    "rank": {"category": "Model scores", "pages": "Top 50 Review Queue, Selected Case Review"},
+    "rank": {"category": "Model scores", "unit": "queue position",
+             "pages": "Top 50 Review Queue, Selected Case Review"},
     "selected_review_priority_score": {"category": "Model scores", "unit": "0–1 ranking score",
                                        "pages": "Top 50 Review Queue, Selected Case Review"},
     "rule_score": {"category": "Model scores", "unit": "0–1 ranking score",
@@ -89,6 +93,7 @@ CURATED: dict[str, dict[str, str]] = {
     # Scenario label: must never be attributed to the official BACI extract.
     "synthetic_review_priority": {
         "category": "Model scores",
+        "unit": "binary scenario label (0 or 1)",
         "dataset": "data/processed/scenario_labels.parquet (scenario evaluation only)",
     },
     "key_evidence_count": {"category": "Evidence fields", "pages": "Top 50 Review Queue, Selected Case Review"},
@@ -146,17 +151,18 @@ def build_dictionary(
     schema_fields = {r["field"] for r in rows}
     for field_name, entry in md_doc.items():
         if field_name not in schema_fields and not any(field_name.startswith(f) for f in schema_fields):
+            code_entry = CODE_DERIVED.get(field_name, {})
             rows.append({
                 "field": field_name,
                 "dataset": CURATED.get(field_name, {}).get("dataset", "data/raw (BACI extract)"),
                 "category": CURATED.get(field_name, {}).get("category", "Source values"),
                 "data_type": entry.get("type", ""),
-                "definition": entry.get("meaning", ""),
-                "derivation": "",
+                "definition": code_entry.get("definition", entry.get("meaning", "")),
+                "derivation": code_entry.get("derivation", ""),
                 "unit": CURATED.get(field_name, {}).get("unit", ""),
-                "time_safety_rule": "",
-                "quality_caveat": entry.get("caveat", ""),
-                "definition_source": "reports/data_dictionary.md",
+                "time_safety_rule": code_entry.get("time_safety", ""),
+                "quality_caveat": code_entry.get("caveat", entry.get("caveat", "")),
+                "definition_source": code_entry.get("source", "reports/data_dictionary.md"),
                 "dashboard_pages": CURATED.get(field_name, {}).get("pages", ""),
             })
 
@@ -174,16 +180,81 @@ def build_dictionary(
 # Definitions quoted from the feature-engineering code (src/tbml_common.py)
 # for fields the markdown documents do not cover — labelled code-derived.
 CODE_DERIVED: dict[str, dict[str, str]] = {
+    "trade_value_usd": {
+        "definition": "Annual aggregate trade value for the corridor-product-year, in US dollars.",
+        "derivation": "BACI reported value v multiplied by 1,000.",
+        "time_safety": "Uses the current official observation only.",
+        "caveat": "An annual aggregate, not an individual transaction amount.",
+        "source": "src/tbml_common.py",
+    },
+    "quantity_metric_ton": {
+        "definition": "Annual aggregate quantity for the corridor-product-year, expressed in metric tons.",
+        "derivation": "BACI quantity q, already reported in metric tons.",
+        "time_safety": "Uses the current official observation only.",
+        "caveat": "A valid positive quantity is required for implied-unit-value analysis.",
+        "source": "src/tbml_common.py",
+    },
+    "unit_value_usd_per_metric_ton": {
+        "definition": "Implied aggregate unit value for one metric ton of the reported trade flow.",
+        "derivation": "Trade value in USD divided by quantity in metric tons.",
+        "time_safety": "Uses the current official observation only.",
+        "caveat": "Calculated from annual public aggregates; it is not an invoice or fair-value price.",
+        "source": "src/tbml_common.py",
+    },
+    "benchmark_price_usd_per_metric_ton": {
+        "definition": "Annual World Bank commodity benchmark expressed per metric ton.",
+        "derivation": "Palm oil and copper use the published unit; gold is converted from USD per troy ounce.",
+        "time_safety": "Uses the benchmark published for the observation year.",
+        "caveat": "Broad market context, not a corridor-specific landed or invoice price.",
+        "source": "src/tbml_common.py",
+    },
     "benchmark_consistency_gap": {
         "definition": ("Did this route move differently from the whole market? A near-zero gap "
                        "means the price change is explained by the market; a big gap means it is not."),
         "derivation": "abs(unit_value_yoy_change - benchmark_yoy_change)",
         "time_safety": "Compares this row's year-over-year change with the same year's benchmark change.",
+        "caveat": "Larger gaps increase review relevance; a small gap may reflect broad market movement.",
     },
     "benchmark_yoy_change": {
         "definition": "Year-over-year log change of the benchmark price itself.",
         "derivation": "log(benchmark price / prior-year benchmark price) per family",
         "time_safety": "Uses the prior year's benchmark only.",
+        "caveat": "Market context only; it does not describe a corridor's own price movement.",
+    },
+    "rank": {
+        "definition": "Position in the published review queue; rank 1 is reviewed first.",
+        "derivation": "Sort official observations by review-priority score, using observation ID to break ties.",
+        "time_safety": "Assigned only after the official observations are scored.",
+        "caveat": "A rank sets review order; it is not a finding of wrongdoing.",
+        "source": "src/06_train_evaluate_models.py",
+    },
+    "rule_score": {
+        "definition": "Transparent review-priority score built from the project's unusual-pattern rules.",
+        "derivation": "Weighted rule signals minus benchmark-consistency credit and data-quality penalty; clipped to 0-1.",
+        "time_safety": "Built only from time-safe analytical signals.",
+        "caveat": "A ranking score, not a probability of financial crime.",
+        "source": "src/06_train_evaluate_models.py",
+    },
+    "selected_challenger_score": {
+        "definition": "Score from the machine-learning challenger selected during scenario validation.",
+        "derivation": "Copied from the challenger model chosen on the validation split.",
+        "time_safety": "Model inputs use information available at the observation year.",
+        "caveat": "Evaluated on synthetic scenarios before being applied to official observations.",
+        "source": "src/06_train_evaluate_models.py",
+    },
+    "selected_review_priority_score": {
+        "definition": "Final score used to order official observations for human review.",
+        "derivation": "Validation-selected blend of the transparent rule score and challenger score.",
+        "time_safety": "Both contributing scores use time-safe analytical signals.",
+        "caveat": "A review-priority ranking score, not a probability or finding of financial crime.",
+        "source": "src/06_train_evaluate_models.py",
+    },
+    "synthetic_review_priority": {
+        "definition": "Synthetic target used only to test whether models recover known injected scenarios.",
+        "derivation": "Assigned by the controlled scenario generator and stored separately from model features.",
+        "time_safety": "Used as an evaluation target, never as a model input or official-observation label.",
+        "caveat": "A scenario label for model evaluation, not a financial-crime label.",
+        "source": "src/tbml_common.py",
     },
 }
 
@@ -205,7 +276,8 @@ def _build_row(column: str, dataset_name: str, dtype: str,
         definition = entry["definition"]
         derivation = entry["derivation"]
         time_safety = entry["time_safety"]
-        source = "src/tbml_common.py (feature-engineering code)"
+        caveat = entry.get("caveat", "")
+        source = entry.get("source", "src/tbml_common.py (feature-engineering code)")
     elif column in md_doc:
         entry = md_doc[column]
         definition = entry.get("meaning", "")

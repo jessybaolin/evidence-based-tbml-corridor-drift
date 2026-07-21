@@ -407,6 +407,34 @@ def comparison_view(comparison: pd.DataFrame, split: str, family_id: str = "all"
     return view.sort_values("average_precision", ascending=False).reset_index(drop=True)
 
 
+# Display names for the five scoring methods compared during model selection.
+# Technical identifiers → readable labels (like family_short_labels for models).
+METHOD_LABELS: dict[str, str] = {
+    "rule": "Fixed rules",
+    "logistic": "Logistic regression",
+    "xgboost": "XGBoost",
+    "isolation": "Isolation forest",
+    "hybrid": "Hybrid blend",
+}
+
+
+def method_comparison(comparison: pd.DataFrame, split: str = "test") -> pd.DataFrame:
+    """The five scoring methods and their precision@k on one split (all families),
+    as a percentage — the share of the top-k that were genuinely planted patterns.
+    Read straight from model_comparison.csv; friendly labels for display. Returns
+    columns model / method / precision_pct (one row per method present)."""
+    view = comparison[(comparison["split"] == split) & (comparison["family_id"] == "all")]
+    rows = [
+        {
+            "model": str(row["model"]),
+            "method": METHOD_LABELS.get(str(row["model"]), str(row["model"])),
+            "precision_pct": 100.0 * float(row["precision_at_k"]),
+        }
+        for _, row in view.iterrows()
+    ]
+    return pd.DataFrame(rows)
+
+
 def split_years_table(project_config: dict) -> pd.DataFrame:
     return pd.DataFrame([
         {"split": "Train", "years": fm.year_span(project_config["train_years"]),

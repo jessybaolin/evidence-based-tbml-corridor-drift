@@ -16,9 +16,31 @@ import streamlit as st
 SELECTED_OBS = "tbml_selected_obs_id"
 QUEUE_FILTER_KEYS = [
     "queue_years", "queue_families", "queue_exporters", "queue_importers",
-    "queue_score_range", "queue_size",
 ]
-APPENDIX_KEYS = ["dict_search", "dict_categories", "dict_datasets", "dict_sources"]
+APPENDIX_KEYS = ["dict_search"]
+LANDING_COMPLETE = "tbml_landing_complete"
+DASHBOARD_ENTRY_PENDING = "tbml_dashboard_entry_pending"
+
+
+def init_landing() -> None:
+    """Root visit: make the completion flag exist before the CTA reads it."""
+    st.session_state.setdefault(LANDING_COMPLETE, False)
+
+
+def landing_complete() -> bool:
+    return bool(st.session_state.get(LANDING_COMPLETE, False))
+
+
+def complete_landing() -> None:
+    # CTA click: the flag survives every rerun and page switch this session,
+    # and the next dashboard render plays its one-shot entrance exactly once.
+    st.session_state[LANDING_COMPLETE] = True
+    st.session_state[DASHBOARD_ENTRY_PENDING] = True
+
+
+def consume_dashboard_entry() -> bool:
+    """True exactly once — on the first dashboard render after the CTA."""
+    return bool(st.session_state.pop(DASHBOARD_ENTRY_PENDING, False))
 
 
 def selected_obs_id() -> str | None:
@@ -34,13 +56,13 @@ def clear_selection() -> None:
 
 
 def reset_queue_filters() -> None:
-    # Deleting widget keys resets each widget to its declared default on rerun.
+    # Explicit empty values also clear mounted multiselect chips on the rerun.
     for key in QUEUE_FILTER_KEYS:
-        st.session_state.pop(key, None)
+        st.session_state[key] = []
 
 
 def clear_queue_filter(key: str) -> None:
     """Clear one governed queue widget without disturbing the other filters."""
     if key not in QUEUE_FILTER_KEYS:
         raise ValueError(f"Unknown queue filter key: {key}")
-    st.session_state.pop(key, None)
+    st.session_state[key] = []

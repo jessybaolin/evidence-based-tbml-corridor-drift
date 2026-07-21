@@ -119,15 +119,41 @@ def test_page_renders_the_plain_narrative(artefacts):
     at = _run()
     assert not at.exception
     text = _text(at)
-    for heading in ("How the ranking is tested", "Does it work?",
+    # The queue-build flow anchors the page, then the five narrative sections.
+    for heading in ("How the ranking queue is built",
+                    "How the ranking is tested", "Does it work?",
                     "Why this method was chosen", "What makes the flagged cases different",
                     "What keeps it honest"):
         assert heading in text, heading
     # The precision metric is translated to a plain share + lift in the takeaway.
     assert f"{round(h['selected_pct'])}%" in text
     assert f"{round(h['lift'])} times" in text
-    # The pinned evaluation caveat is present.
     assert "not real-world detection rates" in text
+    # The "tested on a copy" visual (replaces the old two-lane wall): patterns to
+    # catch, look-alikes to ignore, and the leakage-guard separation line.
+    assert "Planted unusual patterns" in text
+    assert "Benign look-alikes" in text
+    assert "Test rows never mix into the queue" in text
+    # Why-this-method: the methods compared, the honest hybrid-vs-XGBoost trade,
+    # and the blend formula with the derived percentage split.
+    assert "XGBoost" in text
+    assert "leakage" in text
+    assert "How the blended score is built" in text
+    weight = float(selection["selected_hybrid_challenger_weight"])
+    assert f"{round(weight * 100)}%" in text          # challenger share, e.g. 75%
+    assert f"{round((1 - weight) * 100)}%" in text     # rule share, e.g. 25%
+
+
+def test_method_comparison_matches_table(artefacts):
+    comparison, _ = artefacts
+    mc = metrics.method_comparison(comparison, "test")
+    test_all = comparison[(comparison["split"] == "test") & (comparison["family_id"] == "all")]
+    assert len(mc) == len(test_all)
+    for _, row in test_all.iterrows():
+        got = mc[mc["model"] == row["model"]].iloc[0]
+        assert got["precision_pct"] == pytest.approx(100 * float(row["precision_at_k"]))
+    assert "XGBoost" in set(mc["method"])
+    assert mc.loc[mc["model"] == "hybrid", "method"].iloc[0] == "Hybrid blend"
 
 
 def test_technical_machinery_lives_in_the_drawer():

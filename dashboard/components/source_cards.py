@@ -19,7 +19,6 @@ def source_card(card: SourceCard) -> None:
         ("Fields / series used", card.fields_used),
         ("Original unit", card.original_unit),
         ("Project transformation", card.transformation),
-        ("Provenance", card.provenance),
         ("Important caveat", card.caveat),
     ]
     body = "".join(

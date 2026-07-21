@@ -157,6 +157,14 @@ chart:
   axis_color: "#C2CBDA"
   context_gray: "#97A3B4"
   emphasis: "#0F8F8F"
+  # Selected Case Review comparison views: a warm maroon emphasis line for the
+  # corridor itself, cool blue/violet reference lines, and a soft slate (not flat
+  # grey) for the peer population. Harmonises with Navy + Teal + Warm Amber; the
+  # amber case-diamond stays the "selected" marker on top.
+  case_corridor: "#A62E4E"
+  case_benchmark: "#5E7CB0"
+  case_prior: "#7C5CA6"
+  peer_bars: "#9DB0CE"
   marker_outline: "#FFFFFF"
   transparent: "rgba(0,0,0,0)"
   height: 360
@@ -168,6 +176,12 @@ motion:
   standard_ms: 180
   landing_entry_ms: 260
   landing_stagger_ms: 45
+  welcome_entry_ms: 820
+  welcome_stagger_ms: 175
+  dashboard_entry_ms: 520
+  dashboard_entry_delay_ms: 340
+  dashboard_sidebar_ms: 960
+  business_reveal_ms: 720
   easing: "cubic-bezier(0.22, 1, 0.36, 1)"
   entry_ms: 350
   entry_step_ms: 70

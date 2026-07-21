@@ -222,7 +222,7 @@ def _text(at: AppTest) -> str:
 def test_case_page_has_three_tabs_no_evidence_tab(artefacts):
     _, _, _, content = artefacts
     tabs = content["pages"]["case_investigation"]["tabs"]
-    assert tabs == ["Case Summary", "Why It Ranked High", "Limitations"]
+    assert tabs == ["Case Summary", "Why It Ranked High", "Caveats"]
     at = _run_case()
     assert not at.exception
     assert len(at.tabs) == 3
@@ -231,16 +231,17 @@ def test_case_page_has_three_tabs_no_evidence_tab(artefacts):
 def test_why_tab_shows_summary_cards_and_removed_content():
     at = _run_case()
     text = _text(at)
-    # Dynamic summary + verbatim note.
+    # Dynamic summary + the governed note that now rides inside the banner.
     assert "This observation ranked highly because" in text
-    assert ("These comparisons explain the review priority. They are reasons to "
-            "examine the pattern, not conclusions about wrongdoing.") in text
+    assert ("These are reasons to review this pattern more closely — "
+            "not a finding of wrongdoing.") in text
     # Real per-case figures rendered (rank-1 audited values).
     assert "99.4th percentile" in text
-    # Signals + audit sections render (assert on their descriptions — expander
-    # labels are not part of AppTest markdown/caption text).
+    # Signals section still renders (assert on its description — expander labels
+    # are not part of AppTest markdown/caption text). The raw-evidence Audit table
+    # was removed as too technical for the stakeholder view.
     assert "The complete analytical profile supporting the selected observation" in text
-    assert "raw evidence records behind the comparisons above" in text
+    assert "raw evidence records behind the comparisons above" not in text
     # Removed: global SHAP context and the raw data-quality flag string.
     assert "Model-contribution context" not in text
     assert "quantity_missing=" not in text

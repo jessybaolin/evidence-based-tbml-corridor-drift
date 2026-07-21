@@ -14,17 +14,17 @@ import html
 import streamlit as st
 
 from dashboard.components.charts import (
-    bar_by_family, bar_single, histogram_emphasis, lines_by_family,
-    small_multiples_by_family, show,
+    bar_by_family, bar_single, lines_by_family, small_multiples_by_family, show,
 )
 from dashboard.components.page_header import ledger, page_header, section_title
+from dashboard.components.scroll_reveal import render_scroll_reveal
 from dashboard.services import dashboard_metrics as metrics
 from dashboard.services import data_loader as load
 
 content = load.load_content()
 copy = content["pages"]["portfolio_analytics"]
 short_labels = content["family_short_labels"]
-page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
+page_header(copy["title"], copy["subtitle"], copy["eyebrow"], icon="landmark")
 
 panel = load.load_panel(columns=(
     "obs_id", "year", "family_id", "exporter_iso3", "importer_iso3", "hs6",
@@ -76,96 +76,110 @@ st.markdown(f'<div class="stat-band four">{strip_html}</div>', unsafe_allow_html
 
 # =============================================================================
 # PART 1 — THE TRADE LANDSCAPE (the full official population)
+# The section divider is intentionally dropped: the page title (with the
+# landmark icon) already names this half, so the three cards start straight away.
 # =============================================================================
-section_title(copy["landscape_heading"])
 scale_frame = metrics.trade_scale_by_family_year(panel, short_labels)
 
+# Each landscape section is a subtle card (styles.py .st-key-pa_card_*) that
+# lifts off the plane and fades up on entrance, so Scale / Structure / Market
+# read as distinct blocks while scrolling.
+
 # ---- 4.1 Scale (with a value / quantity toggle) ------------------------------
-sc = copy["scale"]
-head_col, toggle_col = st.columns([3, 1.1], vertical_alignment="bottom")
-with head_col:
-    section_title(sc["heading"])
-with toggle_col:
-    _MODE_KEY = "pa_scale_mode"
-    st.session_state.setdefault(_MODE_KEY, sc["toggle_value"])
-    mode = st.segmented_control(
-        sc["toggle_label"], [sc["toggle_value"], sc["toggle_quantity"]],
-        key=_MODE_KEY, label_visibility="collapsed",
-    ) or sc["toggle_value"]
-if mode == sc["toggle_quantity"]:
-    _takeaway(sc["takeaway_quantity"])
-    show(small_multiples_by_family(scale_frame, "quantity_metric_ton",
-                                   hover_label=sc["y_quantity"], value_suffix=" mt"),
-         key="pa_scale_small_multiples")
-else:
-    _takeaway(sc["takeaway_value"].format(
-        family=summary["dominant_family_label"], share=f"{summary['dominant_share']:.0f}"))
-    show(small_multiples_by_family(scale_frame, "trade_value_usd",
-                                   hover_label=sc["y_value"], value_prefix="$"),
-         key="pa_scale_small_multiples")
-st.caption(sc["caption"])
-ledger("panel")
+with st.container(key="pa_card_scale"):
+    sc = copy["scale"]
+    head_col, toggle_col = st.columns([3, 1.1], vertical_alignment="bottom")
+    with head_col:
+        section_title(sc["heading"], icon="chart-pie")
+    with toggle_col:
+        _MODE_KEY = "pa_scale_mode"
+        st.session_state.setdefault(_MODE_KEY, sc["toggle_value"])
+        mode = st.segmented_control(
+            sc["toggle_label"], [sc["toggle_value"], sc["toggle_quantity"]],
+            key=_MODE_KEY, label_visibility="collapsed",
+        ) or sc["toggle_value"]
+    if mode == sc["toggle_quantity"]:
+        _takeaway(sc["takeaway_quantity"])
+        show(small_multiples_by_family(scale_frame, "quantity_metric_ton",
+                                       hover_label=sc["y_quantity"], value_suffix=" mt",
+                                       y_title=sc["y_quantity"]),
+             key="pa_scale_small_multiples")
+    else:
+        _takeaway(sc["takeaway_value"].format(
+            family=summary["dominant_family_label"], share=f"{summary['dominant_share']:.0f}"))
+        show(small_multiples_by_family(scale_frame, "trade_value_usd",
+                                       hover_label=sc["y_value"], value_prefix="$",
+                                       y_title=sc["y_value"]),
+             key="pa_scale_small_multiples")
+    st.caption(sc["caption"])
+    ledger("panel")
 
 # ---- 4.2 Structure: stable base + concentration ------------------------------
-stc = copy["structure"]
-section_title(stc["heading"])
-_takeaway(stc["takeaway"])
-left, right = st.columns(2, gap="large")
-with left:
-    st.markdown(f"**{_e(stc['corridors_subhead'])}**")
-    show(lines_by_family(scale_frame, "active_corridors", stc["y_corridors"],
-                         stc["y_corridors"]), height=340, key="pa_active_corridors")
+with st.container(key="pa_card_structure"):
+    stc = copy["structure"]
+    section_title(stc["heading"], icon="layers")
+    _takeaway(stc["takeaway"])
+    left, right = st.columns(2, gap="large")
+    with left:
+        st.markdown(f'<div class="chart-subhead">{_e(stc["corridors_subhead"])}</div>',
+                    unsafe_allow_html=True)
+        show(lines_by_family(scale_frame, "active_corridors", stc["y_corridors"],
+                             stc["y_corridors"]), height=340, key="pa_active_corridors")
+    with right:
+        st.markdown(f'<div class="chart-subhead">{_e(stc["concentration_subhead"])}</div>',
+                    unsafe_allow_html=True)
+        show(bar_by_family(metrics.top_corridor_share_by_family(panel, short_labels),
+                           x="family_label", y="top_share_pct", y_title=stc["y_share"],
+                           hover=["top_corridors"]), height=340, key="pa_top_share")
+    # Full-width captions below both charts, so each reads as one line.
     st.caption(stc["corridors_caption"])
-with right:
-    st.markdown(f"**{_e(stc['concentration_subhead'])}**")
-    show(bar_by_family(metrics.top_corridor_share_by_family(panel, short_labels),
-                       x="family_label", y="top_share_pct", y_title=stc["y_share"],
-                       hover=["top_corridors"]), height=340, key="pa_top_share")
-st.caption(stc["caption"])
-ledger("panel")
+    st.caption(stc["caption"])
+    ledger("panel")
 
 # ---- 4.3 Market context: benchmarks moved ------------------------------------
-mk = copy["market"]
-section_title(mk["heading"])
-_takeaway(mk["takeaway"])
-show(small_multiples_by_family(metrics.benchmark_by_family_year(panel, short_labels),
-                               "benchmark", hover_label=mk["y_benchmark"],
-                               value_prefix="$", value_suffix="/mt"),
-     key="pa_benchmark_small_multiples")
-st.caption(mk["caption"])
-ledger("panel")
+with st.container(key="pa_card_market"):
+    mk = copy["market"]
+    section_title(mk["heading"], icon="line-chart")
+    _takeaway(mk["takeaway"])
+    show(small_multiples_by_family(metrics.benchmark_by_family_year(panel, short_labels),
+                                   "benchmark", hover_label=mk["y_benchmark"],
+                                   value_prefix="$", value_suffix="/mt",
+                                   y_title=mk["y_benchmark"]),
+         key="pa_benchmark_small_multiples")
+    st.caption(mk["caption"])
+    ledger("panel")
 
 # =============================================================================
-# PART 2 — HOW THE FLAGGED CASES FALL OUT (the queue's shape, trimmed)
+# PART 2 — WHAT THE FIFTY FLAGGED CASES LOOK LIKE (the queue's shape, trimmed)
+# Wrapped in the same subtle card as the landscape sections, so it reads as one
+# more distinct block rather than floating on the plane below them.
 # =============================================================================
-section_title(copy["patterns_heading"])
-_takeaway(copy["patterns_intro"])
+with st.container(key="pa_card_patterns"):
+    section_title(copy["patterns_heading"], icon="checklist")
+    _takeaway(copy["patterns_intro"])
 
-p1, p2 = st.columns(2, gap="large")
-with p1:
-    by_year = metrics.candidates_by_year(enriched)
-    top_year = by_year.loc[by_year["candidates"].idxmax()]
-    section_title(
-        copy["by_year"]["heading"],
-        copy["by_year"]["caption"].format(
-            year=int(top_year["year"]), n=int(top_year["candidates"]),
-            total=int(by_year["candidates"].sum())),
-    )
-    show(bar_single(by_year, x="year", y="candidates", y_title=copy["by_year"]["y"]),
-         key="pa_candidates_by_year")
-with p2:
-    section_title(copy["by_family"]["heading"], copy["by_family"]["caption"])
-    show(bar_by_family(metrics.candidates_by_family(enriched), x="family_label",
-                       y="candidates", y_title=copy["by_family"]["y"]),
-         key="pa_candidates_by_family")
-ledger("review_queue")
+    p1, p2 = st.columns(2, gap="large")
+    with p1:
+        by_year = metrics.candidates_by_year(enriched)
+        top_year = by_year.loc[by_year["candidates"].idxmax()]
+        section_title(
+            copy["by_year"]["heading"],
+            copy["by_year"]["caption"].format(
+                year=int(top_year["year"]), n=int(top_year["candidates"]),
+                total=int(by_year["candidates"].sum())),
+            icon="calendar",
+        )
+        show(bar_single(by_year, x="year", y="candidates", y_title=copy["by_year"]["y"]),
+             key="pa_candidates_by_year")
+    with p2:
+        section_title(copy["by_family"]["heading"], copy["by_family"]["caption"], icon="package")
+        show(bar_by_family(metrics.candidates_by_family(enriched), x="family_label",
+                           y="candidates", y_title=copy["by_family"]["y"]),
+             key="pa_candidates_by_family")
+    ledger("review_queue")
 
-res = copy["residual"]
-section_title(res["heading"], res["caption"])
-population, selected = metrics.residual_context(panel, enriched)
-show(histogram_emphasis(population, selected, res["x"], res["population_name"],
-                        res["queue_name"]), height=400, key="pa_residual_hist")
-ledger("panel", "review_queue")
-
-st.markdown(f'<div class="case-takeaway">{_e(copy["handoff"])}</div>',
-            unsafe_allow_html=True)
+# Reveal each landscape section as it scrolls into view.
+render_scroll_reveal(
+    ".st-key-pa_card_scale, .st-key-pa_card_structure, "
+    ".st-key-pa_card_market, .st-key-pa_card_patterns"
+)

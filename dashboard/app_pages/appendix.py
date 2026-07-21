@@ -16,16 +16,11 @@ content = load.load_content()
 copy = content["pages"]["appendix"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 
-dictionary_tab, sources_tab = st.tabs(["Data Dictionary", "Official Data Sources"])
+dictionary_tab, sources_tab = st.tabs(["Key Data Fields", "Official Data Sources"])
 
-# ---- Tab 1: Data Dictionary ----
+# ---- Tab 1: Key Data Fields ----
 with dictionary_tab:
-    section_title(
-        "Project data dictionary",
-        "Documented definitions come from reports/feature_explanation_table.md and "
-        "reports/data_dictionary.md; rows marked schema-inferred describe the column "
-        "as stored without inventing a definition.",
-    )
+    section_title("Fields used in analysis and review", icon="file-search")
 
     @st.cache_data(show_spinner=False)
     def _dictionary_table():
@@ -40,65 +35,61 @@ with dictionary_tab:
             schemas, load.load_feature_explanations(), load.load_data_dictionary_md(),
         )
 
+    sections = {
+        "Derived financial metrics": ("Trade and benchmark measures", "line-chart"),
+        "Time-safe features": ("Historical and peer comparison signals", "calendar"),
+        "Model scores": ("Review-priority outputs", "list-ordered"),
+    }
     table = _dictionary_table()
+    table = table[table["category"].astype(str).isin(sections)].copy()
+    # A field can occur in several output files. Stakeholders need one definition,
+    # not a repeated schema row for every artefact that carries it.
+    table = (
+        table.sort_values(["category", "field", "dataset"])
+        .drop_duplicates(subset="field", keep="first")
+        .reset_index(drop=True)
+    )
 
-    f1, f2, f3, f4 = st.columns([1.4, 1.4, 1.2, 2])
-    with f1:
-        categories = st.multiselect("Field category", [str(c) for c in table["category"].cat.categories],
-                                    key="dict_categories")
-    with f2:
-        datasets = st.multiselect("Dataset", sorted(table["dataset"].unique()), key="dict_datasets")
-    with f3:
-        sources = st.multiselect("Definition source",
-                                 sorted(table["definition_source"].unique()), key="dict_sources")
-    with f4:
-        search = st.text_input("Search field name or definition", key="dict_search",
-                               placeholder="e.g. residual, unit value, severity")
+    search = st.text_input(
+        "Search key fields",
+        key="dict_search",
+        placeholder="e.g. unit value, benchmark, historical change",
+        icon=":material/search:",
+    )
 
     filtered = table
-    if categories:
-        filtered = filtered[filtered["category"].astype(str).isin(categories)]
-    if datasets:
-        filtered = filtered[filtered["dataset"].isin(datasets)]
-    if sources:
-        filtered = filtered[filtered["definition_source"].isin(sources)]
     if search:
         needle = search.strip().lower()
         haystack = (filtered["field"].str.lower() + " " + filtered["definition"].str.lower()
                     + " " + filtered["derivation"].str.lower())
         filtered = filtered[haystack.str.contains(needle, regex=False)]
 
-    st.caption(f"{len(filtered):,} of {len(table):,} dictionary rows match.")
+    st.caption(f"{len(filtered):,} key fields shown.")
     if filtered.empty:
-        st.info("No dictionary rows match. Clear a filter or broaden the search.")
+        st.info("No key fields match. Try a broader search.")
     else:
-        # Thematic sections instead of one very wide table.
-        for category in filtered["category"].cat.categories:
+        for category, (title, icon) in sections.items():
             block = filtered[filtered["category"] == category]
             if block.empty:
                 continue
-            section_title(str(category))
+            section_title(title, icon=icon)
             plain_table(
-                block[["field", "dataset", "data_type", "definition", "derivation",
-                       "unit", "time_safety_rule", "quality_caveat", "definition_source",
-                       "dashboard_pages"]],
+                block[["field", "definition", "derivation", "unit", "time_safety_rule",
+                       "quality_caveat"]],
                 column_labels={
-                    "field": "Field", "dataset": "Dataset", "data_type": "Type",
-                    "definition": "Definition", "derivation": "Derivation", "unit": "Unit",
-                    "time_safety_rule": "Time-safety rule", "quality_caveat": "Caveat / significance",
-                    "definition_source": "Definition source", "dashboard_pages": "Used on",
+                    "field": "Field", "definition": "What it means",
+                    "derivation": "How it is calculated", "unit": "Unit",
+                    "time_safety_rule": "Time-safety rule",
+                    "quality_caveat": "Why it matters / caveat",
                 },
-                height=min(72 + 35 * len(block), 420),
+                height=min(96 + 72 * len(block), 640),
             )
     ledger("feature_explanations", "data_dictionary_md",
            note="plus schemas of the five loaded artefacts")
 
 # ---- Tab 2: Official Data Sources ----
 with sources_tab:
-    section_title(
-        "Official source datasets",
-        "Publisher, release, units, transformations, and provenance for every source the lab uses.",
-    )
+    section_title("Official source datasets", icon="database")
     notes = load.load_data_source_notes()
     manifest = load.load_source_manifest()
     if notes is None and manifest is None:
@@ -106,6 +97,5 @@ with sources_tab:
     else:
         for card in build_source_cards(notes, manifest):
             source_card(card)
-    st.markdown(f"> {content['provenance_note']}")
     ledger("data_source_notes", "source_manifest",
            note="World Bank + FATF URLs from the dashboard registry (services/source_registry.py)")

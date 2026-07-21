@@ -5,7 +5,9 @@ WHAT IT DOES:
     Boots the app: puts the repository root on sys.path (so `dashboard.*`
     imports work no matter where the terminal was opened), applies the global
     theme, registers the pages with st.navigation, and renders the fixed
-    human-review boundary ribbon that rides on every page.
+    human-review boundary ribbon that rides on every dashboard page. The
+    root/default route is the full-screen welcome landing, which renders
+    WITHOUT the shell (no sidebar, no ribbon); its CTA enters the dashboard.
 
 RUN (from the repository root):
     python -m streamlit run dashboard/streamlit_app.py
@@ -28,7 +30,12 @@ if str(_REPO_ROOT) not in sys.path:
 import streamlit as st
 
 from dashboard.components.boundary_banner import render_boundary_footer
-from dashboard.components.styles import apply_global_styles
+from dashboard.components.styles import (
+    apply_dashboard_entry_styles,
+    apply_global_styles,
+    apply_landing_styles,
+)
+from dashboard.services import session_state as state
 from dashboard.services.data_loader import MissingOutputError, load_content
 
 content = load_content()
@@ -51,7 +58,7 @@ apply_global_styles()
 PAGE_GROUPS = {
     "Business & Review": [
         {"path": "app_pages/executive_overview.py", "title": "Business Problem & Value",
-         "icon": ":material/account_balance:", "default": True},
+         "icon": ":material/account_balance:"},
         {"path": "app_pages/from_data_to_review_queue.py", "title": "From Data to Review Queue",
          "icon": ":material/account_tree:"},
         {"path": "app_pages/portfolio_analytics.py", "title": "Trade Landscape and Patterns",
@@ -90,21 +97,45 @@ for group_name, entries in PAGE_GROUPS.items():
         page_by_path[entry["path"]] = page
     nav_groups[group_name] = built
 
-navigation = st.navigation(nav_groups, position="hidden")
+# The full-screen welcome is the root/default route. It is registered for
+# routing but deliberately absent from PAGE_GROUPS, so the hand-built sidebar
+# below never lists it and in-session navigation can never return to it; deep
+# links to dashboard pages resolve directly and never pass through it.
+landing_page = st.Page("app_pages/landing.py", title="Welcome", default=True)
 
-with st.sidebar:
-    st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="brand-sub">{content["app"]["subtitle"]}</div>', unsafe_allow_html=True)
-    st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
-    for group_name, entries in PAGE_GROUPS.items():
-        st.markdown(f'<div class="nav-group">{group_name}</div>', unsafe_allow_html=True)
-        for entry in entries:
-            st.page_link(page_by_path[entry["path"]], label=entry["title"], icon=entry["icon"])
+navigation = st.navigation({"Welcome": [landing_page], **nav_groups}, position="hidden")
+on_landing = navigation is landing_page
 
-# The human-review boundary rides on EVERY page as a fixed footer ribbon,
-# rendered once here so no page can drop it. Text comes verbatim from
-# configs/project.yml via data_loader.conclusion_boundary().
-render_boundary_footer()
+if on_landing:
+    # Welcome route: no sidebar content is rendered, and the landing sheet
+    # hides the remaining chrome (sidebar space, collapse control, clearance).
+    apply_landing_styles()
+else:
+    with st.sidebar:
+        st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="brand-sub">{content["app"]["tagline"]}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
+        for group_name, entries in PAGE_GROUPS.items():
+            st.markdown(f'<div class="nav-group">{group_name}</div>', unsafe_allow_html=True)
+            for entry in entries:
+                st.page_link(page_by_path[entry["path"]], label=entry["title"], icon=entry["icon"])
+        # Return path to the main (welcome) page at the FOOT of the nav: the
+        # landing is hidden from the groups above, so this quiet link is the one
+        # in-session way back to it (a browser deep link to "/" also works).
+        with st.container(key="sidebar_home"):
+            st.page_link(landing_page, label="Main Page", icon=":material/home:")
+
+    # The human-review boundary rides on the dashboard pages as a fixed footer
+    # ribbon, rendered once here. It is intentionally omitted from the Business
+    # Problem & Value narrative intro (stakeholder preference); every other page
+    # keeps it, verbatim from configs/project.yml.
+    if navigation is not page_by_path["app_pages/executive_overview.py"]:
+        render_boundary_footer()
+
+    # One-shot entrance on the first dashboard render after the landing CTA;
+    # the flag is consumed, so widget reruns never replay it.
+    if state.consume_dashboard_entry():
+        apply_dashboard_entry_styles()
 
 try:
     navigation.run()

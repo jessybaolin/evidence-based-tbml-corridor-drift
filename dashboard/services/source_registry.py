@@ -83,7 +83,10 @@ def build_source_cards(
             f"{code} {desc}" for code, desc in sorted(hs6_desc.items())
         ),
         original_unit="v: thousands of current USD; q: metric tons",
-        transformation=notes.get("important_transformations_done_before_upload", ""),
+        transformation=(
+            "Rows were filtered to the three selected HS6 codes only."
+            if hs6_desc else ""
+        ),
         provenance=notes.get("data_provenance", "official-derived"),
         caveat="The repository Parquet is an official-derived filtered extract (three HS6 codes), not the full BACI release.",
         files=[notes["filtered_output_file"]] if notes.get("filtered_output_file") else [],
@@ -99,7 +102,7 @@ def build_source_cards(
         project_use="Annual benchmark prices for palm oil, copper, and gold (broad market context for unit values).",
         url=REGISTRY_URLS["worldbank_cmo"],
         url_origin="dashboard registry (verified 2026-07-14)",
-        release="CMO-Historical-Data-Annual.xlsx, sheet 'Annual Prices (Nominal)' (no edition date recorded; pinned by SHA-256)",
+        release="CMO-Historical-Data-Annual.xlsx, sheet 'Annual Prices (Nominal)'",
         years_used=_years_label(wb_check.get("years", notes.get("years_included", []))),
         fields_used="Palm oil, Copper, Gold annual nominal prices",
         original_unit="Palm oil and copper: USD per metric ton; gold: USD per troy ounce",

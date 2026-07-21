@@ -7,8 +7,9 @@ from dashboard.components.page_shell import render_page_header, render_section_h
 from dashboard.services import path_resolver as paths
 
 
-def page_header(title: str, subtitle: str, eyebrow: str = "Stakeholder analytics") -> None:
-    render_page_header(title, subtitle, eyebrow)
+def page_header(title: str, subtitle: str, eyebrow: str = "Stakeholder analytics",
+                icon: str | None = None) -> None:
+    render_page_header(title, subtitle, eyebrow, icon=icon)
 
 
 def section_title(title: str, caption: str | None = None,

@@ -10,13 +10,20 @@ from dashboard.components.icons import render_icon
 
 
 def render_page_header(title: str, subtitle: str, eyebrow: str = "Stakeholder analytics",
-                       class_name: str = "") -> None:
+                       class_name: str = "", icon: str | None = None) -> None:
     classes = "page-header" + (f" {class_name}" if class_name else "")
+    eyebrow_html = (
+        f'<div class="page-eyebrow">{html.escape(eyebrow)}</div>' if eyebrow else ""
+    )
+    subtitle_html = (
+        f'<div class="page-subtitle">{html.escape(subtitle)}</div>' if subtitle else ""
+    )
+    icon_html = render_icon(icon, class_name="page-title-icon") if icon else ""
     st.markdown(
         f'<header class="{html.escape(classes, quote=True)}">'
-        f'<div class="page-eyebrow">{html.escape(eyebrow)}</div>'
-        f'<h1 class="page-title">{html.escape(title)}</h1>'
-        f'<div class="page-subtitle">{html.escape(subtitle)}</div>'
+        f'{eyebrow_html}'
+        f'<h1 class="page-title">{icon_html}{html.escape(title)}</h1>'
+        f'{subtitle_html}'
         f'</header>',
         unsafe_allow_html=True,
     )

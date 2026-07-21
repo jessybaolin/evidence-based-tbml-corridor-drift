@@ -3,9 +3,10 @@
 Answers five questions in reading order: what problem are we solving, what
 does the project do, what does it produce, why is it useful, and what does it
 not claim. Every number is derived live from pipeline outputs; every sentence
-template lives in dashboard_content.yml. The human-review boundary rides on
-this page (like every page) as the fixed footer ribbon rendered by
-streamlit_app.py.
+template lives in dashboard_content.yml. Unlike the other pages, this narrative
+intro intentionally omits the fixed human-review boundary ribbon (gated off for
+this route in streamlit_app.py); the sections reveal one block at a time on
+scroll via the .bv-reveal scroll-timeline in components/styles.py.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from dashboard.components.cards import commodity_card_markup, kpi_card_markup
 from dashboard.components.icons import render_icon
 from dashboard.components.page_header import ledger
 from dashboard.components.page_shell import render_page_header, story_section_heading_markup
+from dashboard.components.scroll_reveal import render_scroll_reveal
 from dashboard.services import data_loader as load
 from dashboard.services.formatting import label_from_key
 
@@ -150,7 +152,7 @@ with st.container(key="business_value_page"):
 
     # ---- 2–3 · Business problem + challenge/response -----------------------
     st.markdown(
-        f'<section class="bv-section bv-problem bv-entry bv-d1">'
+        f'<section class="bv-section bv-problem reveal">'
         f'{story_section_heading_markup(copy["problem_heading"])}'
         f'<div class="bv-readable">'
         f'<p class="landing-prose">{_e(copy["problem_body"])}</p>'
@@ -165,7 +167,7 @@ with st.container(key="business_value_page"):
     # ---- 4 · Stakeholder outcomes ------------------------------------------
     with st.container(key="business_value_stakeholders"):
         st.markdown(
-            f'<section class="bv-section bv-entry bv-d2">'
+            f'<section class="bv-section">'
             f'{story_section_heading_markup(copy["deliverables_heading"])}'
             f'<div class="stat-band">{tiles_html}</div></section>',
             unsafe_allow_html=True,
@@ -177,7 +179,7 @@ with st.container(key="business_value_page"):
 
     # ---- 5 · Manual project story ------------------------------------------
     st.markdown(
-        f'<section class="bv-section bv-explore bv-entry bv-d3">'
+        f'<section class="bv-section bv-explore reveal">'
         f'{story_section_heading_markup("Explore the project")}</section>',
         unsafe_allow_html=True,
     )
@@ -229,8 +231,16 @@ with st.container(key="business_value_page"):
 
     # ---- 6 · Final value statement -----------------------------------------
     st.markdown(
-        f'<section class="bv-section bv-final bv-entry bv-d4">'
+        f'<section class="bv-section bv-final reveal">'
         f'<div class="bottom-line"><div class="bottom-line-text">{_e(bottom_line)}</div>'
         f'<div class="value-chip-row">{value_chips}</div></div></section>',
         unsafe_allow_html=True,
     )
+
+# Reveal each section as it scrolls into view. The two widget-backed sections
+# (stakeholder tiles + CTA, and the story tabs) are keyed containers, so they
+# join the markdown `.reveal` sections by their st-key selectors.
+render_scroll_reveal(
+    ".st-key-business_value_page .reveal, "
+    ".st-key-business_value_stakeholders, .st-key-business_value_story"
+)

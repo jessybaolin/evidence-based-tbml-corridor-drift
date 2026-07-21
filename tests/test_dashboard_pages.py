@@ -69,18 +69,37 @@ def test_page_renders_without_exception(page):
     ), f"{page} hit a missing-output error state"
 
 
-@pytest.mark.parametrize("page", PAGES)
+# Business Problem & Value intentionally omits the boundary ribbon (per
+# stakeholder request); every OTHER page must still carry it verbatim.
+BOUNDARY_PAGES = [p for p in PAGES if p != "executive_overview.py"]
+
+
+@pytest.mark.parametrize("page", BOUNDARY_PAGES)
 def test_boundary_ribbon_visible_verbatim(page):
-    # The fixed footer ribbon must carry the boundary VERBATIM on every page.
+    # The fixed footer ribbon must carry the boundary VERBATIM on these pages.
     at = _run_page(page)
     assert _verbatim_boundary() in _rendered_text(at), page
 
 
+def test_business_value_page_omits_boundary_ribbon():
+    # The narrative intro drops the ribbon, and the boundary sentence appears
+    # nowhere else in its copy, so it must be entirely absent here.
+    at = _run_page("executive_overview.py")
+    assert not at.exception
+    assert _verbatim_boundary() not in _rendered_text(at)
+
+
 def test_entry_point_renders_default_page():
+    # The root/default route is the full-screen landing: it deliberately drops
+    # the shell, so the ribbon must be ABSENT here. Every dashboard page keeps
+    # verbatim-ribbon coverage in test_boundary_ribbon_visible_verbatim; the
+    # full landing contract lives in tests/test_dashboard_landing.py.
     at = AppTest.from_file(str(ENTRY_POINT), default_timeout=120)
     at.run()
     assert not at.exception
-    assert _verbatim_boundary() in _rendered_text(at)
+    text = _rendered_text(at)
+    assert "Evidence-First" in text
+    assert _verbatim_boundary() not in text
 
 
 def test_landing_page_numbers_are_derived():
@@ -191,41 +210,69 @@ def test_data_trust_page_mental_model_and_derived_kpis():
     )
     at = _run_page("from_data_to_review_queue.py")
     text = _rendered_text(at)
-    assert "only real official observations enter the review queue" in text
+    assert "only real trade records ever reach the review queue" in text
     assert f"{len(panel):,}" in text, "observation count missing"
     assert f"{eligible_pct:.1f}%" in text, "eligibility share missing"
     assert f"{value_share:.1f}%" in text, "trade-value coverage missing"
-    assert "Scene 1 of 3" in text
+    assert "Scene 1 of 3" not in text
+    assert "Page 1 of 3" not in text
     assert "data-tip" in text, "KPI tooltips missing"
 
 
-def test_data_trust_scene_navigation_and_corrected_wording():
-    # Scene walk: 1 (sources) -> 2 (prepare; carries the corrected
-    # quantity-not-value exclusion wording) -> 3 (evaluation wall) -> back.
+def test_data_trust_scene_navigation_and_simplified_preparation():
+    # Two-scene walk: 1 (sources) -> 2 (prepare; carries a real prepared row and
+    # the concise quantity exclusion). Scene 3 ("Test, rank & explain") was
+    # retired to the Model Evaluation & Controls page, so Scene 2 is the final
+    # scene: it carries the closing statement and a link to that page, and there
+    # is no third scene to advance into.
+    from dashboard.services.data_loader import load_content, load_panel, load_review_queue
+
     at = _run_page("from_data_to_review_queue.py")
     assert "Three sources, each with one clearly separated role" in _rendered_text(at)
 
     at = at.button(key="dtrq_next").click().run()
     text = _rendered_text(at)
     assert not at.exception
-    assert "Scene 2 of 3" in text
-    assert (
-        "Rows without a valid reported quantity cannot support implied "
-        "unit-value analysis" in text
-    )
-    assert "retained for audit" in text
-    assert "not a suspicion signal" in text
+    assert "Standardise units" in text
+    assert "Convert reported trade values to USD and quantities to metric tons." in text
+    assert "Rows without a valid reported quantity are excluded from modelling." in text
+    assert "Time-safe simply means no peeking into the future." in text
+    assert "it cannot use 2023 or 2024" in text
+    assert "CEPII BACI extract" not in text
+    assert "Trade value: thousand USD" not in text
+    assert "View provenance" not in text
+    assert "retained for audit" not in text
+    assert "not a suspicion signal" not in text
 
-    at = at.button(key="dtrq_next").click().run()
-    text = _rendered_text(at)
-    assert not at.exception
-    assert "Scene 3 of 3" in text
-    assert "Controlled evaluation copy—not official findings" in text
-    assert "Only the selected method returns. Synthetic rows never cross." in text
-    assert "Benchmark gap" in text, "real evidence-check names missing"
+    panel = load_panel(columns=("obs_id", "trade_value_usd"))
+    queue_ids = set(load_review_queue()["obs_id"])
+    candidates = panel[~panel["obs_id"].isin(queue_ids)]
+    sample = candidates.loc[candidates["trade_value_usd"].idxmax()]
+    assert str(sample["obs_id"]) in text, "real prepared observation missing"
+
+    # Scene 2 is now the final scene: the closing statement renders here, and Next
+    # is disabled because the evaluation wall (old Scene 3) is gone.
+    assert "accountable human review" in text
+    assert at.button(key="dtrq_next").disabled
+    assert "Controlled evaluation copy—not official findings" not in text
+    assert "Only the selected method returns. Synthetic rows never cross." not in text
+
+    # The model-validation deep dive is offered as an on-demand link, not a scene.
+    cta = load_content()["pages"]["from_data_to_review_queue"]["model_eval_cta"]
+    link_labels = [str(getattr(pl, "label", "")) for pl in at.get("page_link")]
+    assert any(cta in label for label in link_labels), "Model Evaluation link missing"
 
     at = at.button(key="dtrq_prev").click().run()
-    assert "Scene 2 of 3" in _rendered_text(at)
+    assert "Three sources, each with one clearly separated role" in _rendered_text(at)
+
+
+def test_data_trust_row_labels_match_navigation_colours():
+    styles = (
+        REPO_ROOT / "dashboard" / "components" / "styles.py"
+    ).read_text(encoding="utf-8")
+    selector = styles.split("table.data-table td.rec-k", 1)[1].split("}}", 1)[0]
+    assert 'color: {p["sidebar_ink"]}' in selector
+    assert 'background: {p["sidebar_bg"]}' in selector
 
 
 def test_bank_implementation_pathway_is_explicitly_future_state():
@@ -253,11 +300,32 @@ def test_bank_implementation_pathway_names_required_bank_context():
     ):
         assert label in text, label
     for stage in (
-        "Offline enrichment pilot",
-        "Controlled workflow integration",
-        "Validated operational use",
+        "Test offline",
+        "Assist the review",
+        "Validate before use",
     ):
         assert stage in text, stage
+
+
+def test_bank_implementation_pathway_bounds_the_ai_extension():
+    at = _run_page("bank_implementation_pathway.py")
+    assert not at.exception
+    text = _rendered_text(at)
+    assert "Where AI could help: prepare the case, not decide it" in text
+    assert "It would not create evidence, assign criminal intent" in text
+    assert "Evidence-grounded case summaries with source IDs" in text
+    assert "Schema validation and deterministic fallback" in text
+    assert "The prototype provides an external signal" in text
+    assert "What the bank adds to make the signal reviewable" in text
+    assert "How this could help a wholesale-banking AFC team" in text
+
+    styles = (
+        REPO_ROOT / "dashboard" / "components" / "styles.py"
+    ).read_text(encoding="utf-8")
+    assert "animation-timeline: view()" in styles
+    assert ".anim, .bank-reveal" in styles
+    assert "align-items: stretch" in styles
+    assert ".bank-icon-card.domain.bank-card-4" in styles
 
 
 def test_navigation_group_order_and_renamed_reference_page():
@@ -278,13 +346,21 @@ def test_renamed_methodology_and_dictionary_titles_render():
 
 
 def test_review_queue_filters_and_empty_state():
-    at = _run_page("review_queue.py")
-    # The score slider now lives inside the collapsed "Advanced filters"
-    # expander; AppTest reaches it by key regardless. Narrow it to an
-    # impossible band -> transparent empty state.
-    slider = next(s for s in at.slider if s.key == "queue_score_range")
-    low = slider.value[0]
-    at = slider.set_value((low, low)).run()
+    from dashboard.services.data_loader import load_review_queue
+
+    queue = load_review_queue()
+    observed = set(zip(queue["exporter_iso3"], queue["importer_iso3"]))
+    empty_pair = next(
+        (exporter, importer)
+        for exporter in sorted(queue["exporter_iso3"].unique())
+        for importer in sorted(queue["importer_iso3"].unique())
+        if (exporter, importer) not in observed
+    )
+    at = _run_page(
+        "review_queue.py",
+        queue_exporters=[empty_pair[0]],
+        queue_importers=[empty_pair[1]],
+    )
     assert not at.exception
     assert any("No review candidates match" in str(block.value) for block in at.info)
 
@@ -309,22 +385,9 @@ def test_review_queue_banner_default_and_current():
     assert "Default case" not in text2
 
 
-def test_review_queue_export_size_control_and_score_note():
-    at = _run_page("review_queue.py")
-    assert not at.exception
-    assert len(at.download_button) == 1, "CSV export button missing"
-    assert len(at.segmented_control) == 1, "queue-size control missing"
-    assert at.segmented_control[0].value == "Top 50"
-    assert at.segmented_control[0].options == ["Top 50"]
-    # The verbatim score explainer must appear on the page (column tooltip
-    # copy is the same YAML anchor, so one assertion covers both).
-    content = yaml.safe_load(
-        (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(encoding="utf-8")
-    )
-    assert content["pages"]["review_queue"]["score_note"] in _rendered_text(at)
+def test_review_queue_cell_pick_updates_case_and_checked_marker():
+    import pandas as pd
 
-
-def test_review_queue_summary_and_guidance_are_derived_and_separated():
     from dashboard.services import dashboard_metrics as metrics
     from dashboard.services import data_loader as load
 
@@ -335,16 +398,74 @@ def test_review_queue_summary_and_guidance_are_derived_and_separated():
         "robust_historical_z",
     ))
     enriched = metrics.enrich_queue(queue, features, content["family_short_labels"])
-    scores = enriched["selected_review_priority_score"]
+    table_identity = (
+        f"queue_table_{pd.util.hash_pandas_object(enriched['obs_id'], index=False).sum():x}"
+    )
+    picked = enriched.iloc[1]
+    at = _run_page(
+        "review_queue.py",
+        **{
+            f"{table_identity}_default": {
+                "selection": {"rows": [], "columns": [], "cells": [[1, "corridor"]]},
+            },
+        },
+    )
 
+    assert not at.exception
+    assert f"Current case #{int(picked['rank'])}:" in _rendered_text(at)
+    markers = at.dataframe[0].value["current_case"]
+    assert int(markers.sum()) == 1
+    assert bool(markers.iloc[1])
+
+
+def test_review_queue_export_simplified_filters_and_score_note():
+    at = _run_page("review_queue.py")
+    assert not at.exception
+    assert len(at.download_button) == 1, "CSV export button missing"
+    assert not at.segmented_control, "queue-size control should be removed"
+    assert not at.slider, "advanced score filter should be removed"
+    assert all(expander.label != "Advanced filters" for expander in at.expander)
+    text = _rendered_text(at)
+    assert "Year, product family, exporter and importer scope" not in text
+    assert "Queue size" not in text
+    # The verbatim score explainer must appear on the page (column tooltip
+    # copy is the same YAML anchor, so one assertion covers both).
+    content = yaml.safe_load(
+        (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(encoding="utf-8")
+    )
+    assert content["pages"]["review_queue"]["score_note"] in _rendered_text(at)
+    unit_value = content["pages"]["review_queue"]["columns"]["unit_value_usd_per_metric_ton"]
+    assert unit_value["label"].endswith("ⓘ")
+    assert "not observed from an invoice or transaction price" in unit_value["help"]
+
+
+def test_review_queue_redundant_counts_are_removed_and_guidance_is_retained():
+    from dashboard.services import data_loader as load
+
+    content = load.load_content()
     at = _run_page("review_queue.py")
     text = _rendered_text(at)
-    assert f"<strong>{len(enriched):,}</strong> results" in text
-    assert f"<strong>{enriched['family_label'].nunique():,}</strong> product families" in text
-    assert f"{scores.min():.3f}&ndash;{scores.max():.3f}" in text
+    assert "matching observations" not in text
+    assert "queue-result-count" not in text
+    assert "queue-state-summary" not in text
+    assert "Score range" not in text
     assert "How to read the score" in text
     assert content["pages"]["review_queue"]["caveat"] in text
-    assert any(expander.label == "Table notes and methodology" for expander in at.expander)
+    assert not any(expander.label == "Table notes and methodology" for expander in at.expander)
+    assert content["pages"]["review_queue"]["table_caption_precision"] in text
+    assert "Colored dots identify product families:" in text
+
+
+def test_review_queue_product_column_uses_flat_family_dot():
+    at = _run_page("review_queue.py")
+    products = at.dataframe[0].value["product"].astype(str)
+    for label in ("Gold", "Palm oil", "Copper"):
+        family_rows = products[products.str.endswith(label)]
+        assert not family_rows.empty, label
+        # Flat "●" dot; the family colour is applied by the Styler, not the text.
+        assert family_rows.str.startswith("●").all(), label
+    # No glossy emoji markers remain.
+    assert not products.str.contains("🟡|🟢|🟠").any()
 
 
 def test_review_queue_active_chip_clears_only_its_filter():
@@ -366,28 +487,20 @@ def test_review_queue_active_chip_clears_only_its_filter():
     assert family.value == ["Gold"]
 
 
-def test_review_queue_reset_and_clear_advanced_controls():
+def test_review_queue_reset_clears_primary_filters():
     at = _run_page(
         "review_queue.py",
         queue_years=[2022],
         queue_families=["Gold"],
+        queue_exporters=["ITA"],
+        queue_importers=["NPL"],
     )
     at = at.button(key="queue_reset_filters").click().run()
     assert not at.exception
-    assert next(item for item in at.multiselect if item.key == "queue_years").value == []
-    assert next(item for item in at.multiselect if item.key == "queue_families").value == []
-
-    slider = next(item for item in at.slider if item.key == "queue_score_range")
-    default_range = slider.value
-    narrowed = (default_range[0], round(default_range[1] - 0.001, 4))
-    at = slider.set_value(narrowed).run()
-    assert next(item for item in at.slider if item.key == "queue_score_range").value == narrowed
-
-    at = at.button(key="queue_clear_advanced").click().run()
-    assert not at.exception
-    assert next(
-        item for item in at.slider if item.key == "queue_score_range"
-    ).value == default_range
+    for key in (
+        "queue_years", "queue_families", "queue_exporters", "queue_importers",
+    ):
+        assert next(item for item in at.multiselect if item.key == key).value == []
 
 
 def test_case_investigation_selectbox_changes_case():
@@ -430,8 +543,9 @@ def test_case_strip_governed_copy_and_removed_kpis():
             "crime.") in text
     assert ("Annual reported trade value divided by reported quantity. "
             "It is an aggregate average, not an invoice price.") in text
-    assert ("The World Bank benchmark provides broad market context; "
-            "it is not invoice-level fair value.") in text
+    # Combined comparison note: benchmark is market context, not fair value.
+    assert "the World Bank benchmark is the world market price" in text
+    assert "not invoice-level fair value" in text
     # Removed from the visible page: score internals, the method formula and
     # the retired trend tab.
     assert "Rule score" not in text
@@ -440,25 +554,29 @@ def test_case_strip_governed_copy_and_removed_kpis():
     assert "Trade & Benchmark Trend" not in text
 
 
-def test_case_view_carousel_switches_without_changing_case():
+def test_case_view_switcher_changes_view_without_changing_case():
+    # The comparison view is switched by the segmented-control tabs directly.
+    # Market and own-history are now ONE combined view; Peer position is the other.
+    # (Headings highlight the word "corridor" in a tooltip span, so assertions use
+    # substrings that don't cross that word.)
     from dashboard.services.data_loader import load_review_queue
 
     default_id = str(load_review_queue().sort_values("rank").iloc[0]["obs_id"])
     at = _run_page("case_investigation.py")
-    assert "wider commodity market" in _rendered_text(at)
+    assert "the market and its own history" in _rendered_text(at)
 
-    at = at.button(key="case_view_next").click().run()
+    def _switch(app, label):
+        bar = next(s for s in app.segmented_control if s.key == "case_view_bar")
+        return bar.set_value(label).run()
+
+    at = _switch(at, "Peer position")
     assert not at.exception
-    assert "own prior behaviour" in _rendered_text(at)
+    assert "How unusual was the case among comparable" in _rendered_text(at)
     assert at.session_state["tbml_selected_obs_id"] == default_id
 
-    at = at.button(key="case_view_next").click().run()
+    at = _switch(at, "Market & history")
     assert not at.exception
-    assert "comparable corridors" in _rendered_text(at)
-    assert at.session_state["tbml_selected_obs_id"] == default_id
-
-    at = at.button(key="case_view_prev").click().run()
-    assert "own prior behaviour" in _rendered_text(at)
+    assert "the market and its own history" in _rendered_text(at)
     assert at.session_state["tbml_selected_obs_id"] == default_id
 
 
@@ -513,3 +631,48 @@ def test_appendix_dictionary_search():
     search = next(t for t in at.text_input if t.key == "dict_search")
     at = search.set_value("residual").run()
     assert not at.exception
+
+
+def test_appendix_dictionary_is_a_stakeholder_field_shortlist():
+    at = _run_page("appendix.py")
+    assert not at.exception
+    text = _rendered_text(at)
+
+    assert [tab.label for tab in at.tabs] == ["Key Data Fields", "Official Data Sources"]
+    assert "Fields used in analysis and review" in text
+    assert "Trade and benchmark measures" in text
+    assert "Historical and peer comparison signals" in text
+    assert "Review-priority outputs" in text
+    assert not at.multiselect
+
+    for removed in (
+        "Documented definitions come from",
+        "Identifiers",
+        "Source values",
+        "Quality fields",
+        "Evidence fields",
+        "Other",
+        "Field category",
+        "Definition source",
+    ):
+        assert removed not in text
+
+
+def test_appendix_source_copy_is_concise_and_omits_provenance_rows():
+    at = _run_page("appendix.py")
+    assert not at.exception
+    text = _rendered_text(at)
+
+    for removed in (
+        "Definitions, analytical fields, and official data sources.",
+        "Publisher, release, units, transformations, and provenance for every source",
+        "Provenance:",
+        "Source URLs document dataset provenance",
+        "Column k was read and stored as a six-character string",
+        "no edition date recorded; pinned by SHA-256",
+    ):
+        assert removed not in text
+
+    assert "Rows were filtered to the three selected HS6 codes only." in text
+    assert "CMO-Historical-Data-Annual.xlsx" in text
+    assert "Annual Prices (Nominal)" in text

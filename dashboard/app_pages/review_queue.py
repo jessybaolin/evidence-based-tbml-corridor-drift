@@ -12,6 +12,7 @@ from dashboard.components.filters import queue_filters, render_active_filter_chi
 from dashboard.components.controls import render_filter_panel
 from dashboard.components.icons import render_icon
 from dashboard.components.page_header import ledger, page_header, section_title
+from dashboard.components.scroll_reveal import render_scroll_reveal
 from dashboard.components.tables import queue_table
 from dashboard.services import dashboard_metrics as metrics
 from dashboard.services import data_loader as load
@@ -31,7 +32,12 @@ def _selection_rows(pending) -> list[int]:
     rows = getattr(selection, "rows", None)
     if rows is None and isinstance(selection, dict):
         rows = selection.get("rows")
-    return list(rows or [])
+    if rows:
+        return list(rows)
+    cells = getattr(selection, "cells", None)
+    if cells is None and isinstance(selection, dict):
+        cells = selection.get("cells")
+    return [int(cells[0][0])] if cells else []
 
 
 def _country(row: pd.Series, name_column: str, iso_column: str) -> str:
@@ -60,38 +66,32 @@ with render_filter_panel():
         [4.6, 1], vertical_alignment="center", gap="medium",
     )
     with filter_title:
-        section_title(copy["filters_heading"], copy["filters_caption"], icon="sliders")
+        section_title(copy["filters_heading"], icon="sliders")
     with filter_action:
         st.button(
             copy["reset_label"], key="queue_reset_filters",
             icon=":material/restart_alt:", on_click=state.reset_queue_filters,
             width="stretch",
         )
-    filters, result_slot = queue_filters(metrics.queue_filter_options(enriched), copy)
+    filters = queue_filters(metrics.queue_filter_options(enriched))
     filtered = metrics.apply_queue_filters(enriched, filters)
-    result_slot.markdown(
-        f'<div class="queue-filter-result"><strong>{len(filtered):,}</strong> '
-        f"matching observations</div>",
-        unsafe_allow_html=True,
-    )
 
 if filtered.empty:
     section_title(copy["results_heading"], icon="list-ordered")
     no_rows(copy["empty_message"])
 else:
-    # Key the table by the filtered row set: Streamlit keeps a row selection
-    # bound to the widget key across reruns, so after a filter change a stale
-    # positional selection would crash (index out of bounds) or silently point
-    # at a different observation. A content-derived key drops it instead.
-    table_key = f"queue_table_{pd.util.hash_pandas_object(filtered['obs_id'], index=False).sum():x}"
+    # Key the table by the filtered rows and current case. This clears the
+    # temporary cell focus after a pick while preserving the governed case.
+    table_identity = f"queue_table_{pd.util.hash_pandas_object(filtered['obs_id'], index=False).sum():x}"
+    selection_owner = state.selected_obs_id() or "default"
+    table_key = f"{table_identity}_{selection_owner}"
 
-    # Resolve this rerun's row pick BEFORE anything renders: the grid stores
-    # its selection in session state under the widget key, so the banner and
-    # the amber row tint reflect the click that triggered this run instead of
-    # lagging one interaction behind.
+    # Resolve this rerun's cell pick before rendering so the banner, checked
+    # marker and amber row all update together.
     picked = _selection_rows(st.session_state.get(table_key))
     if picked and 0 <= picked[0] < len(filtered):
         state.select_obs(str(filtered.iloc[picked[0]]["obs_id"]))
+        st.session_state.pop(table_key, None)
 
     # Current case: the sticky selection while it still points at a queue row,
     # otherwise the default that Selected Case Review opens with (rank 1). The
@@ -110,24 +110,16 @@ else:
         f"{family} = HS6 {code}" for family, code in metrics.family_hs6_map(enriched).items()
     )
 
-    # ---- Results header: interpretation left, live count and export right. ----
+    # ---- Results header: interpretation left and export right. ----
     with st.container(key="queue_results_header"):
-        heading_col, count_col, export_col = st.columns(
-            [3.4, 0.8, 1.35], vertical_alignment="center", gap="medium",
+        heading_col, export_col = st.columns(
+            [4.2, 1.35], vertical_alignment="center", gap="medium",
         )
         with heading_col:
             section_title(
                 copy["results_heading"],
-                copy["results_caption"].format(
-                    shown=f"{len(filtered):,}", total=f"{len(enriched):,}",
-                ),
+                copy["results_caption"],
                 icon="list-ordered",
-            )
-        with count_col:
-            st.markdown(
-                f'<div class="queue-result-count"><strong>{len(filtered):,}</strong>'
-                f"<span>results</span></div>",
-                unsafe_allow_html=True,
             )
         with export_col:
             st.download_button(
@@ -164,40 +156,45 @@ else:
                 icon=":material/folder_open:", width="stretch",
             )
 
-    # ---- Compact state summary and one-filter-at-a-time clear actions. ----
-    scores = filtered["selected_review_priority_score"]
-    st.markdown(
-        f'<div class="queue-state-summary" role="status">'
-        f'<span><strong>{len(filtered):,}</strong> results</span>'
-        f'<span><strong>{filtered["family_label"].nunique():,}</strong> product families</span>'
-        f'<span>Score range <strong>{scores.min():.3f}&ndash;{scores.max():.3f}</strong></span>'
-        f"</div>",
-        unsafe_allow_html=True,
-    )
+    # ---- One-filter-at-a-time clear actions. ----
     render_active_filter_chips(filters)
 
-    # ---- The queue itself: native selection and sorting remain unchanged. ----
+    # ---- The queue itself: cell selection avoids Streamlit's faded row wash. ----
     display = metrics.queue_display_frame(filtered)
-    positions = filtered.index[filtered["obs_id"] == case_row["obs_id"]]
+    displayed_rows = filtered.reset_index(drop=True)
+    positions = displayed_rows.index[displayed_rows["obs_id"] == case_row["obs_id"]]
     highlight = int(positions[0]) if len(positions) else None
+    table_key = f"{table_identity}_{state.selected_obs_id() or 'default'}"
     with st.container(key="queue_table_region"):
-        queue_table(display, key=table_key, highlight_row=highlight, mappings=mappings)
+        queue_table(
+            display,
+            key=table_key,
+            highlight_row=highlight,
+            mappings=mappings,
+        )
 
     with st.container(key="queue_score_guidance"):
         st.markdown(
+            f'<div class="queue-guidance-content">'
             f'<div class="queue-guidance-icon">{render_icon("info")}</div>'
             f'<div><div class="queue-guidance-label">How to read the score</div>'
-            f'<div class="queue-guidance-text">{html.escape(copy["score_note"])}</div></div>',
+            f'<div class="queue-guidance-text">{html.escape(copy["score_note"])}</div></div>'
+            f'</div>',
             unsafe_allow_html=True,
         )
 
     with st.container(key="queue_table_notes"):
-        with st.expander("Table notes and methodology"):
-            st.markdown(
-                f'<div class="queue-technical-notes">'
-                f'<p>{html.escape(copy["table_caption_products"].format(mappings=mappings))}</p>'
-                f'<p>{html.escape(copy["table_caption_precision"])}</p></div>',
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            f'<div class="queue-technical-notes" role="note">'
+            f'<p>{html.escape(copy["table_caption_products"].format(mappings=mappings))}</p>'
+            f'<p>{html.escape(copy["table_caption_precision"])}</p></div>',
+            unsafe_allow_html=True,
+        )
 
 ledger("review_queue", "features", note="scores ranked on real official observations only")
+
+# Reveal the queue's sections (banner, table, guidance, notes) as they scroll in.
+render_scroll_reveal(
+    ".st-key-queue_header, .st-key-queue_case_banner, .st-key-queue_table_region, "
+    ".st-key-queue_score_guidance, .st-key-queue_table_notes"
+)
