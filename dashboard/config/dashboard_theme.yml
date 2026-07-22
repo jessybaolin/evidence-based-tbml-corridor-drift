@@ -166,14 +166,14 @@ chart:
   case_prior: "#7C5CA6"
   peer_bars: "#9DB0CE"
   marker_outline: "#FFFFFF"
-  # Gold-coverage persistent-gap network: calm red/blue direction hues (a steel
-  # blue for Netherlands-outbound, a muted brick red for inbound), a light
-  # neutral for non-Netherlands routes, a muted slate node with a dark navy hub
-  # so the 12-route centre reads by colour as well as size.
-  network_outbound: "#4E79A8"
-  network_inbound: "#C0504D"
-  network_other: "#B7BFCB"
-  network_node: "#5B6E8C"
+  # Gold-coverage network: teal/maroon/amber distinguish route direction.
+  # Node area is proportional to connected routes; colour reinforces the
+  # three observed counts (1, 2, 12) without implying country risk.
+  network_outbound: "#0F8F8F"
+  network_inbound: "#A62E4E"
+  network_other: "#D89A2B"
+  network_node_one: "#7F96B5"
+  network_node_two: "#7C5CA6"
   network_hub: "#1D2D46"
   transparent: "rgba(0,0,0,0)"
   height: 360

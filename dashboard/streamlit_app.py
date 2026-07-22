@@ -106,7 +106,7 @@ PAGE_GROUPS = {
     "Methodology": [
         {"path": "app_pages/model_and_controls.py", "title": "Model Evaluation & Controls",
          "icon": ":material/verified_user:"},
-        {"path": "app_pages/gold_quantity_coverage.py", "title": "Gold Without Usable Quantity",
+        {"path": "app_pages/gold_quantity_coverage.py", "title": "Unscored Gold Records",
          "icon": ":material/data_alert:"},
     ],
     "Future State": [

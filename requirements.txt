@@ -1,26 +1,9 @@
-pandas
-pyarrow
-openpyxl
-numpy
-scikit-learn
-xgboost
-shap
-matplotlib
-seaborn
-PyYAML
-tabulate
-jinja2
-pygments
-weasyprint
-reportlab
-pypdf
-pillow
-joblib
-markdown
-graphviz
-ipykernel
-
-# Dashboard (dashboard/streamlit_app.py) + its tests
-streamlit
-plotly
-pytest
+# Streamlit Community Cloud runtime for the dashboard (dashboard/streamlit_app.py).
+# The app is a read-only presentation layer; these are the ONLY packages it imports.
+# Full data-pipeline / notebook deps live in requirements-pipeline.txt.
+streamlit==1.59.2
+plotly==6.9.0
+pandas==3.0.4
+numpy==2.4.6
+pyarrow==24.0.0
+PyYAML==6.0.3

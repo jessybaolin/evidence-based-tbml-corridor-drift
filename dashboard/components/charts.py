@@ -640,7 +640,10 @@ def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
         category = str(edge["category"])
         fig.add_scatter(
             x=xs, y=ys, mode="lines",
-            line=dict(color=style["color"], dash=style["dash"], width=2.0),
+            line=dict(
+                color=style["color"], dash=style["dash"],
+                width=3.2 if edge["category"] != "other" else 2.6,
+            ),
             name=copy["edge_" + category], legendgroup=category,
             showlegend=category not in seen, hoverinfo="skip",
         )
@@ -651,7 +654,7 @@ def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
         fig.add_annotation(
             x=xs[tip], y=ys[tip], ax=xs[tip - 2], ay=ys[tip - 2],
             xref="x", yref="y", axref="x", ayref="y", showarrow=True,
-            arrowhead=3, arrowsize=1.6, arrowwidth=1.4, arrowcolor=style["color"],
+            arrowhead=3, arrowsize=1.8, arrowwidth=1.8, arrowcolor=style["color"],
             text="",
         )
         mid = len(xs) // 2
@@ -668,30 +671,49 @@ def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
                            + ": $%{customdata[4]:,.0f}<extra></extra>"),
         )
 
-    # Node size steps clearly across the three route counts (1 · 2 · 12); the
-    # highest-degree hub takes the dark navy while the rest stay muted slate, so
-    # the centre reads by colour as well as size.
+    # Marker AREA is proportional to connected-route count. Plotly receives a
+    # diameter, so sqrt(count) produces the required area ratio (1 : 2 : 12).
+    # The three observed counts also receive distinct colours and legend keys.
     max_conn = int(nodes["connections"].max())
-    node_colors = [chart["network_hub"] if int(c) == max_conn else chart["network_node"]
-                   for c in nodes["connections"]]
-    sizes = (13 + nodes["connections"] * 6).clip(upper=54)
+    node_colors = [
+        chart["network_hub"] if int(c) == max_conn
+        else chart["network_node_two"] if int(c) == 2
+        else chart["network_node_one"]
+        for c in nodes["connections"]
+    ]
+    sizes = nodes["connections"].pow(0.5) * 18
     dimmed = nodes["iso3"].map(lambda c: 1.0 if c in involved else 0.28)
+    fig.add_scatter(
+        x=nodes["x"], y=nodes["y"], mode="markers",
+        marker=dict(
+            size=sizes + 10, color=node_colors,
+            opacity=dimmed * 0.14, line=dict(width=0),
+        ),
+        hoverinfo="skip", showlegend=False,
+    )
     fig.add_scatter(
         x=nodes["x"], y=nodes["y"], mode="markers+text",
         marker=dict(size=sizes, color=node_colors,
                     opacity=dimmed, line=dict(color=p["panel_bg"], width=2)),
         text=nodes["iso3"], textposition="bottom center",
         textfont=dict(size=11, color=p["ink"]),
-        customdata=list(zip(nodes["country"], nodes["outbound"], nodes["inbound"])),
+        customdata=list(zip(
+            nodes["country"], nodes["connections"],
+            nodes["outbound"], nodes["inbound"],
+        )),
         hovertemplate=("<b>%{customdata[0]}</b>"
-                       "<br>" + copy["hover_outbound"] + ": %{customdata[1]}"
-                       "<br>" + copy["hover_inbound"] + ": %{customdata[2]}"
+                       "<br>" + copy["hover_connections"] + ": %{customdata[1]}"
+                       "<br>" + copy["hover_outbound"] + ": %{customdata[2]}"
+                       "<br>" + copy["hover_inbound"] + ": %{customdata[3]}"
                        "<extra></extra>"),
         showlegend=False,
     )
     fig.update_layout(
         xaxis=dict(visible=False, range=[-1.45, 1.45]),
         yaxis=dict(visible=False, range=[-1.3, 1.3], scaleanchor="x"),
-        legend=dict(orientation="h", yanchor="top", y=1.08, x=0),
+        dragmode="pan",
+        hovermode="closest",
+        uirevision="gold-eight-year-network",
+        transition=dict(duration=350, easing="cubic-in-out"),
     )
     return fig

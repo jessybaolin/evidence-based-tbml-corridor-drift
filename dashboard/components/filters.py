@@ -18,6 +18,10 @@ def queue_filters(options: dict, hs6_map: dict | None = None):
         code = hs6_map.get(label)
         return f"{label} · HS6 {code}" if code else label
 
+    def _country_label(role: str):
+        labels = options.get(f"{role}_labels", {})
+        return lambda code: labels.get(str(code), str(code))
+
     row1 = st.columns(4)
     with row1[0]:
         years = st.multiselect("Year", options["years"], key="queue_years")
@@ -27,9 +31,15 @@ def queue_filters(options: dict, hs6_map: dict | None = None):
             format_func=_family_label,
         )
     with row1[2]:
-        exporters = st.multiselect("Exporter", options["exporters"], key="queue_exporters")
+        exporters = st.multiselect(
+            "Exporter", options["exporters"], key="queue_exporters",
+            format_func=_country_label("exporter"),
+        )
     with row1[3]:
-        importers = st.multiselect("Importer", options["importers"], key="queue_importers")
+        importers = st.multiselect(
+            "Importer", options["importers"], key="queue_importers",
+            format_func=_country_label("importer"),
+        )
 
     filters = {
         "years": years,

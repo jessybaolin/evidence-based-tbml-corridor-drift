@@ -1,0 +1,30 @@
+# Full data-pipeline + notebook environment (src/, tests, report generation).
+# The deployed dashboard does NOT use these — see requirements.txt for the slim
+# runtime set that Streamlit Community Cloud installs.
+#   pip install -r requirements-pipeline.txt
+pandas
+pyarrow
+openpyxl
+numpy
+scikit-learn
+xgboost
+shap
+matplotlib
+seaborn
+PyYAML
+tabulate
+jinja2
+pygments
+weasyprint
+reportlab
+pypdf
+pillow
+joblib
+markdown
+graphviz
+ipykernel
+
+# Dashboard (dashboard/streamlit_app.py) + its tests
+streamlit
+plotly
+pytest

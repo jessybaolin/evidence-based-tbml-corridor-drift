@@ -70,6 +70,11 @@ def gold_summary(panel: pd.DataFrame) -> dict:
     gap = gold[gold["coverage_gap"]]
     gold_value = float(gold["trade_value_usd"].sum())
     gap_value = float(gap["trade_value_usd"].sum())
+    assessable = (
+        gold["value_valid_flag"].fillna(False).astype(bool)
+        & gold["quantity_valid_flag"].fillna(False).astype(bool)
+    )
+    assessable_value = float(gold.loc[assessable, "trade_value_usd"].sum())
     ordered = gap.sort_values(
         ["trade_value_usd", "obs_id"], ascending=[False, True], kind="mergesort"
     )
@@ -81,6 +86,7 @@ def gold_summary(panel: pd.DataFrame) -> dict:
         "gap_row_rate": float(len(gap) / len(gold)),
         "gap_value_usd": gap_value,
         "gap_value_share": gap_value / gold_value,
+        "assessable_value_share": assessable_value / gold_value,
         "gap_model_eligible": int(gap["model_eligible"].sum()),
         "largest": {
             "obs_id": str(largest["obs_id"]),
@@ -90,6 +96,7 @@ def gold_summary(panel: pd.DataFrame) -> dict:
             "importer_name": str(largest["importer_name"]),
             "value_usd": float(largest["trade_value_usd"]),
             "share_of_gap_value": float(largest["trade_value_usd"] / gap_value),
+            "share_of_gold_value": float(largest["trade_value_usd"] / gold_value),
         },
         "top10_cumulative_share": top10_share,
         "years": sorted(int(y) for y in frame["year"].unique()),

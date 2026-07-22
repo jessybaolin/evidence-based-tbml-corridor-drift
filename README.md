@@ -29,6 +29,13 @@ and iteration guidance. The dashboard's design skeleton came from a local
 reference prototype at `references/tbml_streamlit_multipage_prototype/`
 (git-ignored, kept for comparison).
 
+### Dependencies
+
+- `requirements.txt` — the slim **dashboard runtime** (pinned), used by
+  Streamlit Community Cloud to build the deployed app.
+- `requirements-pipeline.txt` — the **full data pipeline + notebook** environment
+  (`src/`, tests, report generation): `pip install -r requirements-pipeline.txt`.
+
 ## Tests
 
 ```powershell

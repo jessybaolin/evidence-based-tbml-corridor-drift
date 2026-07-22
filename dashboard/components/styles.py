@@ -917,7 +917,7 @@ def apply_global_styles() -> None:
         z-index: 2;
         pointer-events: none;
         mix-blend-mode: multiply;
-        background: color-mix(in srgb, {outcome_blue} 32%, transparent);
+        background: color-mix(in srgb, {p["sidebar_bg"]} 22%, transparent);
         border-bottom: 2px solid color-mix(in srgb, {outcome_blue} 80%, transparent);
     }}
 
@@ -2284,7 +2284,7 @@ def apply_global_styles() -> None:
         align-items: center;
         gap: 0.45rem;
         align-self: center;
-        color: {case_maroon};
+        color: {p["muted"]};
         font-size: 0.78rem;
         font-weight: 750;
         line-height: 1.35;
@@ -2359,11 +2359,11 @@ def apply_global_styles() -> None:
         overflow-wrap: anywhere;
     }}
 
-    /* AI is deliberately violet rather than teal: it reads as an assistive
-       layer, not another model score or primary action. */
+    /* AI reads as an assistive layer via a soft violet wash; the prominent
+       left accent bar was dropped as distracting. */
     .bank-ai-shell {{
         background: color-mix(in srgb, {context_violet} 7%, white);
-        border-left: 4px solid {context_violet};
+        border-radius: 10px;
         padding: 1rem;
     }}
     .bank-ai-value {{
@@ -2616,6 +2616,27 @@ def apply_global_styles() -> None:
        Problem & Value rhythm) so each question reads as its own block. */
     [data-testid="stMain"]:has(.gc-page-marker) .section-heading {{
         margin-top: 3.4rem;
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .stat-band.three {{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-frequency {{
+        border-top-color: {family_colors["gold_unwrought"]};
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-frequency .stat-label {{
+        color: {family_colors["gold_unwrought"]};
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-coverage {{
+        border-top-color: {p["accent"]};
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-coverage .stat-label {{
+        color: {at};
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-pattern {{
+        border-top-color: {case_maroon};
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-pattern .stat-label {{
+        color: {case_maroon};
     }}
     /* Five-tile trust band (extends the landing stat-band). */
     .stat-band.five {{ grid-template-columns: repeat(5, 1fr); }}
@@ -2955,9 +2976,20 @@ def apply_global_styles() -> None:
         border-top: 1px solid #B4C2D2;
     }}
     table.data-table.grid-lines tbody tr:first-child td {{ border-top: none; }}
+    /* The navy label column has an opaque background, which under
+       border-collapse paints over the collapsed row border (it is computed but
+       hidden — the white column's border shows, the navy one's does not). Draw
+       the row separator as a 1px line in the cell BACKGROUND instead, so it is
+       always painted on top of the navy. */
     table.data-table.grid-lines tbody td.rec-k {{
-        border-top-color: rgba(248, 250, 253, 0.55);
+        border-top: none;
         border-right: 2px solid {p["accent"]};
+        background:
+            linear-gradient(to bottom, rgba(248, 250, 253, 0.6) 1px, transparent 1px),
+            {p["sidebar_bg"]};
+    }}
+    table.data-table.grid-lines tbody tr:first-child td.rec-k {{
+        background: {p["sidebar_bg"]};
     }}
     .fam-card:hover {{
         transform: translateY(-2px);
@@ -3653,6 +3685,51 @@ def apply_global_styles() -> None:
         font-weight: 650;
         font-variant-numeric: tabular-nums;
     }}
+    .gc-size-guide {{
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.55rem 1rem;
+        min-height: 52px;
+        margin: 0.45rem 0 0.2rem;
+        padding: 0.45rem 0.75rem;
+        background: color-mix(in srgb, {outcome_blue} 5%, white);
+        border: 1px solid color-mix(in srgb, {outcome_blue} 20%, white);
+        border-radius: 7px;
+    }}
+    .gc-size-label {{
+        color: {p["ink"]};
+        font-size: 0.76rem;
+        font-weight: 800;
+        margin-right: 0.15rem;
+    }}
+    .gc-size-item {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.42rem;
+        color: {p["muted"]};
+        font-size: 0.74rem;
+        white-space: nowrap;
+    }}
+    .gc-bubble {{
+        display: inline-block;
+        flex: none;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 0 0 3px color-mix(in srgb, {outcome_blue} 12%, transparent);
+    }}
+    .gc-bubble.one {{
+        width: 12px; height: 12px;
+        background: {theme["chart"]["network_node_one"]};
+    }}
+    .gc-bubble.two {{
+        width: 17px; height: 17px;
+        background: {theme["chart"]["network_node_two"]};
+    }}
+    .gc-bubble.twelve {{
+        width: 42px; height: 42px;
+        background: {theme["chart"]["network_hub"]};
+    }}
     .gc-followups {{ margin-top: 1rem; }}
     /* The two follow-up cards: amber = the material one-off to check, teal = the
        repeated source-data pattern. A header row carries an icon, the kicker
@@ -3684,6 +3761,14 @@ def apply_global_styles() -> None:
     }}
     .gc-followups .twin-label {{ margin-bottom: 0; flex: 1; }}
     .gc-oneoff .twin-label {{ color: {family_colors["gold_unwrought"]}; }}
+    .gc-definition-tip.tip {{
+        display: inline-flex;
+        vertical-align: middle;
+        margin-left: 0.2rem;
+        color: {p["accent"]};
+        text-decoration: none;
+    }}
+    .gc-definition-tip.tip svg {{ width: 0.9rem; height: 0.9rem; }}
     .gc-card-metric {{
         display: flex;
         flex-direction: column;
@@ -3748,12 +3833,87 @@ def apply_global_styles() -> None:
         text-transform: uppercase;
         margin-bottom: 0.4rem;
     }}
-
+    .st-key-gc_country_map .data-table-wrap {{ width: 100%; }}
+    .st-key-gc_country_map .data-table th,
+    .st-key-gc_country_map .data-table td {{ white-space: nowrap; }}
+    .st-key-gc_country_map .data-table th:nth-child(2),
+    .st-key-gc_country_map .data-table td:nth-child(2) {{ min-width: 9rem; }}
+    .gc-conclusion {{
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(17rem, 0.75fr);
+        gap: 1.2rem;
+        align-items: center;
+        color: {p["sidebar_ink"]};
+        background: {p["sidebar_bg"]};
+        border-left: 4px solid {p["accent"]};
+        border-radius: 8px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 7px 20px color-mix(in srgb, {p["sidebar_bg"]} 16%, transparent);
+    }}
+    .gc-conclusion-title {{
+        color: #FFFFFF;
+        font-size: 1.02rem;
+        font-weight: 800;
+        line-height: 1.35;
+        margin-bottom: 0.35rem;
+    }}
+    .gc-conclusion p {{
+        color: {p["sidebar_ink"]};
+        font-size: 0.88rem;
+        line-height: 1.55;
+        margin: 0;
+    }}
+    .gc-conclusion-actions {{
+        display: grid;
+        gap: 0.42rem;
+    }}
+    .gc-conclusion-actions span {{
+        position: relative;
+        color: #FFFFFF;
+        border: 1px solid color-mix(in srgb, {p["sidebar_ink"]} 32%, transparent);
+        border-radius: 6px;
+        padding: 0.48rem 0.65rem 0.48rem 1.7rem;
+        font-size: 0.78rem;
+        font-weight: 650;
+        line-height: 1.35;
+    }}
+    .gc-conclusion-actions span::before {{
+        content: "✓";
+        position: absolute;
+        left: 0.62rem;
+        color: {p["accent"]};
+        font-weight: 900;
+    }}
+    .st-key-gc_next_page {{
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.55rem;
+    }}
+    .st-key-gc_next_page [data-testid="stPageLink"] a {{
+        width: auto;
+        min-width: 17rem;
+        justify-content: center;
+        background: {p["accent"]};
+        border-color: {p["accent"]};
+    }}
+    .st-key-gc_next_page [data-testid="stPageLink"] a p,
+    .st-key-gc_next_page [data-testid="stPageLink"] a span {{
+        color: #FFFFFF !important;
+        font-weight: 750;
+    }}
+    .st-key-gc_next_page [data-testid="stPageLink"] a:hover {{
+        background: {at};
+        border-color: {at};
+    }}
     @media (max-width: 1050px) {{
         .src-grid, .fam-grid {{ grid-template-columns: 1fr; }}
         .src-preview {{ position: static; opacity: 1; visibility: visible;
                         transform: none; margin-top: 0.5rem; }}
         .fam-card .src-preview {{ margin-top: 0.5rem; }}
+        [data-testid="stMain"]:has(.gc-page-marker) .stat-band.three {{
+            grid-template-columns: 1fr;
+        }}
+        .gc-conclusion {{ grid-template-columns: 1fr; }}
     }}
     @media (max-width: 900px) {{
         .mc-flow {{ flex-direction: column; }}
@@ -3775,6 +3935,23 @@ def apply_global_styles() -> None:
     }}
     @media (max-width: 560px) {{
         .mc-eval-facts {{ grid-template-columns: 1fr; }}
+        .mental-model.coverage-boundary {{
+            display: block;
+            padding: 0.9rem 1rem;
+        }}
+        .mental-model.coverage-boundary .banner-icon {{
+            display: none;
+        }}
+        .mental-model.coverage-boundary .mm-stamp {{
+            display: block;
+            white-space: normal;
+            margin: 0 0 0.35rem 0;
+        }}
+        .st-key-gc_next_page,
+        .st-key-gc_next_page [data-testid="stPageLink"],
+        .st-key-gc_next_page [data-testid="stPageLink"] a {{
+            width: 100%;
+        }}
     }}
 
     /* ---- CSS-only tooltips (no JS executes inside st.markdown HTML). The

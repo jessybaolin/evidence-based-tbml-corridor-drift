@@ -130,11 +130,28 @@ def enrich_queue(queue: pd.DataFrame, features: pd.DataFrame, short_labels: dict
 
 def queue_filter_options(queue: pd.DataFrame) -> dict:
     scores = queue["selected_review_priority_score"]
+
+    def _country_labels(code_column: str, name_column: str) -> dict[str, str]:
+        # Filters keep ISO/source codes internally while dropdowns show the
+        # readable mapping. Special BACI partner codes retain source labels.
+        labels: dict[str, str] = {}
+        for code, name in queue[[code_column, name_column]].itertuples(index=False, name=None):
+            code_text = str(code)
+            name_text = "" if pd.isna(name) else str(name).strip()
+            labels[code_text] = (
+                f"{name_text} ({code_text})"
+                if name_text and name_text != code_text
+                else code_text
+            )
+        return labels
+
     return {
         "years": sorted(int(y) for y in queue["year"].unique()),
         "families": sorted(queue["family_label"].unique()),
         "exporters": sorted(queue["exporter_iso3"].unique()),
         "importers": sorted(queue["importer_iso3"].unique()),
+        "exporter_labels": _country_labels("exporter_iso3", "exporter_name"),
+        "importer_labels": _country_labels("importer_iso3", "importer_name"),
         "score_min": float(scores.min()),
         "score_max": float(scores.max()),
         "published": len(queue),

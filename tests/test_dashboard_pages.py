@@ -368,7 +368,7 @@ def test_navigation_group_order_and_renamed_reference_page():
     assert source.index('"Methodology"') < source.index('"Future State"')
     assert source.index('"Future State"') < source.index('"Appendix"')
     assert '"title": "Model Evaluation & Controls"' in source
-    assert '"title": "Gold Without Usable Quantity"' in source
+    assert '"title": "Unscored Gold Records"' in source
     assert '"title": "Gold Quantity Coverage"' not in source
     assert '"title": "Bank Implementation Pathway"' in source
     assert '"title": "Data Dictionary"' in source
@@ -497,6 +497,19 @@ def test_review_queue_redundant_counts_are_removed_and_guidance_is_retained():
     # The product-family/HS6 legend caption was removed: the HS6 codes now live
     # in the Product-family filter dropdown labels instead.
     assert "Colored dots identify product families" not in text
+
+
+def test_review_queue_country_filters_show_names_and_keep_iso_values():
+    at = _run_page("review_queue.py")
+    exporter = next(item for item in at.multiselect if item.key == "queue_exporters")
+    importer = next(item for item in at.multiselect if item.key == "queue_importers")
+
+    assert "Spain (ESP)" in exporter.options
+    assert "Nepal (NPL)" in importer.options
+
+    at = exporter.select("Spain (ESP)").run()
+    exporter = next(item for item in at.multiselect if item.key == "queue_exporters")
+    assert exporter.value == ["ESP"]
 
 
 def test_review_queue_product_column_uses_flat_family_dot():

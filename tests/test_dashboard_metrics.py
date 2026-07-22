@@ -49,6 +49,8 @@ def test_queue_filters_and_empty_result(queue, features, content):
     enriched = _enriched(queue, features, content)
     options = metrics.queue_filter_options(enriched)
     assert options["published"] == len(enriched)
+    assert options["exporter_labels"]["ESP"] == "Spain (ESP)"
+    assert options["importer_labels"]["NPL"] == "Nepal (NPL)"
     all_rows = metrics.apply_queue_filters(enriched, {})
     assert len(all_rows) == len(enriched)
     year = options["years"][0]
