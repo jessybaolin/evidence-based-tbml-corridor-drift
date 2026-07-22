@@ -3928,23 +3928,110 @@ def apply_global_styles() -> None:
         border-color: color-mix(in srgb, {case_maroon} 88%, black);
     }}
 
-    /* ---- Gold Quantity Coverage: finding strip, follow-up cards, pathway
+    /* ---- Gold Quantity Coverage: route summary, follow-up cards and pathway
        comparison band. The caveat box and KPI band reuse shared classes. ---- */
-    .gc-strip {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-        margin: 0.3rem 0 0.75rem 0;
+    .gc-network-story {{
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 0.85fr);
+        overflow: hidden;
+        margin: 0.15rem 0 1.15rem;
+        background: #FFFFFF;
+        border: 1px solid color-mix(in srgb, {outcome_blue} 24%, white);
+        border-top: 3px solid {outcome_blue};
+        border-radius: 8px;
+        box-shadow: 0 8px 22px color-mix(in srgb, {p["sidebar_bg"]} 9%, transparent);
     }}
-    .gc-strip-chip {{
-        background: {p["accent_soft"]};
+    .gc-network-story-main {{
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.9rem;
+        padding: 1.1rem 1.2rem;
+    }}
+    .gc-network-story-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.35rem;
+        height: 2.35rem;
+        color: {outcome_blue};
+        background: color-mix(in srgb, {outcome_blue} 12%, white);
+        border-radius: 7px;
+    }}
+    .gc-network-story-icon svg {{ width: 1.25rem; height: 1.25rem; }}
+    .gc-network-story-kicker {{
+        color: {outcome_blue};
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+    }}
+    .gc-network-story-title {{
         color: {p["ink"]};
-        border: 1px solid {p["border"]};
-        border-radius: 999px;
-        padding: 0.22rem 0.75rem;
-        font-size: 0.8rem;
-        font-weight: 650;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+        margin-bottom: 0.7rem;
+    }}
+    .gc-network-story-point {{
+        display: grid;
+        grid-template-columns: 1.65rem minmax(0, 1fr);
+        gap: 0.55rem;
+        align-items: start;
+        padding: 0.55rem 0;
+        border-top: 1px solid {p["border"]};
+    }}
+    .gc-network-story-point > span {{
+        color: {outcome_blue};
+        font-size: 0.68rem;
+        font-weight: 850;
         font-variant-numeric: tabular-nums;
+        padding-top: 0.08rem;
+    }}
+    .gc-network-story-point p,
+    .gc-network-story-use p {{
+        color: {p["ink"]};
+        font-size: 0.86rem;
+        line-height: 1.48;
+        margin: 0;
+    }}
+    .gc-network-story-use {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 1.1rem 1.2rem;
+        background: color-mix(in srgb, {family_colors["gold_unwrought"]} 10%, white);
+        border-left: 1px solid color-mix(in srgb, {family_colors["gold_unwrought"]} 30%, white);
+    }}
+    .gc-network-story-use-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: color-mix(in srgb, {family_colors["gold_unwrought"]} 80%, black);
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }}
+    .gc-network-story-use-head svg {{ width: 1rem; height: 1rem; }}
+    .gc-network-story-scale {{
+        display: grid;
+        gap: 0.2rem;
+        margin-top: 0.15rem;
+        padding-top: 0.65rem;
+        border-top: 1px solid color-mix(in srgb, {family_colors["gold_unwrought"]} 35%, white);
+    }}
+    .gc-network-story-scale strong {{
+        color: color-mix(in srgb, {family_colors["gold_unwrought"]} 80%, black);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+    }}
+    .gc-network-story-scale span {{
+        color: {p["ink"]};
+        font-size: 0.82rem;
+        line-height: 1.45;
     }}
     .gc-size-guide {{
         display: flex;
@@ -4174,6 +4261,11 @@ def apply_global_styles() -> None:
         [data-testid="stMain"]:has(.gc-page-marker) .stat-band.three {{
             grid-template-columns: 1fr;
         }}
+        .gc-network-story {{ grid-template-columns: 1fr; }}
+        .gc-network-story-use {{
+            border-left: 0;
+            border-top: 1px solid color-mix(in srgb, {family_colors["gold_unwrought"]} 30%, white);
+        }}
         .gc-conclusion {{ grid-template-columns: 1fr; }}
     }}
     @media (max-width: 900px) {{
@@ -4208,6 +4300,12 @@ def apply_global_styles() -> None:
             white-space: normal;
             margin: 0 0 0.35rem 0;
         }}
+        .gc-network-story-main {{
+            grid-template-columns: 1fr;
+            gap: 0.6rem;
+            padding: 0.95rem;
+        }}
+        .gc-network-story-use {{ padding: 0.95rem; }}
         .st-key-gc_next_page,
         .st-key-gc_next_page [data-testid="stPageLink"],
         .st-key-gc_next_page [data-testid="stPageLink"] a {{

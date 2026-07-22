@@ -183,20 +183,36 @@ st.markdown(
 
 # ---- 3 · Where does the repeat pattern sit? ---------------------------------
 s3 = copy["section3"]
-section_title(s3["heading"], s3["caption"], icon="package")
+section_title(s3["heading"], icon="package")
 _rule()
-strip_items = s3["finding_strip"].format(
-    nld_linked=findings["nld_linked"], persistent=findings["persistent"],
-    outbound=findings["nld_outbound"], inbound=findings["nld_inbound"],
-    reciprocal=", ".join(findings["reciprocal_partners"]),
-).split(" · ")
-strip_html = "".join(f'<span class="gc-strip-chip">{_e(item)}</span>'
-                     for item in strip_items)
-st.markdown(f'<div class="gc-strip">{strip_html}</div>', unsafe_allow_html=True)
-st.markdown(s3["body"].format(
-    value=fm.compact_usd(findings["value_usd"]),
-    share=f'{findings["value_usd"] / summary["gap_value_usd"]:.4%}',
-))
+summary_card = s3["summary_card"]
+summary_values = {
+    "nld_linked": findings["nld_linked"],
+    "persistent": findings["persistent"],
+    "outbound": findings["nld_outbound"],
+    "inbound": findings["nld_inbound"],
+    "value": fm.compact_usd(findings["value_usd"]),
+    "share": f'{findings["value_usd"] / summary["gap_value_usd"]:.4%}',
+}
+st.markdown(
+    f'<div class="gc-network-story">'
+    f'<div class="gc-network-story-main">'
+    f'<span class="gc-network-story-icon">{render_icon("rotate-cw")}</span>'
+    f'<div><div class="gc-network-story-kicker">{_e(summary_card["kicker"])}</div>'
+    f'<div class="gc-network-story-title">{_e(summary_card["title"])}</div>'
+    f'<div class="gc-network-story-point"><span>01</span>'
+    f'<p>{_e(summary_card["concentration"].format(**summary_values))}</p></div>'
+    f'<div class="gc-network-story-point"><span>02</span>'
+    f'<p>{_e(summary_card["reciprocal"])}</p></div></div></div>'
+    f'<div class="gc-network-story-use">'
+    f'<div class="gc-network-story-use-head">{render_icon("database")}'
+    f'<span>{_e(summary_card["action_label"])}</span></div>'
+    f'<p>{_e(summary_card["action"])}</p>'
+    f'<div class="gc-network-story-scale"><strong>{_e(summary_card["scale_label"])}</strong>'
+    f'<span>{_e(summary_card["scale"].format(**summary_values))}</span></div>'
+    f'</div></div>',
+    unsafe_allow_html=True,
+)
 
 VIEW_KEYS = ["all", "nld_outbound", "nld_inbound", "reciprocal", "other"]
 view_counts = {

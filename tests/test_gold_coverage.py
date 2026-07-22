@@ -154,10 +154,10 @@ def test_page_renders_three_question_story():
     assert "0.000035%" in text
     assert "United Arab Emirates → Thailand" in text
     assert "14" in text and "702" in text
-    # Network finding strip + guardrail.
-    assert "12 of 14 touch the Netherlands" in text
-    assert "9 from the Netherlands" in text and "3 to the Netherlands" in text
-    assert "Greece, Ireland, Latvia" in text
+    # Network summary card + guardrail.
+    assert "12 of the 14 routes touch the Netherlands" in text
+    assert "9 go from the Netherlands" in text and "3 go to it" in text
+    assert "Greece, Ireland and Latvia" in text
     assert "does not identify the reporting party" in text
     assert "measure country risk" in text
     # The coverage-boundary framing in the single red banner.

@@ -1012,7 +1012,7 @@ pages:
   gold_quantity_coverage:
     eyebrow: "Methodology"
     title: "The Gold Records the Queue Cannot Assess"
-    subtitle: "A coverage audit of what unit-value scoring leaves out, whether the gap matters, and whether it repeats."
+    subtitle: ""
     # Opening mental model: why these records sit outside the queue. Every
     # figure on this page is derived live from the official panel.
     # One combined red "coverage boundary" banner (stamp + body).
@@ -1055,9 +1055,16 @@ pages:
       takeaway: "The {gap_value} headline is driven by one record, while the recurring eight-year pattern is tiny in value. That is the useful distinction: investigate the large record as an exception and the recurring routes as a data-process blind spot. Neither should enter the anomaly queue without usable quantity."
     section3:
       heading: "Where is the repeated gap concentrated?"
-      caption: "Fourteen exporter–importer routes are present from 2017 to 2024 but cannot be scored in any year."
-      finding_strip: "{nld_linked} of {persistent} touch the Netherlands · {outbound} from the Netherlands · {inbound} to the Netherlands · two-way pairs: {reciprocal}"
-      body: "The repeat pattern is concentrated: twelve of the fourteen routes touch the Netherlands, and Greece, Ireland and Latvia appear in both directions. This gives data owners a practical place to begin tracing source and processing rules. It does not show which party caused the gap, and it is not a country-risk signal. All fourteen routes together carry only about {value}, or {share} of excluded gold value, so the finding is operational rather than financially material."
+      caption: ""
+      summary_card:
+        kicker: "What the repeated routes show"
+        title: "A narrow pattern that data owners can trace"
+        concentration: "{nld_linked} of the {persistent} routes touch the Netherlands. {outbound} go from the Netherlands and {inbound} go to it."
+        reciprocal: "Greece, Ireland and Latvia appear in both directions, so the missing quantity is repeated across the same country pairs rather than scattered randomly."
+        action_label: "How to use this finding"
+        action: "Start by checking source coverage, reporting conventions and processing rules for these routes. The pattern does not identify who caused the missing quantity and must not be treated as a Netherlands or country-risk signal."
+        scale_label: "Financial scale"
+        scale: "Together, the {persistent} routes represent about {value}, or {share} of excluded gold value. This is a recurring data-quality issue worth tracing, not a financially material exposure."
       view_label: "Choose which routes to show"
       size_guide:
         label: "Circle area = routes touching country"

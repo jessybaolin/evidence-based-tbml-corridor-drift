@@ -39,7 +39,10 @@ def test_native_streamlit_theme_matches_yaml_core_palette():
         native = tomllib.load(handle)["theme"]
     palette = theme["palette"]
     assert native["primaryColor"] == palette["accent"]
-    assert native["backgroundColor"] == palette["page_bg"]
+    # backgroundColor is intentionally the panel white (not page_bg): it drives
+    # the st.dataframe (glide) header fill, which we keep white to match the
+    # cells. The visual page plane (page_bg) is painted by styles.py CSS instead.
+    assert native["backgroundColor"] == palette["panel_bg"]
     assert native["secondaryBackgroundColor"] == palette["panel_bg"]
     assert native["textColor"] == palette["ink"]
 

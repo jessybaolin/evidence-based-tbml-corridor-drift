@@ -746,3 +746,35 @@ def test_appendix_source_copy_is_concise_and_omits_provenance_rows():
     assert "Rows were filtered to the three selected HS6 codes only." in text
     assert "CMO-Historical-Data-Annual.xlsx" in text
     assert "Annual Prices (Nominal)" in text
+
+
+def test_unscored_gold_route_story_replaces_finding_chips():
+    at = _run_page("gold_quantity_coverage.py")
+    assert not at.exception
+    text = _rendered_text(at)
+
+    for removed in (
+        "A coverage audit of what unit-value scoring leaves out",
+        "Fourteen exporter–importer routes are present from 2017 to 2024",
+        "12 of 14 touch the Netherlands",
+        "9 from the Netherlands",
+        "3 to the Netherlands",
+    ):
+        assert removed not in text
+
+    for expected in (
+        "A narrow pattern that data owners can trace",
+        "12 of the 14 routes touch the Netherlands. 9 go from the Netherlands and 3 go to it.",
+        "Greece, Ireland and Latvia appear in both directions",
+        "must not be treated as a Netherlands or country-risk signal",
+        "This is a recurring data-quality issue worth tracing, not a financially material exposure.",
+    ):
+        assert expected in text
+
+    page_source = (REPO_ROOT / "dashboard" / "app_pages" /
+                   "gold_quantity_coverage.py").read_text(encoding="utf-8")
+    styles = (REPO_ROOT / "dashboard" / "components" /
+              "styles.py").read_text(encoding="utf-8")
+    assert "gc-strip" not in page_source
+    assert ".gc-strip-chip" not in styles
+    assert "gc-network-story" in page_source
