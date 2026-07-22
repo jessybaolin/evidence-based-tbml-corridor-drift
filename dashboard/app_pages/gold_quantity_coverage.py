@@ -157,6 +157,27 @@ repeated_metric = f'{persistence["persistent"]}'
 repeated_gap_share = persistence["persistent_value_usd"] / summary["gap_value_usd"]
 gold_value_usd = summary["gap_value_usd"] / summary["gap_value_share"]
 repeated_gold_share = persistence["persistent_value_usd"] / gold_value_usd
+oneoff_values = {
+    "value": fm.compact_usd(largest["value_usd"]),
+    "share": oneoff_metric,
+    "gold_share": f'{largest["share_of_gold_value"]:.4%}',
+    "active_years": n_years,
+    "other_years": n_years - 1,
+}
+repeated_values = {
+    "full_history": persistence["full_history"],
+    "n_years": n_years,
+    "count": persistence["persistent"],
+    "value": fm.compact_usd(persistence["persistent_value_usd"]),
+    "share": f'{repeated_gap_share:.4%}',
+    "gold_share": f'{repeated_gold_share:.6%}',
+}
+oneoff_points = "".join(
+    f'<li>{_e(point.format(**oneoff_values))}</li>' for point in oneoff["points"]
+)
+repeated_points = "".join(
+    f'<li>{_e(point.format(**repeated_values))}</li>' for point in repeated["points"]
+)
 st.markdown(
     f'<div class="twin-grid gc-followups">'
     f'<div class="twin-card gc-oneoff">'
@@ -165,8 +186,7 @@ st.markdown(
     f'<span class="twin-label">{_e(oneoff["kicker"])}</span>'
     f'<span class="gc-card-metric">{_e(oneoff_metric)}<small>of gap value</small></span></div>'
     f'<div class="gc-card-title">{_e(oneoff["title"].format(route=oneoff_route, year=largest["year"]))}</div>'
-    f'<p>{_e(oneoff["body"].format(value=fm.compact_usd(largest["value_usd"]), share=oneoff_metric, active_years=n_years, other_years=n_years - 1, gold_share=f"{largest["share_of_gold_value"]:.4%}"))}</p>'
-    f'<div class="gc-card-action">{_e(oneoff["action"])}</div></div>'
+    f'<ul class="gc-card-points">{oneoff_points}</ul></div>'
     f'<div class="twin-card response gc-repeated">'
     f'<div class="gc-card-head">'
     f'<span class="gc-card-icon">{render_icon("rotate-cw")}</span>'
@@ -175,8 +195,7 @@ st.markdown(
     f'data-tip="{_e(repeated["definition"])}">{render_icon("info")}</span></span>'
     f'<span class="gc-card-metric">{_e(repeated_metric)}<small>corridors</small></span></div>'
     f'<div class="gc-card-title">{_e(repeated["title"].format(count=persistence["persistent"]))}</div>'
-    f'<p>{_e(repeated["body"].format(full_history=persistence["full_history"], n_years=n_years, count=persistence["persistent"], value=fm.compact_usd(persistence["persistent_value_usd"]), share=f"{repeated_gap_share:.4%}", gold_share=f"{repeated_gold_share:.6%}"))}</p>'
-    f'<div class="gc-card-action">{_e(repeated["action"])}</div></div>'
+    f'<ul class="gc-card-points">{repeated_points}</ul></div>'
     f'</div>',
     unsafe_allow_html=True,
 )
@@ -285,7 +304,7 @@ with st.expander(s3["table_label"]):
 
 conclusion = copy["conclusion"]
 conclusion_body = conclusion["body"].format(gap_rows=f'{summary["gap_rows"]:,}')
-section_title(conclusion["heading"], conclusion["caption"], icon="shield-check")
+section_title(conclusion["heading"], icon="shield-check")
 _rule()
 st.markdown(
     f'<div class="gc-conclusion">'

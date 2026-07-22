@@ -1011,7 +1011,7 @@ pages:
       cta: "View Unscored Gold Records"
   gold_quantity_coverage:
     eyebrow: "Methodology"
-    title: "The Gold Records the Queue Cannot Assess"
+    title: "Why Some Gold Records Cannot Be Scored"
     subtitle: ""
     # Opening mental model: why these records sit outside the queue. Every
     # figure on this page is derived live from the official panel.
@@ -1044,14 +1044,18 @@ pages:
         oneoff:
           kicker: "Quantity unavailable in one year"
           title: "{route} · {year}"
-          body: "This {value} record makes up {share} of excluded gold value, but only {gold_share} of all gold value. The route appears in all {active_years} years; quantity is usable in the other {other_years}. The large headline is therefore driven by one record, not a route-wide pattern."
-          action: "Check this record against the source extract or mirror trade data."
+          points:
+            - "Financial scale: {value}, equal to {share} of excluded gold value but only {gold_share} of all gold value."
+            - "Route history: present in all {active_years} years, with usable quantity in the other {other_years}."
+            - "Takeaway: one record drives the headline, not a route-wide pattern."
         repeated:
           kicker: "Quantity unavailable every year"
           definition: "A repeated gap means the same exporter–importer route lacks usable quantity in more than one active year. Here, persistent means the route is present in all eight years and lacks usable quantity in all eight."
           title: "{count} corridors cannot be assessed in all eight years"
-          body: "Of {full_history} gold corridors present in all {n_years} years, {count} have no usable quantity in any year. Together they carry only {value}: {share} of excluded gold value and {gold_share} of all gold value. Their repetition, not their financial size, makes them worth tracing as a source-data pattern."
-          action: "Trace these routes through source, reporting and processing steps as a separate data-quality review."
+          points:
+            - "Frequency: {count} of {full_history} gold corridors present in all {n_years} years lack usable quantity every year."
+            - "Financial scale: {value}, equal to {share} of excluded gold value and {gold_share} of all gold value."
+            - "Takeaway: repetition makes this a source-data pattern to trace, not a financially material exposure."
       takeaway: "The {gap_value} headline is driven by one record, while the recurring eight-year pattern is tiny in value. That is the useful distinction: investigate the large record as an exception and the recurring routes as a data-process blind spot. Neither should enter the anomaly queue without usable quantity."
     section3:
       heading: "Where is the repeated gap concentrated?"
@@ -1097,7 +1101,6 @@ pages:
         gap_value: "Declared value across 8 years (USD)"
     conclusion:
       heading: "What should stakeholders conclude?"
-      caption: "The finding changes data controls, not the review queue."
       title: "Strong value coverage, with one narrow data-quality follow-up"
       body: "The main queue still assesses almost all reported gold value. The {gap_rows} excluded records should remain visible as a coverage metric, while the recurring route pattern is sent to data owners for tracing. Missing quantity should never be converted into an anomaly signal."
       actions:

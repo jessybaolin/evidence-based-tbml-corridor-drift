@@ -2102,14 +2102,10 @@ def apply_global_styles() -> None:
     }}
 
     /* Header -------------------------------------------------------------- */
+    /* The title uses the standard page-title rendering (no hero-block, no size
+       override) so it matches every other dashboard page; only the eyebrow keeps
+       the showcase's teal. */
     .bank-pathway-hero .page-eyebrow {{ color: #1f7d72; letter-spacing: .16em; }}
-    .bank-pathway-hero .page-title {{
-        font-size: clamp(34px, 4.4vw, 52px);
-        font-weight: 900;
-        letter-spacing: -.02em;
-        line-height: 1.05;
-        color: #12253a;
-    }}
     .bank-pathway-hero .page-subtitle {{
         font-size: clamp(16px, 2vw, 20px);
         line-height: 1.5;
@@ -4146,14 +4142,34 @@ def apply_global_styles() -> None:
         margin: 0;
         color: {p["ink"]};
     }}
-    .gc-card-action {{
-        color: {p["muted"]};
-        font-size: 0.82rem;
-        line-height: 1.45;
-        border-top: 1px dashed {p["border"]};
-        padding-top: 0.5rem;
-        margin-top: 0.6rem;
+    .gc-card-points {{
+        display: grid;
+        gap: 0.48rem;
+        margin: 0.25rem 0 0;
+        padding: 0;
+        list-style: none;
     }}
+    .gc-card-points li {{
+        position: relative;
+        color: {p["ink"]};
+        font-size: 0.86rem;
+        line-height: 1.45;
+        padding: 0.48rem 0 0.48rem 1.05rem;
+        border-top: 1px solid {p["border"]};
+    }}
+    .gc-card-points li::before {{
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 1rem;
+        width: 0.34rem;
+        height: 0.34rem;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.72;
+    }}
+    .gc-oneoff .gc-card-points li::before {{ color: {family_colors["gold_unwrought"]}; }}
+    .gc-repeated .gc-card-points li::before {{ color: {p["accent"]}; }}
     /* Section divider — a hairline with a short accent segment at the left,
        matching the Business Problem & Value section rule. */
     .gc-rule {{
@@ -4193,7 +4209,6 @@ def apply_global_styles() -> None:
         align-items: center;
         color: {p["sidebar_ink"]};
         background: {p["sidebar_bg"]};
-        border-left: 4px solid {p["accent"]};
         border-radius: 8px;
         padding: 1.1rem 1.25rem;
         box-shadow: 0 7px 20px color-mix(in srgb, {p["sidebar_bg"]} 16%, transparent);

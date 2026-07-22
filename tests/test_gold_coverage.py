@@ -134,7 +134,9 @@ def test_page_renders_three_question_story():
     at = _run_page()
     assert not at.exception
     text = _text(at)
-    assert "The Gold Records the Queue Cannot Assess" in text
+    assert "Why Some Gold Records Cannot Be Scored" in text
+    assert "Check this record against the source extract or mirror trade data." not in text
+    assert "Trace these routes through source, reporting and processing steps" not in text
     assert "Why inspect just 0.0415% of gold value?" in text
     assert "coverage blind spot" in text
     assert "does not indicate hidden risk or a missed case" in text
@@ -183,6 +185,10 @@ def test_page_renders_three_question_story():
     assert "Direction group" in text
     assert "Part of a two-way pair" in text
     assert "Strong value coverage, with one narrow data-quality follow-up" in text
+    assert "The finding changes data controls, not the review queue" not in text
+    assert "Financial scale:" in text
+    assert "Route history:" in text
+    assert "Takeaway:" in text
     assert "Missing quantity should never be converted into an anomaly signal" in text
     page_link_labels = [str(getattr(link, "label", "")) for link in at.get("page_link")]
     assert "Continue to Bank Implementation Pathway" in page_link_labels

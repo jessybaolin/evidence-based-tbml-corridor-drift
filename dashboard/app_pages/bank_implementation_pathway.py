@@ -338,7 +338,7 @@ render_page_header(
     copy["title"],
     copy["subtitle"],
     copy["eyebrow"],
-    "hero-block bank-pathway-hero anim",
+    "bank-pathway-hero anim",
 )
 
 # Future-state boundary banner (fixed wording; label stacked over the sentence).
