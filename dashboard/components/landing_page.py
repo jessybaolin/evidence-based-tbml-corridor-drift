@@ -6,7 +6,7 @@ call-to-action are the landing-only copy in the `landing` block. Nothing is
 reworded in code — every string lives in content.yml.
 
 The CTA is a real Streamlit button: clicking it records the session flag via
-services.session_state and switches to Business Problem & Value. No timers, no
+services.session_state and switches to Business Problem and Value. No timers, no
 automatic redirects — the user always chooses to enter.
 """
 

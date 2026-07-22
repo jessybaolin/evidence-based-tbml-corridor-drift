@@ -24,11 +24,22 @@ def _e(value: object) -> str:
     return html.escape(str(value), quote=True)
 
 
-def _section_heading(title: str, caption: str | None = None) -> str:
+def _section_heading(
+    title: str,
+    caption: str | None = None,
+    info: str | None = None,
+) -> str:
     caption_html = f'<div class="bank-section-caption">{_e(caption)}</div>' if caption else ""
+    info_html = (
+        '<span class="bank-section-info tip" tabindex="0" role="note" '
+        f'aria-label="More information about {_e(title)}" data-tip="{_e(info)}">'
+        f'{render_icon("info")}</span>'
+        if info else ""
+    )
     return (
         '<div class="bank-section-heading">'
-        f'<div class="bank-section-title">{_e(title)}</div>{caption_html}</div>'
+        f'<div class="bank-section-title">{_e(title)}{info_html}</div>'
+        f'{caption_html}</div>'
     )
 
 
@@ -91,7 +102,26 @@ def _ai_steps(items: list[dict[str, str]]) -> str:
     return "".join(steps)
 
 
-render_page_header(copy["title"], copy["subtitle"], copy["eyebrow"], "hero-block anim")
+def _ai_outputs(items: list[dict[str, str]]) -> str:
+    outputs = []
+    for index, item in enumerate(items, start=1):
+        outputs.append(
+            f'<article class="bank-ai-output bank-ai-output-{index}">'
+            f'{render_icon_badge(item["icon"], class_name="bank-ai-output-icon")}'
+            '<div class="bank-ai-output-copy">'
+            f'<div class="bank-ai-output-title">{_e(item["title"])}</div>'
+            f'<div class="bank-ai-output-detail">{_e(item["detail"])}</div>'
+            '</div></article>'
+        )
+    return "".join(outputs)
+
+
+render_page_header(
+    copy["title"],
+    copy["subtitle"],
+    copy["eyebrow"],
+    "hero-block bank-pathway-hero anim",
+)
 render_info_banner(
     copy["boundary"]["label"],
     copy["boundary"]["body"],
@@ -102,9 +132,7 @@ render_info_banner(
 role = copy["role"]
 st.markdown(
     '<section class="landing-section bank-role bank-reveal">'
-    f'{_section_heading(role["heading"])}'
-    f'<p class="landing-prose">{_e(role["body"])}</p>'
-    f'<p class="landing-prose">{_e(role["body_2"])}</p>'
+    f'{_section_heading(role["heading"], info=role["info"])}'
     f'<div class="bank-fit-rail">{_fit_steps(role["steps"])}</div>'
     '</section>',
     unsafe_allow_html=True,
@@ -155,7 +183,7 @@ st.markdown(
 )
 
 ai = copy["ai_extension"]
-uses = "".join(f'<li>{_e(item)}</li>' for item in ai["uses"])
+outputs = _ai_outputs(ai["outputs"])
 guardrails = "".join(
     f'<span class="bank-ai-guardrail">{render_icon("shield-check")}{_e(item)}</span>'
     for item in ai["guardrails"]
@@ -164,48 +192,16 @@ st.markdown(
     '<section class="landing-section reveal">'
     f'{_section_heading(ai["heading"], ai["caption"])}'
     '<div class="bank-ai-shell">'
+    f'<div class="bank-ai-value">{render_icon("brain")}<span>{_e(ai["value_statement"])}</span></div>'
     f'<div class="bank-ai-flow">{_ai_steps(ai["steps"])}</div>'
     '<div class="bank-ai-support">'
-    '<div class="bank-ai-uses">'
-    f'<div class="bank-ai-support-title">{_e(ai["uses_heading"])}</div>'
-    f'<ul>{uses}</ul></div>'
+    '<div class="bank-ai-outputs">'
+    f'<div class="bank-ai-support-title">{_e(ai["outputs_heading"])}</div>'
+    f'<div class="bank-ai-output-grid">{outputs}</div></div>'
     '<div class="bank-ai-guardrails">'
     f'<div class="bank-ai-support-title">{_e(ai["guardrail_heading"])}</div>'
     f'<div class="bank-ai-guardrail-grid">{guardrails}</div>'
     '</div></div></div></section>',
-    unsafe_allow_html=True,
-)
-
-adoption = copy["adoption"]
-stages = []
-for stage in adoption["stages"]:
-    stages.append(
-        '<article class="bank-stage">'
-        f'<div class="bank-stage-number">{_e(stage["number"])}</div>'
-        f'<div class="bank-stage-title">{_e(stage["title"])}</div>'
-        f'<div class="bank-stage-detail">{_e(stage["detail"])}</div>'
-        '</article>'
-    )
-st.markdown(
-    '<section class="landing-section reveal bank-adoption-section">'
-    f'{_section_heading(adoption["heading"], adoption["caption"])}'
-    f'<div class="bank-adoption">{"".join(stages)}</div>'
-    '</section>',
-    unsafe_allow_html=True,
-)
-
-controls = copy["controls"]
-control_items = "".join(
-    '<div class="bank-control-item">'
-    f'{render_icon("shield-check")}<div><div class="bank-control-title">{_e(item["title"])}</div>'
-    f'<div class="bank-control-detail">{_e(item["detail"])}</div></div></div>'
-    for item in controls["items"]
-)
-st.markdown(
-    '<section class="landing-section reveal">'
-    f'{_section_heading(controls["heading"])}'
-    f'<div class="bank-controls">{control_items}</div>'
-    '</section>',
     unsafe_allow_html=True,
 )
 

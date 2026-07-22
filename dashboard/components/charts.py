@@ -55,6 +55,12 @@ def chart_layout(height: int | None = None) -> dict:
     )
 
 
+def case_emphasis_color() -> str:
+    """The warm maroon 'case corridor' emphasis used by the model page's bar
+    charts — resolved here so page files never read the theme directly."""
+    return load_theme()["chart"]["case_corridor"]
+
+
 def family_color_map() -> dict[str, str]:
     # Keyed by the SHORT display label used on axes/legends; colour follows the
     # family entity on every page and under every filter.
@@ -111,7 +117,8 @@ def bar_single(frame: pd.DataFrame, x: str, y: str, y_title: str = "",
 def small_multiples_by_family(frame: pd.DataFrame, value_col: str,
                               hover_label: str, value_prefix: str = "",
                               value_suffix: str = "", value_fmt: str = ".3s",
-                              y_title: str = "") -> go.Figure:
+                              y_title: str = "",
+                              hover_values: pd.Series | None = None) -> go.Figure:
     """One panel per family over year, each on its OWN scale.
 
     Gold dwarfs the others (value and benchmark alike), so a shared y-axis would
@@ -120,18 +127,33 @@ def small_multiples_by_family(frame: pd.DataFrame, value_col: str,
     the unit (shown once, on the leftmost panel) so the numbers are never read
     without their units; "Year" is labelled once under the centre panel.
     """
+    plot_frame = frame.copy()
+    custom_data = None
+    if hover_values is not None:
+        # Plotly's SI formatter calls one billion "1G" (giga). Stakeholder
+        # charts use familiar business notation instead ("1B"), supplied as
+        # display-only custom data while the plotted values remain numeric.
+        plot_frame["_hover_value"] = list(hover_values)
+        custom_data = ["_hover_value"]
+
     fig = px.line(
-        frame, x="year", y=value_col, facet_col="family_label",
+        plot_frame, x="year", y=value_col, facet_col="family_label",
         color="family_label", color_discrete_map=family_color_map(),
         markers=True, facet_col_wrap=3, facet_col_spacing=0.07,
+        custom_data=custom_data,
     )
     fig.update_yaxes(matches=None, showticklabels=True, title_text="", automargin=True)
     fig.update_xaxes(dtick=1, title_text="", automargin=True)
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    hovertemplate = (
+        f"<b>%{{x}}</b><br>{hover_label}: %{{customdata[0]}}<extra></extra>"
+        if hover_values is not None
+        else (f"<b>%{{x}}</b><br>{hover_label}: {value_prefix}"
+              f"%{{y:{value_fmt}}}{value_suffix}<extra></extra>")
+    )
     fig.update_traces(
         line=dict(width=2.5), marker=dict(size=6),
-        hovertemplate=(f"<b>%{{x}}</b><br>{hover_label}: {value_prefix}"
-                       f"%{{y:{value_fmt}}}{value_suffix}<extra></extra>"),
+        hovertemplate=hovertemplate,
     )
     fig.update_layout(showlegend=False)
     if y_title:
@@ -241,15 +263,17 @@ def shap_importance_bar(values: pd.DataFrame) -> go.Figure:
 
 
 def headline_bar(frame: pd.DataFrame, label_col: str, value_col: str,
-                 emphasis_label: str, x_title: str) -> go.Figure:
+                 emphasis_label: str, x_title: str,
+                 emphasis_color: str | None = None) -> go.Figure:
     """Plain 'how much better' bars (a share, 0-100%), one method emphasised.
 
     For the stakeholder 'does it work?' beat: the chosen method against the simple
     rules and a random-review baseline. Percent labels, no metric jargon.
     """
     theme = load_theme()["chart"]
+    selected_color = emphasis_color or theme["emphasis"]
     ordered = frame.sort_values(value_col, ascending=True)
-    colors = [theme["emphasis"] if label == emphasis_label else theme["context_gray"]
+    colors = [selected_color if label == emphasis_label else theme["context_gray"]
               for label in ordered[label_col]]
     fig = go.Figure(go.Bar(
         x=ordered[value_col], y=ordered[label_col], orientation="h",
@@ -263,36 +287,43 @@ def headline_bar(frame: pd.DataFrame, label_col: str, value_col: str,
     return fig
 
 
-def driver_dumbbell(frame: pd.DataFrame, queue_label: str, population_label: str,
-                    x_title: str) -> go.Figure:
-    """One shared 0-100 percentile scale showing the queue is extreme on every lens.
-
-    Each row is a drift lens; a grey dot marks a typical route (the 50th
-    percentile) and an accent dot marks a typical queue row, joined by a line.
-    The visual point: on all four measures at once, queue rows sit near the top.
-    """
-    theme = load_theme()["chart"]
+def review_capacity_tradeoff(frame: pd.DataFrame, current_k: int,
+                             precision_label: str, recall_label: str,
+                             x_title: str, y_title: str) -> go.Figure:
+    """One shared percentage axis for the review-capacity trade-off."""
+    theme = load_theme()
+    chart = theme["chart"]
+    palette = theme["palette"]
     fig = go.Figure()
-    for _, row in frame.iterrows():
-        fig.add_scatter(
-            x=[row["population_pct"], row["queue_pct"]], y=[row["label"], row["label"]],
-            mode="lines", line=dict(color=theme["axis_color"], width=2),
-            showlegend=False, hoverinfo="skip",
-        )
     fig.add_scatter(
-        x=frame["population_pct"], y=frame["label"], mode="markers", name=population_label,
-        marker=dict(size=12, color=theme["context_gray"],
-                    line=dict(color=theme["marker_outline"], width=1)),
-        hovertemplate="%{y}<br>" + population_label + ": %{x:.0f} of 100<extra></extra>",
+        x=frame["capacity"], y=frame["precision_pct"],
+        mode="lines+markers", name=precision_label,
+        line=dict(color=chart["case_corridor"], width=3), marker=dict(size=8),
+        customdata=frame[["found", "capacity"]],
+        hovertemplate=("<b>%{fullData.name}</b><br>Review %{x} rows"
+                       "<br>%{y:.1f}% of the queue are planted patterns"
+                       "<br>%{customdata[0]:.0f} of %{customdata[1]:.0f} rows<extra></extra>"),
     )
     fig.add_scatter(
-        x=frame["queue_pct"], y=frame["label"], mode="markers", name=queue_label,
-        marker=dict(size=13, color=theme["emphasis"],
-                    line=dict(color=theme["marker_outline"], width=1)),
-        hovertemplate="%{y}<br>" + queue_label + ": %{x:.0f} of 100<extra></extra>",
+        x=frame["capacity"], y=frame["recall_pct"],
+        mode="lines+markers", name=recall_label,
+        line=dict(color=palette["navy_700"], width=3), marker=dict(size=8),
+        customdata=frame[["found", "positives"]],
+        hovertemplate=("<b>%{fullData.name}</b><br>Review %{x} rows"
+                       "<br>%{y:.1f}% of all planted patterns found"
+                       "<br>%{customdata[0]:.0f} of %{customdata[1]:.0f} patterns<extra></extra>"),
     )
-    fig.update_layout(xaxis_title=x_title, yaxis_title="",
-                      xaxis=dict(range=[0, 100]), legend_title_text="")
+    fig.add_vline(
+        x=current_k, line_width=2, line_dash="dash",
+        line_color=theme["selection"]["border"],
+        annotation_text=f"Current Top {current_k}", annotation_position="top right",
+        annotation_font_color=theme["evaluation"]["label_ink"],
+    )
+    fig.update_layout(
+        xaxis_title=x_title, yaxis_title=y_title, legend_title_text="",
+        xaxis=dict(tickmode="array", tickvals=frame["capacity"].tolist()),
+        yaxis=dict(range=[0, 100], ticksuffix="%"),
+    )
     return fig
 
 
@@ -445,5 +476,198 @@ def case_peer_view(position: dict, copy: dict) -> go.Figure:
                    ticktext=[f"{10 ** t:g}×" for t in tickvals],
                    title=copy["x_title"]),
         yaxis_title=copy["y_title"], bargap=0.0, showlegend=False,
+    )
+    return fig
+
+
+# ---- Gold quantity coverage --------------------------------------------------
+
+def coverage_share_bars(products: pd.DataFrame, mode: str, copy: dict) -> go.Figure:
+    """One coverage-gap share per product family — rows or declared value.
+
+    Two calls side by side replace the notebook's 1×2 subplot so each chart
+    keeps a single y-axis. Colour follows the family entity; every tooltip
+    carries the numerator and denominator behind its percentage.
+    """
+    theme = load_theme()
+    families = theme["families"]
+    labels = load_content()["family_short_labels"]
+    frame = products.copy()
+    frame["label"] = frame["family_id"].map(lambda f: labels.get(f, f))
+    colors = [families.get(f, theme["chart"]["context_gray"]) for f in frame["family_id"]]
+    if mode == "rows":
+        y = frame["gap_row_rate"]
+        text = [f"{v:.1%}" for v in y]
+        custom = list(zip(frame["gap_rows"].astype(int), frame["rows"].astype(int)))
+        hover = ("%{x}<br>" + copy["rows_hover"]
+                 + ": %{customdata[0]:,} of %{customdata[1]:,}"
+                 + "<br>%{y:.2%}<extra></extra>")
+        tickformat = ".0%"
+    else:
+        y = frame["gap_value_share"]
+        text = [f"{v:.4%}" for v in y]
+        custom = list(zip(frame["gap_value_usd"], frame["total_value_usd"]))
+        hover = ("%{x}<br>" + copy["value_hover"]
+                 + ": $%{customdata[0]:,.0f} of $%{customdata[1]:,.0f}"
+                 + "<br>%{y:.4%}<extra></extra>")
+        tickformat = ".2%"
+    fig = go.Figure(go.Bar(
+        x=frame["label"], y=y, marker_color=colors, marker_line_width=0,
+        width=0.55, text=text, textposition="outside", customdata=custom,
+        hovertemplate=hover, showlegend=False,
+    ))
+    fig.update_layout(
+        yaxis=dict(tickformat=tickformat, rangemode="tozero"),
+        xaxis_title="", yaxis_title="",
+    )
+    return fig
+
+
+def gap_persistence_scatter(corridors: pd.DataFrame, copy: dict) -> go.Figure:
+    """Gap years vs declared gap value (log y): materiality and persistence
+    single out different corridors. Grey context, amber top-15 by value, teal
+    persistent cluster; the two annotations carry pre-formatted page text.
+    """
+    import math
+
+    theme = load_theme()
+    chart = theme["chart"]
+    amber = theme["families"]["gold_unwrought"]
+    styles = {
+        "other": dict(color=chart["context_gray"], size=6, opacity=0.55),
+        "top_value": dict(color=amber, size=10, opacity=0.9),
+        "persistent": dict(color=chart["emphasis"], size=10, opacity=0.9),
+    }
+    fig = go.Figure()
+    for key in ("other", "top_value", "persistent"):
+        frame = corridors[corridors["pattern"].eq(key)]
+        fig.add_scatter(
+            x=frame["gap_years"], y=frame["gap_value_usd"], mode="markers",
+            name=copy[f"series_{key}"],
+            marker=dict(**styles[key], line=dict(width=0)),
+            customdata=list(zip(
+                frame["exporter_name"], frame["importer_name"],
+                frame["active_years"].astype(int),
+            )),
+            hovertemplate=("%{customdata[0]} → %{customdata[1]}"
+                           "<br>" + copy["hover_years"]
+                           + ": %{x:.0f} of %{customdata[2]:.0f}"
+                           "<br>" + copy["hover_value"]
+                           + ": $%{y:,.0f}<extra></extra>"),
+        )
+    largest = corridors.loc[corridors["gap_value_usd"].idxmax()]
+    fig.add_annotation(
+        x=float(largest["gap_years"]), y=math.log10(float(largest["gap_value_usd"])),
+        yref="y", text=copy["annotation_largest"], showarrow=True, arrowhead=2,
+        arrowcolor=amber, ax=52, ay=6, font=dict(size=12), align="left",
+    )
+    persistent = corridors[corridors["pattern"].eq("persistent")]
+    top_persistent = float(persistent["gap_value_usd"].max())
+    fig.add_annotation(
+        x=float(persistent["gap_years"].max()), y=math.log10(top_persistent),
+        yref="y", text=copy["annotation_persistent"], showarrow=True, arrowhead=2,
+        arrowcolor=chart["emphasis"], ax=-38, ay=-42, font=dict(size=12), align="left",
+    )
+    fig.update_layout(
+        xaxis=dict(title=copy["x_title"], dtick=1, rangemode="tozero"),
+        yaxis=dict(title=copy["y_title"], type="log", tickprefix="$"),
+    )
+    return fig
+
+
+def _curved_edge(x0: float, y0: float, x1: float, y1: float,
+                 bend: float, points: int = 30) -> tuple[list[float], list[float]]:
+    # Quadratic bezier: reciprocal pairs bend apart so both directions stay
+    # visible; single-direction edges stay straight (bend 0).
+    mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    dx, dy = x1 - x0, y1 - y0
+    dist = max((dx * dx + dy * dy) ** 0.5, 1e-9)
+    cx, cy = mx - dy / dist * bend, my + dx / dist * bend
+    ts = [i / (points - 1) for i in range(points)]
+    xs = [(1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t ** 2 * x1 for t in ts]
+    ys = [(1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t ** 2 * y1 for t in ts]
+    return xs, ys
+
+
+def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
+                           view: str, copy: dict) -> go.Figure:
+    """Directed node-link view of the corridors that lack usable quantity in
+    every active year. Node positions are fixed across every filtered view so
+    viewers keep their spatial orientation; layout carries no geographic or
+    risk meaning. Arrows point exporter → importer.
+    """
+    theme = load_theme()
+    chart = theme["chart"]
+    p = theme["palette"]
+    amber = theme["families"]["gold_unwrought"]
+    styles = {
+        "nld_outbound": dict(color=amber, dash="solid"),
+        "nld_inbound": dict(color=chart["emphasis"], dash="solid"),
+        "other": dict(color=chart["context_gray"], dash="dot"),
+    }
+    if view == "reciprocal":
+        shown = edges[edges["reciprocal"]]
+    elif view in styles:
+        shown = edges[edges["category"].eq(view)]
+    else:
+        shown = edges
+    involved = set(shown["exporter_iso3"]) | set(shown["importer_iso3"])
+
+    fig = go.Figure()
+    seen: set[str] = set()
+    for _, edge in shown.iterrows():
+        style = styles[edge["category"]]
+        xs, ys = _curved_edge(edge["x0"], edge["y0"], edge["x1"], edge["y1"],
+                              bend=0.14 if edge["reciprocal"] else 0.0)
+        category = str(edge["category"])
+        fig.add_scatter(
+            x=xs, y=ys, mode="lines",
+            line=dict(color=style["color"], dash=style["dash"], width=2.2),
+            name=copy["edge_" + category], legendgroup=category,
+            showlegend=category not in seen, hoverinfo="skip",
+        )
+        seen.add(category)
+        # Direction arrow at ~76% along the curve, plus an invisible midpoint
+        # marker that carries the corridor tooltip.
+        tip = int(len(xs) * 0.76)
+        fig.add_annotation(
+            x=xs[tip], y=ys[tip], ax=xs[tip - 2], ay=ys[tip - 2],
+            xref="x", yref="y", axref="x", ayref="y", showarrow=True,
+            arrowhead=3, arrowsize=1.6, arrowwidth=1.4, arrowcolor=style["color"],
+            text="",
+        )
+        mid = len(xs) // 2
+        fig.add_scatter(
+            x=[xs[mid]], y=[ys[mid]], mode="markers",
+            marker=dict(size=18, opacity=0.0), showlegend=False,
+            customdata=[[edge["exporter_name"], edge["importer_name"],
+                         int(edge["gap_years"]), int(edge["active_years"]),
+                         float(edge["gap_value_usd"])]],
+            hovertemplate=("%{customdata[0]} → %{customdata[1]}"
+                           "<br>" + copy["hover_years"]
+                           + ": %{customdata[2]} of %{customdata[3]}"
+                           "<br>" + copy["hover_value"]
+                           + ": $%{customdata[4]:,.0f}<extra></extra>"),
+        )
+
+    dimmed = nodes["iso3"].map(lambda c: 1.0 if c in involved else 0.3)
+    sizes = 16 + nodes["connections"] * 2.6
+    fig.add_scatter(
+        x=nodes["x"], y=nodes["y"], mode="markers+text",
+        marker=dict(size=sizes, color=p["sidebar_bg"],
+                    opacity=dimmed, line=dict(color=p["panel_bg"], width=2)),
+        text=nodes["iso3"], textposition="bottom center",
+        textfont=dict(size=11, color=p["ink"]),
+        customdata=list(zip(nodes["country"], nodes["outbound"], nodes["inbound"])),
+        hovertemplate=("<b>%{customdata[0]}</b>"
+                       "<br>" + copy["hover_outbound"] + ": %{customdata[1]}"
+                       "<br>" + copy["hover_inbound"] + ": %{customdata[2]}"
+                       "<extra></extra>"),
+        showlegend=False,
+    )
+    fig.update_layout(
+        xaxis=dict(visible=False, range=[-1.45, 1.45]),
+        yaxis=dict(visible=False, range=[-1.3, 1.3], scaleanchor="x"),
+        legend=dict(orientation="h", yanchor="top", y=1.08, x=0),
     )
     return fig

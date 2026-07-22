@@ -26,6 +26,7 @@ from dashboard.components.banners import render_info_banner
 from dashboard.components.cards import kpi_card_markup, source_card_markup
 from dashboard.components.scroll_reveal import render_scroll_reveal
 from dashboard.components.page_header import ledger, page_header
+from dashboard.services import data_dictionary as ddict
 from dashboard.services import data_loader as load
 from dashboard.services import formatting as fm
 
@@ -37,6 +38,7 @@ panel = load.load_panel(columns=(
     "obs_id", "year", "family_id", "product_name", "hs6",
     "exporter_name", "importer_name", "trade_value_usd", "quantity_metric_ton",
     "model_eligible", "benchmark_price_original", "benchmark_unit_original",
+    "benchmark_price_usd_per_metric_ton", "unit_value_usd_per_metric_ton",
 ))
 queue = load.load_review_queue()
 benchmark_series = load.load_benchmark_series_config() or []
@@ -76,6 +78,31 @@ _gold = panel[
 ]
 gold_bench = _gold.loc[_gold["year"].idxmax()] if not _gold.empty else None
 
+# Time-safe signals for the sample obs, read from the features table — the same
+# columns that feed the ranking — so the demonstration table below traces the
+# metrics straight back to one auditable row. Values are formatted on the page.
+_feat = load.load_features(columns=(
+    "obs_id", "robust_historical_z", "same_family_year_peer_percentile",
+    "unit_value_usd_per_metric_ton", "benchmark_price_usd_per_metric_ton",
+    "unit_value_yoy_change", "benchmark_residual",
+    "value_quantity_divergence", "corridor_activity_history",
+    "corridor_novelty_flag", "corridor_reactivation_flag",
+))
+_sf = _feat[_feat["obs_id"] == sample["obs_id"]]
+sample_signals = _sf.iloc[0] if not _sf.empty else None
+
+# Authoritative field definitions for the in-table info icons, read from the
+# same sources the Appendix data dictionary uses (feature-explanation table,
+# then the code-derived definitions) so the tooltips can never drift from it.
+_feat_expl = load.load_feature_explanations()
+_TIPS = {
+    field: ddict.field_tooltip(field, _feat_expl)
+    for field in (
+        "unit_value_usd_per_metric_ton", "unit_value_yoy_change",
+        "same_family_year_peer_percentile", "benchmark_residual",
+    )
+}
+
 
 def _e(text: object) -> str:
     return html.escape(str(text), quote=True)
@@ -84,6 +111,109 @@ def _e(text: object) -> str:
 def _tip(term: str, tip: str) -> str:
     # CSS-only tooltip (styles.py .tip): opens on hover and keyboard focus.
     return f'<span class="tip" tabindex="0" data-tip="{_e(tip)}">{_e(term)}</span>'
+
+
+def _year_list_phrase(yrs: list[int]) -> str:
+    # "2022, 2023 or 2024" / "2024" / "later years" — a natural spoken list.
+    labels = [str(y) for y in yrs]
+    if not labels:
+        return "later years"
+    if len(labels) == 1:
+        return labels[0]
+    return ", ".join(labels[:-1]) + " or " + labels[-1]
+
+
+def _th(label: str, tip: str | None = None) -> str:
+    # A table header cell. When a definition is supplied it carries a native
+    # `title` tooltip (browser-rendered, so — unlike a CSS tooltip — it is never
+    # clipped by the table's horizontal-scroll wrapper) plus a small ⓘ cue.
+    # Each line of the definition is escaped, then joined with a newline entity
+    # so the derivation drops onto its own line in the tooltip (a raw "\n" can be
+    # collapsed by the markdown pipeline; "&#10;" renders reliably).
+    if tip:
+        tip_attr = "&#10;".join(_e(line) for line in tip.split("\n"))
+        return (f'<th title="{tip_attr}">{_e(label)} '
+                f'<span class="th-info" aria-hidden="true">ⓘ</span></th>')
+    return f"<th>{_e(label)}</th>"
+
+
+def _row_panel_cells() -> list[tuple[str, str, str, str | None]]:
+    """The one clean annual row, as (label, value, css, tooltip) cells.
+
+    Shared by the "build one clean annual row" table and the signals table so
+    both show the identical prepared row; only the signals table appends the
+    derived columns. Values come from the real sample observation.
+    """
+    fields = copy["scene2"]["row_panel"]["record_fields"]
+    bench_mt = sample["benchmark_price_usd_per_metric_ton"]
+    uv_mt = sample["unit_value_usd_per_metric_ton"]
+    return [
+        (fields["observation_id"], str(sample["obs_id"]), "mono", None),
+        (fields["year"], str(int(sample["year"])), "num", None),
+        (fields["corridor"],
+         f'{sample["exporter_name"]} → {sample["importer_name"]}', "", None),
+        (fields["product"],
+         f'{short_labels.get(sample["family_id"], sample["product_name"])} · HS6 {sample["hs6"]}',
+         "", None),
+        (fields["trade_value"], fm.money(sample["trade_value_usd"]), "num", None),
+        (fields["quantity"], fm.quantity_mt(sample["quantity_metric_ton"]), "num", None),
+        # Implied unit value, beside its world-market benchmark; the info icon
+        # carries the data-dictionary definition of why it is an "implied
+        # aggregate unit value for one metric ton".
+        (fields["unit_value"], fm.money(uv_mt) if uv_mt == uv_mt else "—", "num",
+         _TIPS["unit_value_usd_per_metric_ton"]),
+        (fields["benchmark"],
+         fm.money(bench_mt) if bench_mt == bench_mt else "—", "num", None),
+    ]
+
+
+def _signals_table_html(timesafe: dict, focus_year: int) -> str:
+    """The same prepared row, replicated, then extended with three derived,
+    time-safe signals read from the features table (the same columns that feed
+    the ranking) so a reader can trace each signal back to one auditable row.
+    Each derived column carries its data-dictionary definition as an info icon.
+    """
+    if sample_signals is None:
+        return ""
+    table_copy = timesafe["signal_table"]
+    sig_labels = table_copy["signal_columns"]
+    s = sample_signals
+
+    def _n(value):
+        return value if value == value else None  # NaN → None
+
+    yoy = _n(s["unit_value_yoy_change"])
+    peer = _n(s["same_family_year_peer_percentile"])
+    resid = _n(s["benchmark_residual"])
+
+    cells = _row_panel_cells() + [
+        (sig_labels["unit_value_yoy"],
+         f"{yoy * 100:+.1f}%" if yoy is not None else "—", "num",
+         _TIPS["unit_value_yoy_change"]),
+        (sig_labels["peer_percentile"],
+         f"{round(peer * 100)}th pct" if peer is not None else "—", "num",
+         _TIPS["same_family_year_peer_percentile"]),
+        (sig_labels["benchmark_residual"],
+         f"{resid:+.3f}" if resid is not None else "—", "num",
+         _TIPS["benchmark_residual"]),
+    ]
+    head_html = "".join(_th(label, tip) for label, _, _, tip in cells)
+    val_html = "".join(f'<td class="{css}">{_e(v)}</td>' for _, v, css, _ in cells)
+
+    # The table shows three signals as an example; note how many are derived in
+    # total, counted live from the feature-explanation table (the Data Dictionary
+    # source) so the number never drifts. Omit the note if that file is absent.
+    intro_text = table_copy["intro"].format(focus_year=focus_year)
+    total_signals = len(_feat_expl) if _feat_expl is not None else 0
+    if total_signals:
+        intro_text += " " + table_copy["scope_note"].format(total_signals=total_signals)
+    return (
+        f'<p class="prep-body sig-table-intro">{_e(intro_text)}</p>'
+        f'<div class="data-table-wrap prep-record-table prep-signals-table">'
+        f'<table class="data-table"><thead><tr>{head_html}</tr></thead>'
+        f'<tbody><tr>{val_html}</tr></tbody></table></div>'
+        f'<div class="mini-note">{_e(table_copy["caption"])}</div>'
+    )
 
 
 # ---- Page frame: header · sticky mental model · trust KPI strip --------------
@@ -277,8 +407,9 @@ def _scene_sources() -> None:
 
     _block(
         f'<div class="landing-section sb reveal b1">'
-        f'<div class="landing-heading">{_e(s1["heading"])}</div></div>'
+        f'<div class="landing-heading">{_e(s1["heading"])}</div>'
         f'<div class="src-grid">{card_1}{card_2}{card_3}</div>'
+        f'</div>'
     )
 
     # Unit of analysis: one real record shown as a plain table, plus the twin
@@ -298,7 +429,7 @@ def _scene_sources() -> None:
         for label, value in record_rows
     )
     corridor = (
-        f'<div class="data-table-wrap"><table class="data-table"><tbody>'
+        f'<div class="data-table-wrap"><table class="data-table grid-lines"><tbody>'
         f"{record_body}</tbody></table></div>"
         f'<div class="mini-note">{_e(unit["record_caption"])}</div>'
     )
@@ -339,10 +470,11 @@ def _scene_sources() -> None:
     tags = "".join(f'<span class="tag">{_e(tag)}</span>' for tag in fams["tags"])
     _block(
         f'<div class="landing-section sb reveal b6">'
-        f'<div class="landing-heading">{_e(fams["heading"])}</div></div>'
+        f'<div class="landing-heading">{_e(fams["heading"])}</div>'
         f'<div class="fam-grid">{"".join(fam_cards)}</div>'
         f'<div class="sb b8"><div class="tag-row">{tags}</div>'
         f'<p class="landing-prose">{_e(fams["statement"])}</p></div>'
+        f'</div>'
     )
     ledger("panel", "hs_families", "benchmark_series")
 
@@ -365,29 +497,22 @@ def _scene_prepare() -> None:
             )
     _block(
         f'<div class="landing-section sb reveal b1">'
-        f'<div class="landing-heading">{_e(s2["heading"])}</div></div>'
+        f'<div class="landing-heading">{_e(s2["heading"])}</div>'
         f'<div class="pipe-strip">{"".join(stage_cards)}</div>'
+        f'</div>'
     )
 
     row_panel = s2["row_panel"]
-    row_fields = row_panel["record_fields"]
-    record_cells = [
-        (row_fields["observation_id"], sample["obs_id"], "mono"),
-        (row_fields["year"], str(int(sample["year"])), "num"),
-        (row_fields["corridor"],
-         f'{sample["exporter_name"]} → {sample["importer_name"]}', ""),
-        (row_fields["product"],
-         f'HS6 {sample["hs6"]} · {sample["product_name"]}', ""),
-        (row_fields["trade_value"], fm.money(sample["trade_value_usd"]), "num"),
-        (row_fields["quantity"], fm.quantity_mt(sample["quantity_metric_ton"]), "num"),
-    ]
-    record_headers = "".join(f"<th>{_e(label)}</th>" for label, _, _ in record_cells)
+    # The prepared row, carrying the implied unit value beside its benchmark; the
+    # signals table below replicates these exact cells and extends them.
+    record_cells = _row_panel_cells()
+    record_headers = "".join(_th(label, tip) for label, _, _, tip in record_cells)
     record_values = "".join(
         f'<td class="{css_class}">{_e(value)}</td>'
-        for _, value, css_class in record_cells
+        for _, value, css_class, _ in record_cells
     )
     _block(
-        f'<div class="prep-panel prep-record-panel sb b5">'
+        f'<div class="prep-panel prep-record-panel reveal sb b5">'
         f'<div class="prep-kicker">3 · {_e(s2["stages"][2]["title"])}</div>'
         f'<div class="data-table-wrap prep-record-table"><table class="data-table">'
         f'<thead><tr>{record_headers}</tr></thead>'
@@ -402,7 +527,9 @@ def _scene_prepare() -> None:
         f'<div class="sig-q">{_e(chip["question"])}</div></div>'
         for chip in timesafe["chips"]
     )
-    focus_year = 2022 if 2022 in years else years[max(0, len(years) - 3)]
+    # The time-safe illustration uses the SAME real observation shown above, so
+    # the whole scene is one coherent example (its year drives the strip).
+    focus_year = int(sample["year"])
     history_years = [y for y in years if y < focus_year]
     hidden_years = [y for y in years if y > focus_year]
     year_chips = []
@@ -416,20 +543,30 @@ def _scene_prepare() -> None:
         year_chips.append(
             f'<span class="yr hid">{y}<small>✕ {_e(timesafe["year_hidden_label"])}</small></span>'
         )
+    history_span = fm.year_span(history_years) if history_years else "—"
+    definition_text = timesafe["definition"].format(
+        focus_year=focus_year,
+        history_span=history_span,
+        hidden_phrase=_year_list_phrase(hidden_years),
+    )
     year_caption = timesafe["year_caption"].format(
         focus_year=focus_year,
-        history_span=fm.year_span(history_years) if history_years else "—",
+        history_span=history_span,
         hidden_span=fm.year_span(hidden_years) if hidden_years else "—",
     )
+    signals_table_html = _signals_table_html(timesafe, focus_year)
     _block(
-        f'<div class="prep-panel sb b7">'
+        f'<div class="prep-panel reveal sb b7">'
         f'<div class="prep-kicker">5 · {_e(s2["stages"][4]["title"])}</div>'
-        f'<p class="prep-body">{_e(timesafe["definition"])}</p>'
+        f'<p class="prep-body">{_e(definition_text)}</p>'
         f'<div class="sig-chip-row">{chips}</div>'
+        f'<div class="year-block">'
         f'<div class="mini-note year-section-heading">'
         f'{_e(timesafe["year_heading"].format(focus_year=focus_year))}</div>'
         f'<div class="year-strip">{"".join(year_chips)}</div>'
-        f'<div class="mini-note">{_e(year_caption)}</div>'
+        f'<div class="mini-note year-caption">{_e(year_caption)}</div>'
+        f'</div>'
+        f'{signals_table_html}'
         f"</div>"
     )
     ledger("panel", "source_manifest", "features")
@@ -447,11 +584,11 @@ if scene_idx == len(SCENE_LABELS) - 1:
     # model-validation deep dive, so the close reads as a single block. How the
     # ranking is tested is a separate story — a link here, not a mandatory scene.
     with st.container(key="dtrq_closing"):
-        st.markdown(
-            f'<div class="bottom-line-text">{_e(closing["statement"])}</div>'
-            f'<div class="bl-reminder">{_e(closing["reminder"])}</div>',
-            unsafe_allow_html=True,
+        statement_html = "".join(
+            f'<p class="bottom-line-text">{_e(para)}</p>'
+            for para in closing["statement"]
         )
+        st.markdown(statement_html, unsafe_allow_html=True)
         st.page_link("app_pages/model_and_controls.py",
                      label=f'{copy["model_eval_cta"]} →', icon=":material/verified_user:")
 

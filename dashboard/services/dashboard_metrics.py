@@ -323,8 +323,8 @@ def residual_context(panel: pd.DataFrame, queue: pd.DataFrame) -> tuple[pd.Serie
 
 # ---- Trade landscape (the full official panel, not the 50-row queue) -----------
 # These describe the whole official population — the reading frame a reviewer
-# needs before the queue: how large the trade is (scale), how the corridors are
-# built (structure), and how far prices moved on their own (market context).
+# needs before the queue: how large the trade is and how the wider market
+# benchmark changed over time.
 
 def _with_corridor(panel: pd.DataFrame) -> pd.DataFrame:
     frame = panel.copy()
@@ -334,41 +334,15 @@ def _with_corridor(panel: pd.DataFrame) -> pd.DataFrame:
 
 
 def trade_scale_by_family_year(panel: pd.DataFrame, short_labels: dict) -> pd.DataFrame:
-    # Value, quantity and active-corridor count per family per year. One frame
-    # feeds the scale small multiples (value/quantity toggle) and the structure
-    # active-corridor lines. Columns: family_id, family_label, year,
-    # trade_value_usd, quantity_metric_ton, active_corridors.
-    frame = _with_corridor(panel)
-    grouped = frame.groupby(["family_id", "year"], as_index=False).agg(
+    # Value and quantity per family per year. The same frame feeds the scale
+    # small multiples and their exact-value table twin.
+    grouped = panel.groupby(["family_id", "year"], as_index=False).agg(
         trade_value_usd=("trade_value_usd", "sum"),
         quantity_metric_ton=("quantity_metric_ton", "sum"),
-        active_corridors=("corridor", "nunique"),
     )
     grouped["family_label"] = grouped["family_id"].map(short_labels).fillna(
         grouped["family_id"])
     return grouped.sort_values(["family_label", "year"]).reset_index(drop=True)
-
-
-def top_corridor_share_by_family(panel: pd.DataFrame, short_labels: dict,
-                                 top_n: int = 10) -> pd.DataFrame:
-    # Share of each family's total value carried by its N largest corridors —
-    # how top-heavy the market is, and where small-denominator unit-value
-    # extremes come from. Columns: family_id, family_label, top_share_pct,
-    # top_corridors (the three biggest, for the tooltip).
-    frame = _with_corridor(panel)
-    by_corridor = frame.groupby(["family_id", "corridor"], as_index=False).agg(
-        value=("trade_value_usd", "sum"))
-    by_corridor["share"] = by_corridor["value"] / by_corridor.groupby(
-        "family_id")["value"].transform("sum")
-    ordered = by_corridor.sort_values("value", ascending=False)
-    out = ordered.groupby("family_id").head(top_n).groupby(
-        "family_id", as_index=False).agg(top_share=("share", "sum"))
-    out["top_share_pct"] = out["top_share"] * 100.0
-    names = (ordered.groupby("family_id").head(3).groupby("family_id")["corridor"]
-             .apply(lambda s: ", ".join(s)).rename("top_corridors").reset_index())
-    out = out.merge(names, on="family_id", how="left")
-    out["family_label"] = out["family_id"].map(short_labels).fillna(out["family_id"])
-    return out.sort_values("top_share_pct", ascending=False).reset_index(drop=True)
 
 
 def benchmark_by_family_year(panel: pd.DataFrame, short_labels: dict) -> pd.DataFrame:
@@ -447,16 +421,6 @@ def split_years_table(project_config: dict) -> pd.DataFrame:
 
 
 # ---- Model evaluation, in plain-language stakeholder terms ----------------------
-# The four drift lenses shown on the case page, paired with a plain label. Used by
-# driver_separation to show that queue rows are extreme on several measures at once.
-DRIVER_LENSES: list[tuple[str, str]] = [
-    ("robust_historical_z", "Distance from its own history"),
-    ("benchmark_residual", "Distance from the market benchmark"),
-    ("same_family_year_peer_percentile", "Rank among same-product peers"),
-    ("unit_value_yoy_change", "Year-over-year price move"),
-]
-
-
 def headline_eval(comparison: pd.DataFrame, selection: dict, split: str = "test") -> dict | None:
     """The plain "does it work?" numbers for the selected method vs simple rules.
 
@@ -502,32 +466,70 @@ def headline_eval(comparison: pd.DataFrame, selection: dict, split: str = "test"
     }
 
 
-def driver_separation(features: pd.DataFrame, queue_ids: set) -> pd.DataFrame:
-    """Where the queue's typical value sits among all scored rows, per lens.
+def ranking_evidence(
+    scores: pd.DataFrame,
+    selection: dict,
+    split: str = "test",
+    k: int = 50,
+) -> dict[str, float | int | str]:
+    """Recompute Top-k evidence from row-level synthetic-scenario scores.
 
-    For each drift lens, the median of the 50-row queue and of every other scored
-    row, plus the percentile the queue median occupies in the scored population
-    (0 = lowest, 100 = highest). Queue rows land near the top on ALL of them,
-    which is the plain answer to "what makes these different?". Descriptive only.
+    Sorting mirrors src/06_train_evaluate_models.metric_at_k exactly: score
+    descending, then observation ID ascending with a stable mergesort. The
+    counts make precision, recall and lift auditable without treating planted
+    labels as real-world outcomes.
     """
-    scored = (features[features["model_eligible"].astype(bool)]
-              if "model_eligible" in features.columns else features)
-    ids = {str(o) for o in queue_ids}
-    in_queue = scored["obs_id"].astype(str).isin(ids)
-    queue = scored[in_queue]
-    rest = scored[~in_queue]
+    score_col = str(selection.get("selected_score_column", "hybrid_score"))
+    required = {"obs_id", "split", "synthetic_review_priority", "hard_negative", score_col}
+    missing = required - set(scores.columns)
+    if missing:
+        raise ValueError(f"Model scores are missing required columns: {sorted(missing)}")
+
+    ranked = (
+        scores[scores["split"].eq(split)]
+        .sort_values([score_col, "obs_id"], ascending=[False, True], kind="mergesort")
+        .reset_index(drop=True)
+    )
+    k_eff = min(max(int(k), 0), len(ranked))
+    top = ranked.head(k_eff)
+    positives = int(ranked["synthetic_review_priority"].sum())
+    found = int(top["synthetic_review_priority"].sum())
+    precision = found / k_eff if k_eff else 0.0
+    recall = found / positives if positives else 0.0
+    prevalence = positives / len(ranked) if len(ranked) else 0.0
+    hard_total = int(ranked["hard_negative"].astype(bool).sum())
+    hard_top = int(top["hard_negative"].astype(bool).sum())
+    return {
+        "score_col": score_col,
+        "n": int(len(ranked)),
+        "positives": positives,
+        "k": k_eff,
+        "found": found,
+        "precision": precision,
+        "recall": recall,
+        "prevalence": prevalence,
+        "random_expected": k_eff * prevalence,
+        "lift": precision / prevalence if prevalence else 0.0,
+        "hard_negative_total": hard_total,
+        "hard_negative_top": hard_top,
+    }
+
+
+def review_capacity_curve(
+    scores: pd.DataFrame,
+    selection: dict,
+    capacities: tuple[int, ...] = (10, 25, 50, 100, 200),
+    split: str = "test",
+) -> pd.DataFrame:
+    """Precision/recall trade-off as analyst review capacity changes."""
     rows = []
-    for column, label in DRIVER_LENSES:
-        population = scored[column].dropna()
-        queue_median = float(queue[column].dropna().median())
-        rest_median = float(rest[column].dropna().median())
-        queue_pct = 100.0 * float((population <= queue_median).mean()) if len(population) else 0.0
+    for capacity in sorted(set(int(value) for value in capacities if int(value) > 0)):
+        evidence = ranking_evidence(scores, selection, split=split, k=capacity)
         rows.append({
-            "lens": column,
-            "label": label,
-            "queue_median": queue_median,
-            "rest_median": rest_median,
-            "queue_pct": queue_pct,
-            "population_pct": 50.0,
+            "capacity": int(evidence["k"]),
+            "found": int(evidence["found"]),
+            "positives": int(evidence["positives"]),
+            "precision_pct": 100.0 * float(evidence["precision"]),
+            "recall_pct": 100.0 * float(evidence["recall"]),
         })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows).drop_duplicates("capacity").reset_index(drop=True)

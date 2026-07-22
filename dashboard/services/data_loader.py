@@ -32,6 +32,7 @@ _REGENERATE_HINTS = {
     "panel": "python src/03_build_panel.py",
     "features": "python src/04_build_features.py",
     "model_comparison": "python src/06_train_evaluate_models.py",
+    "model_scores": "python src/06_train_evaluate_models.py",
     "model_selection": "python src/06_train_evaluate_models.py",
     "hybrid_candidates": "python src/06_train_evaluate_models.py",
     "scenario_split_manifest": "python src/05_build_scenarios.py",
@@ -109,6 +110,13 @@ def load_features(columns: tuple[str, ...] | None = None) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def load_model_comparison() -> pd.DataFrame:
     return pd.read_csv(_resolve("model_comparison"))
+
+
+@st.cache_data(show_spinner=False)
+def load_model_scores(columns: tuple[str, ...] | None = None) -> pd.DataFrame:
+    # Row-level synthetic-scenario scores. Pages request only the evaluation
+    # columns they need; these planted labels are never official findings.
+    return pd.read_csv(_resolve("model_scores"), usecols=list(columns) if columns else None)
 
 
 @st.cache_data(show_spinner=False)
@@ -195,6 +203,11 @@ def load_xgboost_parameters() -> dict | None:
 @st.cache_data(show_spinner=False)
 def load_project_config() -> dict:
     return yaml.safe_load(_resolve("project_config").read_text(encoding="utf-8"))
+
+
+@st.cache_data(show_spinner=False)
+def load_thresholds_config() -> dict:
+    return yaml.safe_load(_resolve("thresholds_config").read_text(encoding="utf-8"))
 
 
 @st.cache_data(show_spinner=False)

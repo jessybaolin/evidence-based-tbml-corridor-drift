@@ -18,6 +18,7 @@ WRITES (outputs): nothing — this is a read-only presentation layer.
 
 from __future__ import annotations
 
+import html
 import sys
 from pathlib import Path
 
@@ -30,6 +31,7 @@ if str(_REPO_ROOT) not in sys.path:
 import streamlit as st
 
 from dashboard.components.boundary_banner import render_boundary_footer
+from dashboard.components.icons import render_icon
 from dashboard.components.styles import (
     apply_dashboard_entry_styles,
     apply_global_styles,
@@ -39,6 +41,40 @@ from dashboard.services import session_state as state
 from dashboard.services.data_loader import MissingOutputError, load_content
 
 content = load_content()
+
+
+def _render_about(about: dict | None) -> None:
+    # Compact creator block pinned to the foot of the sidebar: name, one-line bio,
+    # and contact links. Only links that are set are shown; external links open in
+    # a new tab, email uses a mailto. Presentation only — no data is written.
+    if not about:
+        return
+    icons = {"linkedin": "linkedin", "github": "github", "email": "mail"}
+    labels = {"linkedin": "LinkedIn", "github": "GitHub"}
+    links = about.get("links") or {}
+    link_html = ""
+    for key in ("linkedin", "github", "email"):
+        value = str(links.get(key, "") or "").strip()
+        if not value:
+            continue
+        href = f"mailto:{value}" if key == "email" else value
+        target = "" if key == "email" else ' target="_blank" rel="noopener"'
+        # Email shows the actual address beside its icon; the others show a label.
+        display = value if key == "email" else labels[key]
+        link_html += (
+            f'<a class="about-link" href="{html.escape(href, quote=True)}"{target}>'
+            f'{render_icon(icons[key])}<span>{html.escape(display)}</span></a>'
+        )
+    st.markdown(
+        f'<div class="about-sep"></div>'
+        f'<div class="nav-group">{html.escape(str(about.get("section_label", "About")))}</div>'
+        f'<div class="about-card">'
+        f'<div class="about-name">{html.escape(str(about.get("name", "")))}</div>'
+        f'<div class="about-bio">{html.escape(str(about.get("bio", "")))}</div>'
+        f'<div class="about-links">{link_html}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 st.set_page_config(
     page_title=content["app"]["short_title"],
@@ -57,7 +93,7 @@ apply_global_styles()
 # file alone — without the global styles, sidebar, or boundary ribbon.
 PAGE_GROUPS = {
     "Business & Review": [
-        {"path": "app_pages/executive_overview.py", "title": "Business Problem & Value",
+        {"path": "app_pages/executive_overview.py", "title": "Business Problem and Value",
          "icon": ":material/account_balance:"},
         {"path": "app_pages/from_data_to_review_queue.py", "title": "From Data to Review Queue",
          "icon": ":material/account_tree:"},
@@ -71,6 +107,8 @@ PAGE_GROUPS = {
     "Methodology": [
         {"path": "app_pages/model_and_controls.py", "title": "Model Evaluation & Controls",
          "icon": ":material/verified_user:"},
+        {"path": "app_pages/gold_quantity_coverage.py", "title": "Gold Quantity Coverage",
+         "icon": ":material/rule:"},
     ],
     "Future State": [
         {"path": "app_pages/bank_implementation_pathway.py", "title": "Bank Implementation Pathway",
@@ -99,8 +137,8 @@ for group_name, entries in PAGE_GROUPS.items():
 
 # The full-screen welcome is the root/default route. It is registered for
 # routing but deliberately absent from PAGE_GROUPS, so the hand-built sidebar
-# below never lists it and in-session navigation can never return to it; deep
-# links to dashboard pages resolve directly and never pass through it.
+# below never lists it as a content page. A compact home control in the brand
+# area provides the in-session return; deep links still bypass the welcome page.
 landing_page = st.Page("app_pages/landing.py", title="Welcome", default=True)
 
 navigation = st.navigation({"Welcome": [landing_page], **nav_groups}, position="hidden")
@@ -114,23 +152,25 @@ else:
     with st.sidebar:
         st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="brand-sub">{content["app"]["tagline"]}</div>', unsafe_allow_html=True)
+        # Keep the landing-page return with the app identity rather than among
+        # content pages or creator links. CSS presents this as an icon-only home
+        # control while retaining the label for assistive technology.
+        with st.container(key="sidebar_home"):
+            st.page_link(landing_page, label="Main Page", icon=":material/home:")
         st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
         for group_name, entries in PAGE_GROUPS.items():
             st.markdown(f'<div class="nav-group">{group_name}</div>', unsafe_allow_html=True)
             for entry in entries:
                 st.page_link(page_by_path[entry["path"]], label=entry["title"], icon=entry["icon"])
-        # Return path to the main (welcome) page at the FOOT of the nav: the
-        # landing is hidden from the groups above, so this quiet link is the one
-        # in-session way back to it (a browser deep link to "/" also works).
-        with st.container(key="sidebar_home"):
-            st.page_link(landing_page, label="Main Page", icon=":material/home:")
+        # Foot of the sidebar, pinned to the bottom via CSS: the creator block is
+        # separated from the navigation above and remains independent of routing.
+        with st.container(key="sidebar_bottom"):
+            _render_about(content.get("about"))
 
-    # The human-review boundary rides on the dashboard pages as a fixed footer
-    # ribbon, rendered once here. It is intentionally omitted from the Business
-    # Problem & Value narrative intro (stakeholder preference); every other page
-    # keeps it, verbatim from configs/project.yml.
-    if navigation is not page_by_path["app_pages/executive_overview.py"]:
-        render_boundary_footer()
+    # The human-review boundary rides on every dashboard page as a fixed footer
+    # ribbon, rendered once here, verbatim from configs/project.yml — so the
+    # boundary is consistent across all pages.
+    render_boundary_footer()
 
     # One-shot entrance on the first dashboard render after the landing CTA;
     # the flag is consumed, so widget reruns never replay it.

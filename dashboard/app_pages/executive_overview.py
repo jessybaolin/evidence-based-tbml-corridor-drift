@@ -1,12 +1,12 @@
-"""Business Problem & Value — narrative-first landing page.
+"""Business Problem and Value — narrative-first landing page.
 
 Answers five questions in reading order: what problem are we solving, what
 does the project do, what does it produce, why is it useful, and what does it
 not claim. Every number is derived live from pipeline outputs; every sentence
-template lives in dashboard_content.yml. Unlike the other pages, this narrative
-intro intentionally omits the fixed human-review boundary ribbon (gated off for
-this route in streamlit_app.py); the sections reveal one block at a time on
-scroll via the .bv-reveal scroll-timeline in components/styles.py.
+template lives in dashboard_content.yml. Like every dashboard page it carries the
+fixed human-review boundary ribbon (rendered once in streamlit_app.py); the
+sections reveal one block at a time on scroll via the .bv-reveal scroll-timeline
+in components/styles.py.
 """
 
 from __future__ import annotations
@@ -89,7 +89,10 @@ commodity_icons = {
 }
 commodity_cards = "".join(
     commodity_card_markup(
-        title=family_names[fid], family_id=fid, icon=commodity_icons[fid]
+        title=family_names[fid],
+        family_id=fid,
+        icon=commodity_icons[fid],
+        info=copy["commodity_info"][fid],
     )
     for fid in content["family_short_labels"] if fid in family_names
 )

@@ -26,6 +26,7 @@ PAGES = [
     "from_data_to_review_queue.py",
     "bank_implementation_pathway.py",
     "model_and_controls.py",
+    "gold_quantity_coverage.py",
     "appendix.py",
 ]
 
@@ -69,9 +70,8 @@ def test_page_renders_without_exception(page):
     ), f"{page} hit a missing-output error state"
 
 
-# Business Problem & Value intentionally omits the boundary ribbon (per
-# stakeholder request); every OTHER page must still carry it verbatim.
-BOUNDARY_PAGES = [p for p in PAGES if p != "executive_overview.py"]
+# The boundary ribbon rides on every dashboard page verbatim, for consistency.
+BOUNDARY_PAGES = list(PAGES)
 
 
 @pytest.mark.parametrize("page", BOUNDARY_PAGES)
@@ -79,14 +79,6 @@ def test_boundary_ribbon_visible_verbatim(page):
     # The fixed footer ribbon must carry the boundary VERBATIM on these pages.
     at = _run_page(page)
     assert _verbatim_boundary() in _rendered_text(at), page
-
-
-def test_business_value_page_omits_boundary_ribbon():
-    # The narrative intro drops the ribbon, and the boundary sentence appears
-    # nowhere else in its copy, so it must be entirely absent here.
-    at = _run_page("executive_overview.py")
-    assert not at.exception
-    assert _verbatim_boundary() not in _rendered_text(at)
 
 
 def test_entry_point_renders_default_page():
@@ -180,6 +172,25 @@ def test_landing_story_control_exposes_existing_project_and_pipeline_content():
             "family-gold-unwrought",
         )
     )
+    text = _rendered_text(at)
+    assert text.count("commodity-info tip") == 3
+    for explanation in content["commodity_info"].values():
+        assert explanation in text
+    for gold_hs6 in ("710811", "710812", "710813", "710820"):
+        assert gold_hs6 in text
+
+    styles = (REPO_ROOT / "dashboard" / "components" / "styles.py").read_text(
+        encoding="utf-8"
+    )
+    for selector in (
+        ".st-key-business_value_page .twin-card:hover",
+        ".st-key-business_value_page .stat-tile:hover",
+        ".st-key-business_value_story .quote-card:hover",
+        ".st-key-business_value_story .story-process-stage:hover",
+    ):
+        hover_rule = styles.split(selector, 1)[1].split("}}", 1)[0]
+        assert "transform: translateY(-2px)" in hover_rule
+        assert "box-shadow: 0 6px 16px" in hover_rule
 
     control = next(
         item for item in at.segmented_control
@@ -237,7 +248,9 @@ def test_data_trust_scene_navigation_and_simplified_preparation():
     assert "Convert reported trade values to USD and quantities to metric tons." in text
     assert "Rows without a valid reported quantity are excluded from modelling." in text
     assert "Time-safe simply means no peeking into the future." in text
-    assert "it cannot use 2023 or 2024" in text
+    # The time-safe example is tied to the real sample observation's year (2021),
+    # so the future years it must not use are 2022, 2023 or 2024.
+    assert "it cannot use 2022, 2023 or 2024" in text
     assert "CEPII BACI extract" not in text
     assert "Trade value: thousand USD" not in text
     assert "View provenance" not in text
@@ -280,11 +293,13 @@ def test_bank_implementation_pathway_is_explicitly_future_state():
     assert not at.exception
     text = _rendered_text(at)
     assert (
-        "Future-state design only. Private bank-data integration, "
-        "case-management connectivity, and production decisioning have not been built."
+        "Future-state design only. Connections to private bank data, "
+        "case-management systems and production decisions have not been built."
     ) in text
-    assert "It would not replace transaction monitoring" in text
-    assert "Analyst dispositions are not unquestioned ground-truth labels" in text
+    assert "this queue could be an early signal for review" in text
+    assert "sit alongside transaction monitoring" in text
+    assert "bank-section-info tip" in text
+    assert "Analyst decisions can provide useful feedback" in text
 
 
 def test_bank_implementation_pathway_names_required_bank_context():
@@ -292,32 +307,40 @@ def test_bank_implementation_pathway_names_required_bank_context():
     text = _rendered_text(at)
     for label in (
         "KYC/CDD and expected activity",
-        "Trade-finance documentation",
+        "Trade-finance documents",
         "Shipment and customs records",
         "Payments and correspondent data",
         "Sanctions and adverse media",
         "Beneficial ownership",
     ):
         assert label in text, label
-    for stage in (
-        "Test offline",
-        "Assist the review",
-        "Validate before use",
-    ):
-        assert stage in text, stage
+    assert "How a bank could start safely" not in text
 
 
 def test_bank_implementation_pathway_bounds_the_ai_extension():
     at = _run_page("bank_implementation_pathway.py")
     assert not at.exception
     text = _rendered_text(at)
-    assert "Where AI could help: prepare the case, not decide it" in text
-    assert "It would not create evidence, assign criminal intent" in text
-    assert "Evidence-grounded case summaries with source IDs" in text
-    assert "Schema validation and deterministic fallback" in text
-    assert "The prototype provides an external signal" in text
-    assert "What the bank adds to make the signal reviewable" in text
+    assert "Where AI could help: connect the records, leave the decision to the analyst" in text
+    assert "It would not decide whether the activity is suspicious" in text
+    assert "The useful part is not writing a summary" in text
+    assert "Find the bank activity behind the public signal" in text
+    assert "Check whether the records tell the same story" in text
+    assert "Lay out the case for the analyst" in text
+    for output in (
+        "Related activity in one view",
+        "Document and payment comparison",
+        "Explanations checked against the records",
+        "Ask questions about the case",
+    ):
+        assert output in text
+    assert "Practical extensions" not in text
+    assert "Keep a log and use fixed templates if validation fails" in text
+    assert "Public data points to a pattern" in text
+    assert "What bank records add" in text
     assert "How this could help a wholesale-banking AFC team" in text
+    assert "Proposed benefits to test in a controlled pilot" not in text
+    assert "What must stay controlled" not in text
 
     styles = (
         REPO_ROOT / "dashboard" / "components" / "styles.py"
@@ -326,10 +349,21 @@ def test_bank_implementation_pathway_bounds_the_ai_extension():
     assert ".anim, .bank-reveal" in styles
     assert "align-items: stretch" in styles
     assert ".bank-icon-card.domain.bank-card-4" in styles
+    assert ".bank-ai-output-grid" in styles
+    closing_text = styles.split(".bank-closing .bottom-line-text", 1)[1].split("}}", 1)[0]
+    assert "font-size: 0.88rem" in closing_text
+
+    business_closing_text = (
+        styles.split(".st-key-business_value_page .bottom-line-text", 1)[1]
+        .split("}}", 1)[0]
+    )
+    assert "font-size: 0.88rem" in business_closing_text
 
 
 def test_navigation_group_order_and_renamed_reference_page():
     source = ENTRY_POINT.read_text(encoding="utf-8")
+    assert '"title": "Business Problem and Value"' in source
+    assert '"title": "Business Problem & Value"' not in source
     assert source.index('"Business & Review"') < source.index('"Methodology"')
     assert source.index('"Methodology"') < source.index('"Future State"')
     assert source.index('"Future State"') < source.index('"Appendix"')
@@ -434,9 +468,14 @@ def test_review_queue_export_simplified_filters_and_score_note():
         (REPO_ROOT / "dashboard" / "config" / "dashboard_content.yml").read_text(encoding="utf-8")
     )
     assert content["pages"]["review_queue"]["score_note"] in _rendered_text(at)
+    # Unit value is now explained as a footer note ("How unit value is
+    # calculated"), not an in-grid tooltip, so its label carries no ⓘ marker and
+    # the definition text renders in the page.
     unit_value = content["pages"]["review_queue"]["columns"]["unit_value_usd_per_metric_ton"]
-    assert unit_value["label"].endswith("ⓘ")
+    assert not unit_value["label"].endswith("ⓘ")
     assert "not observed from an invoice or transaction price" in unit_value["help"]
+    assert unit_value["help"] in _rendered_text(at)
+    assert "How unit value is calculated" in _rendered_text(at)
 
 
 def test_review_queue_redundant_counts_are_removed_and_guidance_is_retained():
@@ -453,7 +492,9 @@ def test_review_queue_redundant_counts_are_removed_and_guidance_is_retained():
     assert content["pages"]["review_queue"]["caveat"] in text
     assert not any(expander.label == "Table notes and methodology" for expander in at.expander)
     assert content["pages"]["review_queue"]["table_caption_precision"] in text
-    assert "Colored dots identify product families:" in text
+    # The product-family/HS6 legend caption was removed: the HS6 codes now live
+    # in the Product-family filter dropdown labels instead.
+    assert "Colored dots identify product families" not in text
 
 
 def test_review_queue_product_column_uses_flat_family_dot():

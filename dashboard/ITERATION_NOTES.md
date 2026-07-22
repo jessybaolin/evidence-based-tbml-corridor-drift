@@ -15,24 +15,18 @@ Presentation only; no scoring/eval logic changed. Tests +8, suite 124 green.
 
 **Structure (single scroll):** objective callout → 1) How it's tested (synthetic
 scenarios + benign look-alikes, time-safe learn/choose/judge-once split, pinned
-caveat "not real-world detection rates") → 2) Does it work? (one plain bar: the
-chosen method vs simple rules vs random, as "share of the top 50 that were
-genuinely planted patterns" — 48% vs 14% vs ~2%, ≈27× lift; guardrail "no benign
-look-alikes reached the top 50"; family limit strongest gold / weakest palm) →
-3) Why this method (rules-anchored blend chosen for auditability, learned model a
-touch higher — stated openly; serves the case page's "how the method was
-selected" link) → 4) What makes flagged cases different (the 7.2 driver
-separation on a shared 0–100 percentile dumbbell; queue near the top on all four
-lenses) → 5) What keeps it honest (integrity checks as a pass summary, allowed /
-not-allowed language, boundary note) → ▸ Technical details drawer.
+caveat "not real-world detection rates") → 2) How well it ranks test patterns
+(chosen method vs simple rules vs random; precision/recall at different queue
+sizes; expandable calculations) → 3) Why this method (rules-anchored blend chosen
+for auditability, with the learned model's small test-set edge stated openly) →
+4) What keeps it honest (live integrity failures, allowed / not-allowed language,
+boundary note) → ▸ Technical details drawer. The former queue-driver comparison
+was removed because it reused ranking inputs and added little independent evidence.
 
-**New metrics** (`dashboard_metrics.py`): `headline_eval(comparison, selection)`
-translates precision@k into share/lift + best/worst family, all from
-model_comparison.csv; `driver_separation(features, queue_ids)` gives each lens's
-queue vs population median + the queue-median percentile (model-eligible rows).
-**New builders** (`charts.py`): `headline_bar` (emphasis %-bar) and
-`driver_dumbbell` (shared percentile scale) — both through `show()`, page stays
-theme-contract clean. All copy moved to `dashboard_content.yml
+**Evaluation helpers** (`dashboard_metrics.py`) recompute row-level Top-k evidence
+and the review-capacity curve from the held-out model scores. **Chart builders**
+(`charts.py`) keep the plain percentage comparison and capacity trade-off on the
+shared theme. All copy lives in `dashboard_content.yml
 pages.model_and_controls` (was 4 keys hardcoding everything) in the de-AI'd
 voice. Title kept "Model Evaluation & Controls" (rename not requested; two tests
 assert it). Drawer's split selectbox stays `at.selectbox[0]` so the existing

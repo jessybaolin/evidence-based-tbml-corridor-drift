@@ -216,7 +216,7 @@ with summary_tab:
 
     with left:
         facts = copy["facts"]
-        section_title(facts["heading"], facts["caption"], icon="file-text")
+        section_title(facts["heading"], icon="file-text")
         exporter = record.get("exporter_name")
         importer = record.get("importer_name")
         exporter = exporter if pd.notna(exporter) else record["exporter_iso3"]
@@ -270,24 +270,26 @@ with summary_tab:
         if view_idx == 0:
             # ---- View 1 · Combined: vs the market AND vs its own history ----
             vw = views["combined"]
-            _view_heading(str(vw["title"]), "line-chart")
-            case_m = market.loc[market["year"] == case_year].iloc[0]
-            case_o = own.loc[own["year"] == case_year].iloc[0]
-            take_col, mode_col = st.columns([3.2, 1.1], vertical_alignment="center")
+            # Heading left, Chart|Table toggle in the top-right corner; the
+            # takeaway then runs full width beneath them.
+            head_col, mode_col = st.columns([3.4, 1], vertical_alignment="center")
+            with head_col:
+                _view_heading(str(vw["title"]), "line-chart")
             with mode_col:
                 mode = _mode_control(0)
-            with take_col:
-                if pd.isna(case_m["multiple"]):
-                    _takeaway(vw["takeaway_unavailable"])
-                elif pd.notna(case_o["multiple_vs_prior"]):
-                    _takeaway(vw["takeaway"].format(
-                        year=case_year,
-                        market_multiple=f"{case_m['multiple']:.1f}",
-                        history_multiple=f"{case_o['multiple_vs_prior']:.1f}",
-                        prior_years=int(case_o["prior_years_used"])))
-                else:
-                    _takeaway(vw["takeaway_market_only"].format(
-                        year=case_year, market_multiple=f"{case_m['multiple']:.1f}"))
+            case_m = market.loc[market["year"] == case_year].iloc[0]
+            case_o = own.loc[own["year"] == case_year].iloc[0]
+            if pd.isna(case_m["multiple"]):
+                _takeaway(vw["takeaway_unavailable"])
+            elif pd.notna(case_o["multiple_vs_prior"]):
+                _takeaway(vw["takeaway"].format(
+                    year=case_year,
+                    market_multiple=f"{case_m['multiple']:.1f}",
+                    history_multiple=f"{case_o['multiple_vs_prior']:.1f}",
+                    prior_years=int(case_o["prior_years_used"])))
+            else:
+                _takeaway(vw["takeaway_market_only"].format(
+                    year=case_year, market_multiple=f"{case_m['multiple']:.1f}"))
             if mode == MODE_LABELS[0]:
                 show(case_combined_view(market, own, vw),
                      height=case_view_height(), key="case_view_combined")
@@ -312,17 +314,20 @@ with summary_tab:
         else:
             # ---- View 2 · Peer position ------------------------------------
             vw = views["peers"]
-            _view_heading(str(vw["title"]), "list-ordered")
             if position is None:
+                _view_heading(str(vw["title"]), "list-ordered")
                 render_empty_state(str(vw["takeaway_unavailable"]), level="warning")
             else:
-                take_col, mode_col = st.columns([3.2, 1.1], vertical_alignment="center")
+                # Heading left, Chart|Table toggle in the top-right corner; the
+                # takeaway then runs full width beneath them.
+                head_col, mode_col = st.columns([3.4, 1], vertical_alignment="center")
+                with head_col:
+                    _view_heading(str(vw["title"]), "list-ordered")
                 with mode_col:
                     mode = _mode_control(1)
-                with take_col:
-                    _takeaway(vw["takeaway"].format(
-                        percentile=f"{position['percentile']:.1%}",
-                        peers=f"{position['peer_count']:,}", year=case_year))
+                _takeaway(vw["takeaway"].format(
+                    percentile=f"{position['percentile']:.1%}",
+                    peers=f"{position['peer_count']:,}", year=case_year))
                 if mode == MODE_LABELS[0]:
                     show(case_peer_view(position, vw),
                          height=case_view_height(), key="case_view_peers")

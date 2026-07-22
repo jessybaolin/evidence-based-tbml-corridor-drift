@@ -79,7 +79,7 @@ CURATED: dict[str, dict[str, str]] = {
     "data_quality_score": {"category": "Quality fields", "unit": "additive score 0–6",
                            "pages": "Top 50 Review Queue, Selected Case Review"},
     "quality_status": {"category": "Quality fields", "pages": "Top 50 Review Queue, Selected Case Review"},
-    "model_eligible": {"category": "Quality fields", "pages": "Business Problem & Value"},
+    "model_eligible": {"category": "Quality fields", "pages": "Business Problem and Value"},
     "valid_extreme_flag": {"category": "Quality fields", "pages": "Selected Case Review"},
     "exclusion_reason": {"category": "Quality fields"},
     "rank": {"category": "Model scores", "unit": "queue position",
@@ -257,6 +257,40 @@ CODE_DERIVED: dict[str, dict[str, str]] = {
         "source": "src/tbml_common.py",
     },
 }
+
+
+def field_tooltip(field: str, feature_explanations: pd.DataFrame | None = None) -> str:
+    """A concise, authoritative definition for a field, for an in-page info icon.
+
+    Sources match the Appendix dictionary, in the same order of authority: the
+    approved feature-explanation table first (plain-English meaning + derivation),
+    then the code-derived definitions. Never invents wording; returns "" if the
+    field is undocumented in either source.
+
+    Returns the parts on separate lines (joined by "\\n") — the plain meaning
+    first, then the derivation, then any caveat — so an info-icon tooltip stays
+    readable rather than running everything into one line. The caller decides
+    how to render the line breaks.
+    """
+    if (feature_explanations is not None
+            and "feature_name" in getattr(feature_explanations, "columns", [])):
+        match = feature_explanations[feature_explanations["feature_name"] == field]
+        if not match.empty:
+            row = match.iloc[0]
+            plain = str(row.get("plain_english_interpretation", "") or "").strip()
+            deriv = str(row.get("derivation", "") or "").strip()
+            lines = [plain, f"Derivation: {deriv}" if deriv else ""]
+            return "\n".join(line for line in lines if line)
+    entry = CODE_DERIVED.get(field, {})
+    if entry:
+        derivation = entry.get("derivation", "")
+        lines = [
+            entry.get("definition", ""),
+            f"Derivation: {derivation}" if derivation else "",
+            entry.get("caveat", ""),
+        ]
+        return "\n".join(line for line in lines if line)
+    return ""
 
 
 def _build_row(column: str, dataset_name: str, dtype: str,

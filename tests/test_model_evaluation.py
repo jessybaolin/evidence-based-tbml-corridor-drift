@@ -1,8 +1,8 @@
 """Model Evaluation & Controls — the stakeholder revamp.
 
 Confirms the plain-language translations are correct (share/lift derived from the
-real comparison table), that the driver separation is computed honestly, that the
-narrative renders, and that the technical machinery stays in the collapsed drawer.
+real comparison table), that model-selection criteria and blend evidence remain
+auditable, that the narrative renders, and that technical machinery stays collapsed.
 """
 
 from __future__ import annotations
@@ -10,8 +10,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import yaml
 from streamlit.testing.v1 import AppTest
 
+from dashboard.components.charts import headline_bar, review_capacity_tradeoff
 from dashboard.services import dashboard_metrics as metrics
 from dashboard.services import data_loader as load
 
@@ -24,6 +26,15 @@ PAGE_SOURCE = (REPO_ROOT / "dashboard" / "app_pages" / "model_and_controls.py").
 @pytest.fixture(scope="module")
 def artefacts():
     return load.load_model_comparison(), load.load_model_selection()
+
+
+@pytest.fixture(scope="module")
+def model_scores(artefacts):
+    _, selection = artefacts
+    score_col = str(selection["selected_score_column"])
+    return load.load_model_scores(columns=(
+        "obs_id", "split", "synthetic_review_priority", "hard_negative", score_col,
+    ))
 
 
 # ---- headline_eval: the plain "does it work?" numbers ------------------------
@@ -66,35 +77,70 @@ def test_selected_beats_rule_beats_random(artefacts):
     assert h["lift"] > 1.0
 
 
-# ---- driver_separation: queue extreme on every lens -------------------------
+def test_row_level_top50_evidence_reconciles_with_published_metrics(artefacts, model_scores):
+    comparison, selection = artefacts
+    evidence = metrics.ranking_evidence(model_scores, selection, split="test", k=50)
+    published = comparison[
+        comparison["split"].eq("test")
+        & comparison["family_id"].eq("all")
+        & comparison["model"].eq("hybrid")
+    ].iloc[0]
 
-def test_driver_separation_queue_is_extreme_on_all_lenses():
-    features = load.load_features(columns=(
-        "obs_id", "model_eligible", "robust_historical_z", "benchmark_residual",
-        "same_family_year_peer_percentile", "unit_value_yoy_change",
+    assert evidence["n"] == 6033 == int(published["n"])
+    assert evidence["positives"] == 108 == int(published["positives"])
+    assert evidence["found"] == 24
+    assert evidence["precision"] == pytest.approx(0.48)
+    assert evidence["precision"] == pytest.approx(float(published["precision_at_k"]))
+    assert evidence["recall"] == pytest.approx(24 / 108)
+    assert evidence["recall"] == pytest.approx(float(published["recall_at_k"]))
+    assert evidence["random_expected"] == pytest.approx(50 * 108 / 6033)
+    assert evidence["lift"] == pytest.approx(float(published["lift_at_k"]))
+    assert evidence["hard_negative_total"] == 72
+    assert evidence["hard_negative_top"] == 0
+
+
+def test_review_capacity_curve_is_auditable(artefacts, model_scores):
+    _, selection = artefacts
+    curve = metrics.review_capacity_curve(model_scores, selection).set_index("capacity")
+    expected = {
+        10: (6, 60.0, 100 * 6 / 108),
+        25: (14, 56.0, 100 * 14 / 108),
+        50: (24, 48.0, 100 * 24 / 108),
+        100: (40, 40.0, 100 * 40 / 108),
+        200: (54, 27.0, 50.0),
+    }
+    for capacity, (found, precision, recall) in expected.items():
+        assert int(curve.loc[capacity, "found"]) == found
+        assert float(curve.loc[capacity, "precision_pct"]) == pytest.approx(precision)
+        assert float(curve.loc[capacity, "recall_pct"]) == pytest.approx(recall)
+
+    fig = review_capacity_tradeoff(
+        curve.reset_index(), 50, "Precision", "Recall", "Rows reviewed", "Share (%)",
+    )
+    assert [trace.name for trace in fig.data] == ["Precision", "Recall"]
+    assert fig.data[0].line.color == "#A62E4E"
+    assert any(int(shape.x0) == 50 == int(shape.x1) for shape in fig.layout.shapes)
+    assert fig.layout.yaxis.range == (0, 100)
+
+
+def test_model_bar_charts_accept_the_page_red_emphasis():
+    import pandas as pd
+
+    red = load.load_theme()["chart"]["case_corridor"]
+    frame = pd.DataFrame({"method": ["Selected", "Baseline"], "value": [48.0, 14.0]})
+    fig = headline_bar(
+        frame, "method", "value", "Selected", "Share (%)", emphasis_color=red,
+    )
+    colors = dict(zip(
+        fig.data[0].y,
+        fig.data[0].marker.color,
     ))
-    queue = load.load_review_queue()
-    sep = metrics.driver_separation(features, set(queue["obs_id"]))
-    assert len(sep) == 4
-    for _, row in sep.iterrows():
-        # Every lens: the queue's typical value sits well above a typical route.
-        assert row["queue_pct"] > row["population_pct"], row["lens"]
-        assert row["queue_pct"] >= 85.0, row["lens"]
-        assert row["queue_median"] > row["rest_median"], row["lens"]
+    assert colors["Selected"] == red
+    assert colors["Baseline"] != red
 
-
-def test_driver_separation_medians_recomputed_independently():
-    features = load.load_features(columns=(
-        "obs_id", "model_eligible", "robust_historical_z", "benchmark_residual",
-        "same_family_year_peer_percentile", "unit_value_yoy_change",
-    ))
-    queue = load.load_review_queue()
-    ids = set(queue["obs_id"].astype(str))
-    scored = features[features["model_eligible"].astype(bool)]
-    sep = metrics.driver_separation(features, set(queue["obs_id"])).set_index("lens")
-    for lens in ("robust_historical_z", "same_family_year_peer_percentile"):
-        expected = scored[scored["obs_id"].astype(str).isin(ids)][lens].median()
-        assert sep.loc[lens, "queue_median"] == pytest.approx(float(expected))
+    assert "emphasis_color=model_emphasis" in PAGE_SOURCE
+    styles = (REPO_ROOT / "dashboard" / "components" / "styles.py").read_text("utf-8")
+    assert ".blend-challenger {{ background: {case_maroon}; }}" in styles
 
 
 # ---- Page render + structure -------------------------------------------------
@@ -119,26 +165,46 @@ def test_page_renders_the_plain_narrative(artefacts):
     at = _run()
     assert not at.exception
     text = _text(at)
-    # The queue-build flow anchors the page, then the five narrative sections.
+    # The queue-build flow anchors the page, followed by evaluation, method
+    # selection and the interpretation controls.
     for heading in ("How the ranking queue is built",
-                    "How the ranking is tested", "Does it work?",
-                    "Why this method was chosen", "What makes the flagged cases different",
-                    "What keeps it honest"):
+                    "How the ranking is tested", "How well does it rank the test patterns?",
+                    "Why this method was chosen", "What keeps it honest"):
         assert heading in text, heading
-    # The precision metric is translated to a plain share + lift in the takeaway.
-    assert f"{round(h['selected_pct'])}%" in text
-    assert f"{round(h['lift'])} times" in text
+    assert "What makes the flagged cases different" not in text
+    # Precision and recall are stated as distinct counts, with the random
+    # expectation and lift translated into plain language.
+    assert "24 of the 50 highest-ranked rows" in text
+    assert "random 50-row review" in text
+    assert "27x more concentrated than random selection" in text
+    assert "24 of all 108 planted patterns" in text
     assert "not real-world detection rates" in text
+    assert "What changes when review capacity changes?" in text
+    assert "How these results are calculated" in text
+    assert "48.0%" in text
+    assert "22.2%" in text
+    assert "26.8x" in text
+    assert "72 planted benign look-alikes" in text
     # The "tested on a copy" visual (replaces the old two-lane wall): patterns to
     # catch, look-alikes to ignore, and the leakage-guard separation line.
     assert "Planted unusual patterns" in text
     assert "Benign look-alikes" in text
     assert "Test rows never mix into the queue" in text
     # Why-this-method: the methods compared, the honest hybrid-vs-XGBoost trade,
-    # and the blend formula with the derived percentage split.
+    # the two score sources, and the blend formula with its validation evidence.
     assert "XGBoost" in text
-    assert "leakage" in text
-    assert "How the blended score is built" in text
+    assert "documented weighted-sum score" in text
+    assert "Start with fixed weights" in text
+    assert any(
+        "How the weighted-sum score and 75/25 blend are calculated" in str(e.label)
+        for e in at.expander
+    )
+    assert "23 of 50 (46%)" in text
+    assert "formula weight" in text
+    assert "governance choice" in text
+    assert "transparent fixed-rule score" not in text
+    assert "documented points" not in text
+    assert "The retained ranking formula" in text
     weight = float(selection["selected_hybrid_challenger_weight"])
     assert f"{round(weight * 100)}%" in text          # challenger share, e.g. 75%
     assert f"{round((1 - weight) * 100)}%" in text     # rule share, e.g. 25%
@@ -156,6 +222,62 @@ def test_method_comparison_matches_table(artefacts):
     assert mc.loc[mc["model"] == "hybrid", "method"].iloc[0] == "Hybrid blend"
 
 
+def test_model_selection_metrics_and_rule_weights_are_explicit():
+    settings = yaml.safe_load((REPO_ROOT / "configs" / "thresholds.yml").read_text("utf-8"))
+    selection = settings["model_selection"]
+    assert "selected_metric" not in selection
+    assert selection["challenger_metric"] == "average_precision"
+    assert selection["hybrid_metric"] == "precision_at_k"
+
+    rules = settings["rules"]
+    expected_weights = {
+        "history_weight": 0.20,
+        "benchmark_residual_weight": 0.18,
+        "benchmark_drift_weight": 0.18,
+        "yoy_weight": 0.12,
+        "divergence_weight": 0.12,
+        "peer_weight": 0.10,
+        "novelty_weight": 0.06,
+        "reactivation_weight": 0.08,
+        "valid_extreme_weight": 0.14,
+    }
+    for key, value in expected_weights.items():
+        assert float(rules[key]) == pytest.approx(value)
+
+    pipeline = (REPO_ROOT / "src" / "06_train_evaluate_models.py").read_text("utf-8")
+    for key in expected_weights:
+        assert f'settings["{key}"]' in pipeline
+    assert 'selection_settings["challenger_metric"]' in pipeline
+    assert 'selection_settings["hybrid_metric"]' in pipeline
+
+
+def test_configured_selection_metrics_reproduce_the_published_choice(artefacts):
+    comparison, published = artefacts
+    settings = yaml.safe_load(
+        (REPO_ROOT / "configs" / "thresholds.yml").read_text("utf-8")
+    )["model_selection"]
+
+    validation = comparison[
+        comparison["split"].eq("validation") & comparison["family_id"].eq("all")
+    ]
+    supervised = validation[validation["model"].isin(["logistic", "xgboost"])]
+    challenger = supervised.sort_values(
+        [settings["challenger_metric"], "hard_negative_false_positive_rate"],
+        ascending=[False, True], kind="mergesort",
+    ).iloc[0]
+    assert challenger["model"] == published["selected_challenger"] == "xgboost"
+
+    candidates = load.load_hybrid_candidates()
+    selected = candidates.sort_values(
+        [settings["hybrid_metric"], "hard_negative_false_positive_rate",
+         "average_precision", "challenger_weight"],
+        ascending=[False, True, False, True], kind="mergesort",
+    ).iloc[0]
+    assert float(selected["challenger_weight"]) == pytest.approx(
+        float(published["selected_hybrid_challenger_weight"])
+    )
+
+
 def test_technical_machinery_lives_in_the_drawer():
     # The drawer exists, and the raw model builders / params are only used inside
     # the expander block — never in the main narrative above it.
@@ -164,6 +286,8 @@ def test_technical_machinery_lives_in_the_drawer():
     drawer_start = PAGE_SOURCE.index("with st.expander(drawer[")
     for technical in ("shap_importance_bar(", "model_metric_bar(", "st.json("):
         assert PAGE_SOURCE.index(technical) > drawer_start, technical
+    assert "Source files and checksums" not in _text(at)
+    assert "load_source_file_inventory" not in PAGE_SOURCE
 
 
 def test_no_wrongdoing_language_in_page_copy():

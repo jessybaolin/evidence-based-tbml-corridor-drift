@@ -30,6 +30,19 @@ landing:
 
 boundary_label: "Human-review boundary"
 
+# Creator / "about" block pinned to the foot of the sidebar. section_label is the
+# nav-group heading; the GitHub link is the real project repo, the rest are
+# PLACEHOLDERS to be replaced with the creator's own details. A blank link is
+# simply not rendered.
+about:
+  section_label: "Behind the Project"
+  name: "Jesslyn Guo Baolin"
+  bio: "Creator of this evidence-first, public-data prototype for TBML review triage."
+  links:
+    linkedin: "https://www.linkedin.com/in/jesslyn-baolin/"
+    github: "https://github.com/jessybaolin/evidence-based-tbml-corridor-drift"
+    email: "jessbaolin@gmail.com"
+
 # Short display names for the three HS6 product families.
 family_short_labels:
   crude_palm_oil: "Palm oil"
@@ -87,6 +100,10 @@ pages:
       possible benign explanations behind each ranking.
     corridor_term: "exporter–importer–product–year"
     tooltip_corridor: "One exporter, one importer, one product and one calendar year, aggregated from public trade records."
+    commodity_info:
+      crude_palm_oil: "Oil pressed from oil-palm fruit. It is widely used in cooking oil, packaged food, soap, cosmetics and biofuel."
+      refined_copper_cathodes: "High-purity copper made during refining. It is used for electrical wiring, electronics, motors, plumbing and construction."
+      gold_unwrought: "This project covers only HS6 710812: non-monetary gold in unwrought forms other than powder, such as bars or ingots. It excludes non-monetary gold powder (710811), semi-manufactured gold (710813) and monetary gold (710820). This gold may be held for investment or processed into jewellery, electronics and industrial components."
     deliverables_heading: "What the system delivers"
     deliverables:
       observations:
@@ -164,7 +181,9 @@ pages:
         label: "Quantity (metric tons)"
         help: "Annual aggregate quantity in metric tons. Gold flows can be small fractions of a ton."
       unit_value_usd_per_metric_ton:
-        label: "Unit value (USD/t) ⓘ"
+        label: "Unit value (USD/t)"
+        # Shown as a footer note under the table (the in-grid tooltip landed far
+        # from the header), so this text is the "How unit value is calculated" note.
         help: "Implied unit value is the annual trade value divided by the reported quantity in metric tons. It is called implied because it is calculated from aggregate public data, not observed from an invoice or transaction price."
       benchmark_price_usd_per_metric_ton:
         label: "Benchmark price (USD/t)"
@@ -198,7 +217,6 @@ pages:
       quality_tip: "Data quality rates how usable the underlying official record is. It is separate from how unusual the observation is."
     facts:
       heading: "Case facts"
-      caption: "Annual official aggregates — not invoices or shipments."
       rank: "Review rank"
       year: "Year"
       corridor: "Corridor"
@@ -447,7 +465,7 @@ pages:
     title: "Trade Landscape and Patterns"
     subtitle: ""
     # Skimmable objective, stated plainly at the top of the page.
-    objective: "This page shows what ordinary trade looks like across the three commodities: how much money moves, which routes carry it, and how world prices shifted over the years. It matters before the queue because a case there is called \"unusual\" only by comparison with this everyday picture. Read it first, and each flagged case on the next page reads as genuinely out of the ordinary rather than just a big number."
+    objective: "This page builds the context for the review queue. First, see how much trade each commodity carries. Next, see how world benchmark prices moved. Finally, see when and where the Top 50 review candidates appear. This separates ordinary market scale and price movement from patterns elevated for human review."
     # Context strip. Every figure is derived live from the official panel.
     strip:
       value_label: "Trade value covered"
@@ -468,36 +486,31 @@ pages:
       caption: "Each panel has its own scale, so heights are not comparable across panels. Figures are nominal USD, not adjusted for inflation. Scale tells you where the money is, not where the unusual behaviour is."
       y_value: "Trade value (USD)"
       y_quantity: "Quantity (metric tons)"
-    structure:
-      heading: "Structure: a steady base, unevenly concentrated"
-      takeaway: "The corridor base holds up year to year, with no year where coverage collapses. How concentrated it is differs by family. Palm oil leans on a few large routes, while gold spreads across a long tail of small ones, and small routes are where the most extreme unit values tend to come from."
-      corridors_subhead: "Active corridors each year"
-      corridors_caption: "This chart matters because the number of active routes holds steady, with no year suddenly dropping out. A sudden drop would usually mean missing data, which is easy to mistake for a real change in trade."
-      concentration_subhead: "Value carried by each family's ten largest corridors"
-      caption: "Concentration describes how the market is built. It is not a control weakness or a finding about any country. A corridor is a country pair, not a customer or a bank relationship."
-      y_corridors: "Active corridors"
-      y_share: "Top-10 share of value (%)"
+      table:
+        label: "View annual scale data"
+        caption: "The same 24 family-year points shown in the chart, with trade value and quantity together. The table is ordered from the newest year to the oldest."
+        columns:
+          year: "Year"
+          family: "Product family"
+          trade_value: "Trade value (USD)"
+          quantity: "Quantity (metric tons)"
+        download_label: "Download scale data (.csv)"
+        download_help: "Download the 24 family-year rows with their underlying numeric precision."
     market:
-      heading: "Market context: prices moved on their own"
-      takeaway: "This chart is the world price per tonne, not the money traded. All three prices moved sharply: palm oil roughly doubled into 2022 then fell back, copper rose about 50% in 2021, and gold nearly doubled. So a corridor's price rising can simply be the market rising — what counts is how it moved relative to its benchmark."
+      heading: "Market context: prices can move across the whole market"
+      takeaway: "Commodity prices can rise or fall across the whole market. If palm oil becomes more expensive worldwide, a corridor's implied unit value may rise for an ordinary reason. These lines show that broad market movement. The project therefore compares each corridor with the benchmark for the same product and year, rather than treating every price increase as unusual."
       caption: "The benchmark is broad market context, one series per family. It is not an invoice price, a landed cost, or a legal reference price. These are annual nominal averages."
       y_benchmark: "USD per metric ton"
-    patterns_heading: "What the fifty flagged cases look like"
-    patterns_intro: "Now the fifty highest-priority cases the queue will list. This is their shape: when they occur, which families they sit in, and why they stand out from the market."
+    patterns_heading: "Profile of the Top 50 Review Queue"
+    patterns_intro: "This is the shape of the current review queue: when the candidates occur and which product families they belong to."
     by_year:
-      heading: "Flagged cases by year"
+      heading: "Review candidates by year"
       caption: "{year} carries the most in the current run, {n} of {total}."
       y: "Review candidates"
     by_family:
-      heading: "Flagged cases by product family"
-      caption: "Counts across the three families. These are the fifty cases, not the whole market."
+      heading: "Review candidates by product family"
+      caption: "Counts across the three families. These are the Top 50 review candidates, not the whole market."
       y: "Review candidates"
-    residual:
-      heading: "Why these fifty: distance from the benchmark"
-      caption: "The log gap to the benchmark for every official observation (grey) and for the queue (blue). The flagged cases sit in the tails. They are the corridors furthest from their market benchmark, not simply the largest."
-      population_name: "All official observations"
-      queue_name: "Review queue"
-      x: "Log gap to benchmark"
   from_data_to_review_queue:
     eyebrow: "Data coverage & trust"
     title: "From Trusted Public Data to Review-Ready Evidence"
@@ -634,7 +647,7 @@ pages:
         - title: "Create time-safe analytical signals"
           body: "Describe each observation using only information available at that point in time."
       row_panel:
-        record_caption: "One real prepared annual observation from the official panel."
+        record_caption: "One real prepared annual observation from the official panel — with the matching world-market benchmark price attached, so the row already carries a reference for later comparison."
         record_fields:
           observation_id: "Observation ID"
           year: "Year"
@@ -642,8 +655,13 @@ pages:
           product: "Product"
           trade_value: "Trade value (USD)"
           quantity: "Quantity (metric tons)"
+          unit_value: "Unit value (USD/mt)"
+          benchmark: "Benchmark price (USD/mt)"
       timesafe_panel:
-        definition: "Time-safe simply means no peeking into the future. When assessing a 2022 record, the system may use 2017–2021 to understand what was normal, but it cannot use 2023 or 2024. This keeps every comparison realistic for the date being assessed."
+        # {focus_year}, {history_span} and {hidden_phrase} are filled on the page
+        # from the real sample observation's year, so the wording always matches
+        # the row shown above.
+        definition: "Time-safe simply means no peeking into the future. When assessing the {focus_year} record above, the system may use {history_span} to learn what was normal, but it cannot use {hidden_phrase}. This keeps every comparison realistic for the year being assessed."
         chips:
           - name: "Own history"
             question: "Is this route different from how it behaved before?"
@@ -659,9 +677,29 @@ pages:
         year_compare_label: "compare"
         year_hidden_label: "hidden"
         year_caption: "Years {history_span} inform what was normal; {focus_year} is the observation under comparison; {hidden_span} remain hidden."
+        # Signals table: the same prepared row from above, now with its derived,
+        # time-safe signals. Values are computed live on the page from the panel
+        # and features — never typed here.
+        signal_table:
+          intro: "Each signal is computed from information available up to {focus_year}, so every metric traces back to an auditable row."
+          # {total_signals} is filled live from the feature-explanation table (the
+          # same source as the Data Dictionary), so the count never drifts. Only
+          # three signals are shown here; the table is a representative example.
+          scope_note: "The three columns on the right are examples — {total_signals} time-safe signals in total are derived for every observation, each defined in the Data Dictionary."
+          # Labels for the replicated columns are reused from record_fields above;
+          # only the three appended signal columns are named here. Their info-icon
+          # definitions are read live from the data dictionary.
+          signal_columns:
+            unit_value_yoy: "Unit value YoY change"
+            peer_percentile: "Same-family peer percentile"
+            benchmark_residual: "Benchmark residual"
+          caption: "Each signal is a described, recomputable measurement — not a verdict. The review queue weighs them together, so a single large value never decides a case on its own."
     closing:
-      statement: "The data is now clean, comparable and time-safe — ready to read. Every figure traces back to verified public trade and benchmark records at one annual grain: one exporter, one importer, one product, one year. From here, each pattern the queue flags is measured against this prepared picture — how large the trade is, how its corridors are built, and how far its price moved on its own — so a case reads as genuinely unusual rather than merely large. Each one is carried forward with recomputable evidence and clear caveats, and every conclusion is left to accountable human review."
-      reminder: "Annual public aggregates—not invoices, customers or bank exposure."
+      # Rendered as separate paragraphs (list) so the wrap-up reads in plain,
+      # digestible steps rather than one dense block.
+      statement:
+        - "The row is now clean, comparable, and time-safe. Every figure on this page traces back to public trade and world-market benchmark records at one grain — one exporter, one importer, one product, one year — and no signal uses information that would not have been available at the time."
+        - "From here, each prepared row is measured against this same picture: its own history, its same-year peers, and the wider market. Weighing several signals together is what separates a genuinely unusual pattern from one that is merely large — no single number decides. Every row the queue raises carries its recomputable evidence and caveats, and every conclusion is left to accountable human review."
     companion:
       cta: "Open technical companion"
       intro: "Detailed pipeline diagrams, raw source field names and cryptographic provenance — everything needed to verify the story above."
@@ -719,42 +757,138 @@ pages:
           detail: "Both scale up in proportion, so the unit value barely changes."
       separation_note: "Only the chosen method returns to score the real records. Test rows never mix into the queue."
     works:
-      heading: "Does it work?"
-      takeaway: "On the years it had never seen, the chosen method put about {selected_pct}% of the planted patterns into its top 50, roughly {lift} times better than reviewing cases at random."
-      bar_x: "Share of the top 50 that were genuinely unusual patterns"
+      heading: "How well does it rank the test patterns?"
+      takeaway: "On the unseen 2023-2024 test years, {found} of the {k} highest-ranked rows were planted test patterns. A random {k}-row review would be expected to contain about {random_expected}. The selected queue is therefore {lift}x more concentrated than random selection."
+      bar_x: "Share of each 50-row review queue that is a planted test pattern"
       bar_selected: "The chosen method"
       bar_rule: "Simple fixed rules"
-      bar_random: "Reviewing at random"
-      guardrail: "It left the benign look-alikes alone as well: none reached the top 50, so the method does not raise alarms on ordinary market swings."
-      family_limit: "It is strongest on {best} and weakest on {worst} — worth remembering for a queue weighted toward {worst}."
+      bar_random: "Random review (expected)"
+      guardrail: "None of the {hard_total} planted benign look-alikes entered the test Top {k}. This is a useful guardrail result, but it applies only to the benign scenarios that were tested."
+      family_limit: "Test performance varies by product family: average precision is highest on {best} and lowest on {worst}."
+      capacity_heading: "What changes when review capacity changes?"
+      capacity_body: "A shorter queue is more concentrated but misses more planted patterns. A longer queue finds more of them, but analysts must review more rows that are not planted patterns."
+      capacity_precision: "Precision: planted share of queue"
+      capacity_recall: "Recall: patterns found"
+      capacity_x: "Rows reviewed"
+      capacity_y: "Share (%)"
+      capacity_caption: "At the current Top {k}, {found} of {k} reviewed rows are planted patterns ({precision}% precision), while {found} of all {positives} planted patterns are found ({recall}% recall). These are synthetic-scenario results, not real-world detection rates."
+      math:
+        label: "How these results are calculated"
+        intro: "The calculations below use the selected method's row-level scores for the held-out 2023-2024 test years."
+        facts:
+          rows: "Eligible test rows"
+          patterns: "Planted test patterns"
+          reviewed: "Rows reviewed"
+          found: "Patterns found in selected queue"
+        columns:
+          metric: "Metric"
+          calculation: "Calculation"
+          result: "Result"
+          meaning: "What it means"
+        metrics:
+          precision: ["Precision@50", "Share of reviewed rows that are planted patterns"]
+          recall: ["Recall@50", "Share of all planted patterns found in the queue"]
+          random: ["Random baseline", "Expected planted-pattern share under random review"]
+          lift: ["Lift over random", "How concentrated the queue is relative to random selection"]
+        caveat: "Lift is a ranking-concentration measure. It is not a measure of improvement in real-world financial-crime detection."
     method:
       heading: "Why this method was chosen"
       body: >
-        Five approaches were compared, from a transparent fixed-rule score to a
-        learned model (XGBoost) and an unsupervised outlier detector. Each bar
-        below is a method's precision on its top 50, on years it never saw.
-      comparison_caption: "Share of the top 50 that were genuinely planted patterns, per method — held-out test years."
+        The final ranking combines two different views of unusual trade activity:
+        a documented weighted-sum score and an XGBoost model. One applies fixed,
+        inspectable weights to known review signals; the other learns combinations
+        of signals from the controlled test scenarios.
+      story_steps:
+        - icon: "sliders"
+          title: "Start with fixed weights"
+          detail: "Nine review signals are put on a common 0-to-1 scale and combined using weights recorded before model testing."
+        - icon: "brain"
+          title: "Learn signal combinations"
+          detail: "XGBoost learns which combinations best rank the planted patterns in the training years."
+        - icon: "shield-check"
+          title: "Choose the permitted blend"
+          detail: "Three predefined blends are compared on validation years only; the test years remain unopened until the design is fixed."
+      formula_heading: "The retained ranking formula"
+      formula: "Ranking score  =  {challenger_pct}% × XGBoost  +  {rule_pct}% × weighted sum"
+      blend_challenger_label: "{challenger_pct}% XGBoost"
+      blend_rule_label: "{rule_pct}% weighted sum"
+      selection_summary: >
+        The 75/25 blend ranked the most planted patterns among the three permitted
+        blends on the {validation_years} validation years. The {rule_pct}% is a
+        formula weight, not a share of human judgement or a guarantee that the
+        full model is transparent.
+      weighted_sum:
+        label: "How the weighted-sum score and 75/25 blend are calculated"
+        intro: >
+          Each signal is first converted to a value from 0 to 1. A fixed weight is
+          then multiplied by that value. For example, a history signal at 1 can add
+          up to 0.20; a history signal at 0.5 adds 0.10. The weights control how
+          strongly each signal can move the score.
+        formula: "Weighted-sum score = weighted signals − market-consistency reduction − data-quality reduction"
+        components_heading: "Fixed weights applied to the review signals"
+        columns:
+          signal: "Review signal"
+          weight: "Maximum addition"
+          meaning: "What it captures"
+        components:
+          - key: "history_weight"
+            signal: "Own-history deviation"
+            meaning: "How far the route is from its earlier pattern"
+          - key: "benchmark_residual_weight"
+            signal: "Market-benchmark gap"
+            meaning: "How far its implied unit value is from the broad benchmark"
+          - key: "benchmark_drift_weight"
+            signal: "Change after the benchmark"
+            meaning: "Whether its benchmark gap changed from the previous observation"
+          - key: "yoy_weight"
+            signal: "Annual implied-value movement"
+            meaning: "How sharply its implied unit value changed"
+          - key: "divergence_weight"
+            signal: "Value versus quantity"
+            meaning: "Whether reported value changed differently from physical volume"
+          - key: "peer_weight"
+            signal: "Same-product peer position"
+            meaning: "How extreme the route is among comparable routes that year"
+          - key: "novelty_weight"
+            signal: "New route"
+            meaning: "Whether the route-product has no earlier active year"
+          - key: "reactivation_weight"
+            signal: "Returning route"
+            meaning: "Whether the route-product returned after a gap"
+          - key: "valid_extreme_weight"
+            signal: "Valid extreme value"
+            meaning: "Whether a usable row is far above or below its benchmark"
+        reductions_heading: "What can reduce the weighted sum"
+        consistency_reduction: "Up to {value}: the movement follows the wider market benchmark."
+        quality_reduction: "Up to {value}: the underlying row has weaker data quality."
+        clipping_note: "The result is limited to the 0-to-1 range. It remains a ranking score, not a likelihood."
+        validation_heading: "How the blend was selected on validation"
+        validation_intro: >
+          Average precision selected XGBoost as the supervised challenger across
+          the full validation ranking. Precision@50 then selected the blend because
+          the operational output is a 50-row review queue.
+        validation_columns:
+          blend: "Validation candidate"
+          xgboost: "XGBoost weight"
+          weighted_sum: "Weighted-sum weight"
+          result: "Planted patterns in Top 50"
+        validation_caveat: >
+          Standalone XGBoost was retained as a benchmark but was not an eligible
+          final blend under the pre-specified design. The hybrid is therefore a
+          governance choice, not the highest-scoring standalone model.
+      test_heading: "Held-out test: how all five methods compared"
+      comparison_caption: "Share of each method's top 50 that were planted patterns in the unseen {test_years} test years. This is the final check, not how the 75/25 weight was selected."
       comparison_x: "Share of the top 50 that were planted patterns (%)"
       tradeoff: >
-        XGBoost alone actually scored a little higher than the blend on the
-        held-out test ({xgb_pct}% vs {hyb_pct}% of the top 50 correct). The blend
-        is used anyway, for two reasons that outweigh a small edge on a ranking
-        people act on:
-      tradeoff_reasons:
-        - "The method was locked on the validation years before the test was opened — re-picking it to chase the test score would be the exact leakage the design forbids."
-        - "Keeping {rule_pct}% transparent rules means every score breaks down into named, auditable signals, not a black box."
-      formula_heading: "How the blended score is built"
-      formula: "Ranking score  =  {challenger_pct}% × XGBoost  +  {rule_pct}% × rules"
-      blend_challenger_label: "{challenger_pct}% XGBoost"
-      blend_rule_label: "{rule_pct}% rules"
+        Standalone XGBoost scored slightly higher on the held-out test ({xgb_pct}%
+        versus {hyb_pct}% precision@50). The hybrid is retained because the project
+        deliberately required an auditable weighted-sum component before the test
+        was opened—not because it was the accuracy winner.
+      explainability_note: >
+        The 25% weighted-sum component is an auditable anchor, not a complete
+        explanation of the hybrid. Interpretability also depends on model-
+        contribution analysis and the recomputable evidence attached to each case.
       score_note: "The score sets review order. A higher score means higher review priority. It is not a probability or a finding of financial crime."
-    drivers:
-      heading: "What makes the flagged cases different"
-      takeaway: "The flagged cases are not unusual by luck on a single measure. A typical one sits near the top on all four at once: far from its own history, far from the market benchmark, high among its peers, and moving sharply year over year."
-      queue_label: "A typical flagged case"
-      population_label: "A typical route"
-      x_title: "Where it ranks among all routes (0 = lowest, 100 = highest)"
-      caption: "Shown on a shared 0-to-100 scale so the four measures line up. This describes the flagged rows; the measures are related, so one price spike can lift several at once."
     honest:
       heading: "What keeps it honest"
       integrity_fail_intro: "A live data check did not pass:"
@@ -767,165 +901,280 @@ pages:
       split_label: "Evaluation split"
       family_label: "Product family"
       metrics_heading: "Full metric table"
-      hybrid_heading: "Blend weights tested on validation"
       splits_heading: "Scenario counts by split"
       splits_note: "Scenario identifiers and labels are stored in a separate file, never in the model inputs. The test split was scored once, after the design was frozen."
       shap_heading: "What the learned model leans on (SHAP)"
       shap_caveat: "Model-contribution context for reviewers only. It is not evidence about any case and never appears in a case view."
       params_heading: "Selected model parameters"
       coeffs_heading: "Transparent-baseline coefficients"
-      sources_heading: "Source files and checksums"
+    # Hand-off to the coverage page: once the viewer knows how the queue is
+    # built, the natural next question is what could not enter it.
+    next_page:
+      body: "Synthetic scenarios helped compare and select the scoring approach, and official observations with usable value and quantity produced the Top 50 queue. One question remains: which official gold records never reached that assessment because usable quantity was unavailable?"
+      cta: "Continue to Gold Quantity Coverage"
+  gold_quantity_coverage:
+    eyebrow: "Methodology"
+    title: "Gold Trade Without Usable Quantity"
+    subtitle: "Where declared trade value exists but implied unit value cannot be calculated."
+    # Opening mental model: why these records sit outside the queue. Every
+    # figure on this page is derived live from the official panel.
+    mental_model_stamp: "Coverage boundary"
+    mental_model: "These observations still have declared trade value, but they do not have usable quantity. Without both fields, implied unit value cannot be calculated, so rule and model scores are not produced. The model did not fail and the trade value is not missing — the records simply sit outside unit-value coverage."
+    caveat: "Missing usable quantity is a data-completeness and auditability limitation. It is not an anomaly signal, and it never raises an observation's review priority."
+    # {gold_rows} etc. are derived live on the page — never typed here.
+    kpis:
+      gap_rows:
+        label: "Gold rows without usable quantity"
+        detail: "Of {gold_rows} official gold rows in the panel."
+      row_rate:
+        label: "Row coverage-gap rate"
+        detail: "The largest row-level gap of the three product families."
+      gap_value:
+        label: "Declared value on those rows"
+        detail: "Nominal declared value; one record dominates this total."
+      value_share:
+        label: "Share of total gold value"
+        detail: "Financially thin relative to all gold value in the panel."
+    section1:
+      heading: "How much cannot be assessed?"
+      caption: "The same records look very different depending on whether they are counted by rows or by declared value."
+      body: "For gold, {gap_rows} of {gold_rows} rows ({gap_row_rate}) carry no usable quantity, so implied unit value cannot be calculated for them. Their declared value totals {gap_value} — which sounds large, but is only {gap_value_share} of all gold value in the panel. Both shares are shown so the size of the coverage gap is never mistaken for a large share of gold trade value."
+      chart_rows_title: "Share of rows without usable quantity"
+      chart_value_title: "Share of declared value without usable quantity"
+      note: "Gold leads by row share; copper leads by gap value. Gold is examined in depth because its gaps are broad and repeated — not because its dollar figure is largest."
+      takeaway: "This shows where the unit-value method has no coverage. It does not show widespread financial exposure."
+    section2:
+      heading: "Large one-offs or repeated gaps?"
+      caption: "Materiality and persistence single out different corridors — and call for different follow-ups."
+      body: "Each point below is a gold corridor with at least one year outside unit-value coverage: how many of its active years lack usable quantity (horizontal) against the declared value on those rows (vertical). The corridors that dominate the dollar total are not the corridors with repeated gaps."
+      log_note: "The vertical axis is logarithmic: equal steps represent multiplicative differences, not equal dollar amounts."
+      cards:
+        oneoff:
+          kicker: "Check the large one-off"
+          title: "{route} · {year}"
+          body: "One observation carries {value} — {share} of the entire gold gap value. The corridor is active in all {active_years} panel years and lacks usable quantity in only this one, so the gap is episodic, not persistent."
+          action: "Verify this record against the original or mirror trade data before the headline total is quoted."
+        repeated:
+          kicker: "Review the repeated gaps"
+          title: "{count} corridors lack usable quantity in every year"
+          body: "Of {full_history} gold corridors active in all {n_years} panel years, {count} lack usable quantity in every single year — yet together they carry only {value} ({share} of the gap value), and none appears in the top fifteen by value."
+          action: "Send these routes to a separate source-data review; the cause may be rounding, reporting or processing conventions."
+      takeaway: "Large one-off records and small repeated gaps need different follow-ups — neither belongs in the anomaly queue."
+      concentration_label: "Concentration detail — top gap observations"
+      concentration_intro: "The largest observations by declared value, with the running share of the total gap value they account for. The top ten cover {top10_share} of it."
+      persistence_label: "Persistence detail — most-repeated corridor gaps"
+      persistence_intro: "Corridors ordered by how many active years lack usable quantity. This is the start of the repeated-gap follow-up list."
+    section3:
+      heading: "Where do the repeated gaps occur?"
+      caption: "The corridors that lack usable quantity in every active year, drawn as exporter → importer routes."
+      finding_strip: "{nld_linked} of {persistent} Netherlands-linked · {outbound} outbound · {inbound} inbound · reciprocal partners: {reciprocal}"
+      body: "Twelve of the fourteen persistent routes connect to the Netherlands, and three partner relationships appear in both directions. All fourteen together carry about {value} — {share} of the overall gold gap value — so this is a focused source-data pattern to check, not a financially material exposure."
+      view_label: "Network view"
+      views:
+        all: "All persistent routes"
+        nld_outbound: "Netherlands outbound"
+        nld_inbound: "Netherlands inbound"
+        reciprocal: "Reciprocal routes"
+        other: "Not Netherlands-linked"
+      guardrail: "A Netherlands-linked pattern, not reporter attribution: exporter and importer fields do not identify which reporting party, harmonisation step or source convention caused the missing quantity — and prominence in this network is not country risk."
+      table_intro: "The same fourteen routes as a table, with the exact values behind the network."
+      table_columns:
+        route: "Route"
+        active_years: "Active years"
+        gap_years: "Years without usable quantity"
+        gap_value: "Declared value (USD)"
+    charts:
+      products:
+        rows_hover: "Rows without usable quantity"
+        value_hover: "Declared value without usable quantity"
+      scatter:
+        series_other: "Other affected corridor"
+        series_top_value: "Top 15 by gap value"
+        series_persistent: "Gap in every active year"
+        x_title: "Active years without usable quantity"
+        y_title: "Declared value without usable quantity (log scale)"
+        hover_years: "Years without usable quantity"
+        hover_value: "Declared value"
+        annotation_largest: "One 2024 record — {share} of the gap value"
+        annotation_persistent: "{count} corridors, every year — {value} in total"
+      network:
+        edge_nld_outbound: "Netherlands → partner"
+        edge_nld_inbound: "Partner → Netherlands"
+        edge_other: "Route not linked to the Netherlands"
+        hover_years: "Years without usable quantity"
+        hover_value: "Declared value"
+        hover_outbound: "Persistent routes out"
+        hover_inbound: "Persistent routes in"
+    closing:
+      heading: "What happens next"
+      caption: "Two separate pathways — records the model can assess, and records it cannot."
+      compare:
+        left_title: "Unit-value review pathway"
+        right_title: "Quantity-coverage follow-up"
+        rows:
+          - left: "Hybrid-ranked Top 50 review queue"
+            right: "Gold quantity follow-up queue"
+          - left: "Requires valid declared value and usable quantity"
+            right: "Starts where usable quantity is unavailable"
+          - left: "Prioritises unusual, measurable unit-value patterns"
+            right: "Prioritises material or persistent coverage gaps"
+          - left: "Uses rule and model scores"
+            right: "Uses declared value, missing-year persistence and source lineage"
+          - left: "Leads to human case review"
+            right: "Leads to source checks on the underlying records"
+          - left: "Leaves every conclusion to human review"
+            right: "Leaves every conclusion to human review"
+      statement: "The project does more than rank unusual observations. It also shows which gold records could not be scored and routes them to a separate follow-up — missing quantity is handled outside the anomaly score, never treated as a signal."
+    trend_label: "Annual detail — gold coverage gap by year"
+    trend_intro: "Yearly rows and declared value outside unit-value coverage. The 2024 value spike is the single large observation highlighted above."
+    trend_columns:
+      year: "Year"
+      rows: "Gold rows"
+      gap_rows: "Rows without usable quantity"
+      gap_rate: "Row rate"
+      gap_value: "Declared value (USD)"
+    source_label: "Source rows — the follow-up queue"
+    source_intro: "Every gold observation outside unit-value coverage, ordered by declared value, with its lineage identifiers. The download carries all {gap_rows} rows."
+    export_label: "Download follow-up queue (.csv)"
+    export_help: "All gold observations without usable quantity, ordered by declared value, with obs_id, source_row_id and source_version for traceability."
+    # Recommended stakeholder-facing labels for values this page cannot compute.
+    missing_labels:
+      quantity: "No usable quantity in BACI"
+      unit_value: "Not computable: no usable BACI quantity"
+      model_score: "Not scored: outside unit-value coverage"
   bank_implementation_pathway:
     eyebrow: "Future-state design"
     title: "Bank Implementation Pathway"
-    subtitle: "How public trade signals could help wholesale-banking AFC teams focus reviews, gather the right evidence and make better-informed human decisions."
+    subtitle: "How public trade data could help wholesale-banking AFC teams decide what to review first and understand the records behind each case."
     boundary:
       label: "Future-state boundary"
-      body: "Future-state design only. Private bank-data integration, case-management connectivity, and production decisioning have not been built."
+      body: "Future-state design only. Connections to private bank data, case-management systems and production decisions have not been built."
     role:
       heading: "Where the prototype could fit"
-      body: >-
-        Today, the prototype can show which country-to-country trade patterns
-        look unusual and explain the public-data signals behind them. Inside a
-        wholesale bank, that queue could become an early triage input: a prompt
-        to identify relevant customers and transactions, then check whether the
-        activity fits the customer profile and whether the documents, movement
-        of goods and payments tell a consistent story.
-      body_2: >-
-        It would not replace transaction monitoring, sanctions screening,
-        case management or human investigation. Its role would be narrower and
-        practical: add external corridor, product and market context at the
-        front of the review funnel, then let bank-governed evidence and an
-        accountable analyst determine what the pattern means.
+      info: >-
+        Inside a wholesale bank, this queue could be an early signal for review.
+        It would highlight an unusual corridor or product, then help an analyst find
+        the customers and transactions behind it. The analyst could compare the
+        public pattern with the customer profile, trade documents, shipments and
+        payments. This would sit alongside transaction monitoring, sanctions
+        screening and case management, not replace them. The bank's records and the
+        analyst's judgement would determine what the activity means and what happens
+        next.
       steps:
         - label: "Public signal"
-          question: "What changed in the corridor, product or market pattern?"
+          question: "What looks unusual in the corridor, product or market?"
           icon: "line-chart"
         - label: "Bank context"
-          question: "Which customers, transactions and trade records could explain it?"
+          question: "Which customers, transactions and records relate to it?"
           icon: "layers"
         - label: "Human decision"
-          question: "Does the evidence resolve the pattern or justify deeper review?"
+          question: "Do the records explain the pattern, or does it need a closer review?"
           icon: "shield-check"
     architecture:
-      heading: "From public-data prototype to a bank review workflow"
-      caption: "The prototype provides an external signal. Bank records help explain what happened, and an analyst decides what to do next."
+      heading: "How the prototype could fit into a bank review"
+      caption: "Public data points to a pattern. Bank records add the detail. An analyst decides what it means."
       today:
         kicker: "Today"
         title: "Public-data prototype"
         nodes:
-          - title: "Official trade data and benchmarks"
-            detail: "Annual country-to-country product totals, compared with broad market prices."
-          - title: "Review-priority queue"
-            detail: "The most unusual patterns are placed first for analyst attention."
-          - title: "Evidence and analyst briefs"
-            detail: "Traceable facts, caveats and the questions a reviewer should ask next."
-      bridge: "Extend with governed bank context"
+          - title: "Public trade data and market prices"
+            detail: "Annual country-to-country product totals compared with broad market prices."
+          - title: "Ranked review queue"
+            detail: "The strongest unusual patterns appear first."
+          - title: "Evidence for each case"
+            detail: "The facts, caveats and questions behind each ranking."
+      bridge: "Add bank records"
       future:
         kicker: "Future"
         title: "Bank-integrated design"
         nodes:
-          - title: "External-intelligence layer"
-            detail: "The public-data queue and its evidence enter the review workflow as external context."
-          - title: "Bank-governed enrichment"
-            detail: "Approved customer, document, shipment and payment records are brought together."
-          - title: "Case management and human review"
-            detail: "An analyst checks the evidence, records the outcome and decides the next step."
-          - title: "Governed feedback dataset"
-            detail: "Quality-controlled review outcomes may later help evaluate and tune the triage process."
-      feedback_note: "Analyst dispositions are not unquestioned ground-truth labels. Coverage, reviewer consistency and selective-label bias must be assessed before they are used for model evaluation or calibration."
+          - title: "Public signal enters the review"
+            detail: "The queue and its evidence are added to the bank's existing case workflow."
+          - title: "Relevant bank records are added"
+            detail: "Customer, document, shipment and payment records are brought together."
+          - title: "An analyst reviews the case"
+            detail: "The analyst checks the records, logs the outcome and decides the next step."
+          - title: "Review outcomes improve later testing"
+            detail: "Completed reviews may help assess and tune the queue after quality and bias checks."
+      feedback_note: "Analyst decisions can provide useful feedback, but they are not perfect labels. Before using them to test or tune the model, the bank would need to check how many cases were reviewed, whether reviewers applied the same standards and which cases were never selected."
     data_domains:
-      heading: "What the bank adds to make the signal reviewable"
+      heading: "What bank records add"
       caption: "Public data can show that a trade pattern is unusual. These bank-held records help an investigator understand who was involved, what was agreed, whether goods moved and how payment was made."
       items:
         - title: "KYC/CDD and expected activity"
           detail: "Who is the customer, what activity is expected, and does this trade route fit the relationship?"
           icon: "landmark"
-        - title: "Trade-finance documentation"
+        - title: "Trade-finance documents"
           detail: "Do contracts and invoices support the price, quantity, goods description, terms and Incoterms?"
           icon: "file-search"
         - title: "Shipment and customs records"
           detail: "Did the stated goods and quantity move as declared in shipping and customs records?"
           icon: "package"
         - title: "Payments and correspondent data"
-          detail: "Who paid whom, through which banks, in what currency, amount and timing?"
+          detail: "Who paid whom? Through which banks, in what currency, how much and when?"
           icon: "line-chart"
         - title: "Sanctions and adverse media"
-          detail: "Do screened parties or connected entities require a separate sanctions or adverse-media review?"
+          detail: "Do any parties or connected entities need a separate sanctions or adverse-media review?"
           icon: "search"
         - title: "Beneficial ownership"
           detail: "Who ultimately owns or controls the trading parties, and are the relationships expected?"
           icon: "shield-check"
     value:
       heading: "How this could help a wholesale-banking AFC team"
-      caption: "Proposed benefits to test in a controlled pilot, not measured production outcomes."
+      caption: ""
       items:
-        - title: "Choose where to look first"
-          detail: "Use corridor, product and market context to direct limited analyst time toward stronger patterns."
+        - title: "Focus analyst time"
+          detail: "Bring the strongest unusual patterns to the front of the review queue."
           icon: "checklist"
         - title: "Test the pattern against bank facts"
           detail: "Compare the public signal with expected customer activity, documents, payments and physical trade."
           icon: "layers"
-        - title: "Start with a traceable case pack"
-          detail: "Carry source-linked evidence, caveats and missing-information questions into the review record."
+        - title: "Start with evidence, not just a score"
+          detail: "Give the analyst the source records, caveats and unanswered questions behind each case."
           icon: "file-text"
-        - title: "Learn from controlled outcomes"
-          detail: "Use quality-checked review outcomes to evaluate whether the queue is useful and revisit its calibration."
+        - title: "Learn carefully from completed reviews"
+          detail: "Use checked review outcomes to see whether the queue is useful and where it needs adjustment."
           icon: "rotate-cw"
     ai_extension:
-      heading: "Where AI could help: prepare the case, not decide it"
-      caption: "A bounded AI assistant could organise approved evidence into a faster-to-read case pack. It would not create evidence, assign criminal intent, close a case or make an escalation decision."
+      heading: "Where AI could help: connect the records, leave the decision to the analyst"
+      caption: "The ranking points to a case. With access to the relevant bank records, an AI assistant could help the analyst find related activity, compare documents and organise the evidence. It would not decide whether the activity is suspicious or what action to take."
+      value_statement: "The useful part is not writing a summary. It is bringing together information that may be spread across KYC files, trade documents, shipment records and payment systems, then showing where those records agree, conflict or leave a gap. Every result would link back to its source."
       steps:
-        - kicker: "Grounded inputs"
-          title: "Retrieve approved evidence"
-          detail: "Use validated public evidence rows and only the bank records the reviewer is entitled to access."
-          icon: "database"
-        - kicker: "AI-assisted preparation"
-          title: "Draft and connect"
-          detail: "Summarise why the pattern ranked highly, cite the supporting records, surface benign explanations and list what is still missing."
-          icon: "brain"
-        - kicker: "Accountable review"
-          title: "Verify and decide"
-          detail: "The analyst checks every source, edits the case narrative and remains responsible for the next step."
+        - kicker: "Find the records"
+          title: "Find the bank activity behind the public signal"
+          detail: "Use the countries, product, year and counterparties to find possible customer relationships, trade instruments and transactions. Show why each record may be related."
+          icon: "search"
+        - kicker: "Compare the details"
+          title: "Check whether the records tell the same story"
+          detail: "Compare names, goods, prices, quantities, currencies, dates and terms across contracts, invoices, shipping, customs and payment records. Mark what matches, what conflicts and what is missing."
+          icon: "file-search"
+        - kicker: "Prepare for review"
+          title: "Lay out the case for the analyst"
+          detail: "Build a timeline and relationship view, show which records support or challenge each possible explanation, and suggest the questions that still need an answer."
           icon: "shield-check"
-      uses_heading: "Practical extensions"
-      uses:
-        - "Evidence-grounded case summaries with source IDs"
-        - "Source-backed questions across corridor and customer history"
-        - "Automatic missing-information and inconsistency checklists"
-      guardrail_heading: "Required AI guardrails"
+      outputs_heading: "What the analyst would receive"
+      outputs:
+        - title: "Related activity in one view"
+          detail: "See how the public corridor signal connects to customers, trade instruments, shipments, payments and counterparties."
+          icon: "layers"
+        - title: "Document and payment comparison"
+          detail: "Compare values, quantities, dates, parties and terms, with every match or conflict linked to the original record."
+          icon: "file-search"
+        - title: "Explanations checked against the records"
+          detail: "See what supports a possible innocent explanation, what does not fit and what information is still missing."
+          icon: "checklist"
+        - title: "Ask questions about the case"
+          detail: "Get answers from the approved case records, with links to the sources and a clear 'not found' when the records do not contain an answer."
+          icon: "brain"
+      guardrail_heading: "Rules the AI would have to follow"
       guardrails:
-        - "No unsupported facts or numbers"
-        - "Citations back to approved records"
-        - "Schema validation and deterministic fallback"
-        - "Prompt, input and output audit logs"
-    adoption:
-      heading: "How a bank could start safely"
-      caption: "A short pathway is enough: prove the review value offline before adding workflow integration or operational reliance."
-      stages:
-        - number: "1"
-          title: "Test offline"
-          detail: "Compare a small queue sample with approved internal records. No automated decisions or customer action."
-        - number: "2"
-          title: "Assist the review"
-          detail: "Send traceable case packs into a controlled analyst workflow and capture structured feedback."
-        - number: "3"
-          title: "Validate before use"
-          detail: "Add operational reliance only after independent validation, access approval and monitoring on fresh data."
-    controls:
-      heading: "What must stay controlled"
-      items:
-        - title: "Private-data governance"
-          detail: "Purpose limitation, entitlements, retention, lineage and audit logging for every internal record used."
-        - title: "Model risk and monitoring"
-          detail: "Independent validation, periodic re-evaluation, drift monitoring and documented change control."
-        - title: "Feedback-label governance"
-          detail: "Disposition definitions, reviewer consistency, missing outcomes and selective-label bias must be tested."
-        - title: "Human accountability"
-          detail: "A named analyst remains responsible for every review decision; the score never establishes suspicion or criminal intent."
+        - "Use only records the analyst can access"
+        - "Link every fact to its source"
+        - "Say when the records do not answer a question"
+        - "Keep a log and use fixed templates if validation fails"
     closing:
-      statement: "The bank value is not a public-data score on its own. It is the combination of an external trade signal, governed customer and transaction evidence, a traceable case pack and an accountable human decision."
-      chips: ["External trade context", "Bank-governed evidence", "AI-assisted preparation", "Human decision"]
+      statement: "A public-data score would only be a starting point. The value comes from combining it with the bank's customer and transaction records, giving the analyst a clear evidence trail and leaving the decision with them."
+      chips: ["Public trade signal", "Relevant bank records", "Evidence brought together", "Analyst decision"]
     design_basis: "Design basis: references/DOMAIN_GUIDE.md | references/evidence_first_tbml_project_explainer.md | references/feature_typology_crosswalk.md | references/post-core-project-improvement.md | reports/analyst_briefs.md"
   appendix:
     eyebrow: "Appendix"
@@ -946,7 +1195,7 @@ overview_kpis:
 navigation_steps:
   - ["Top 50 Review Queue", "Filter and sort the ranked official observations."]
   - ["Selected Case Review", "Open one case: history, signals, and evidence."]
-  - ["Trade Landscape and Patterns", "See coverage and concentration across the queue."]
+  - ["Trade Landscape and Patterns", "See trade scale, market context, and the profile of the review queue."]
   - ["Model Evaluation & Controls", "Check evaluation, selection, and interpretation limits."]
 
 # Verbatim from reports/final_analysis_report.md — Key limitations.

@@ -73,7 +73,9 @@ with render_filter_panel():
             icon=":material/restart_alt:", on_click=state.reset_queue_filters,
             width="stretch",
         )
-    filters = queue_filters(metrics.queue_filter_options(enriched))
+    filters = queue_filters(
+        metrics.queue_filter_options(enriched), metrics.family_hs6_map(enriched)
+    )
     filtered = metrics.apply_queue_filters(enriched, filters)
 
 if filtered.empty:
@@ -110,16 +112,26 @@ else:
         f"{family} = HS6 {code}" for family, code in metrics.family_hs6_map(enriched).items()
     )
 
-    # ---- Results header: interpretation left and export right. ----
+    # ---- Results header: interpretation left, export note + button right. ----
     with st.container(key="queue_results_header"):
-        heading_col, export_col = st.columns(
-            [4.2, 1.35], vertical_alignment="center", gap="medium",
+        heading_col, info_col, export_col = st.columns(
+            [4.0, 0.3, 1.3], vertical_alignment="center", gap="small",
         )
         with heading_col:
             section_title(
                 copy["results_heading"],
                 copy["results_caption"],
                 icon="list-ordered",
+            )
+        with info_col:
+            # The rounding / full-precision-export note lives here as an info
+            # icon beside the button (was a footer caption).
+            st.markdown(
+                f'<div class="queue-export-info">'
+                f'<span class="tip queue-export-tip" tabindex="0" role="note" '
+                f'data-tip="{html.escape(copy["table_caption_precision"], quote=True)}">'
+                f'{render_icon("info")}</span></div>',
+                unsafe_allow_html=True,
             )
         with export_col:
             st.download_button(
@@ -173,28 +185,29 @@ else:
             mappings=mappings,
         )
 
+    # "How to read this queue" — the score explainer plus the unit-value
+    # definition, both as footer notes (the in-grid column tooltip is dropped
+    # because the dataframe positions it far from the header).
+    unit_value_note = copy["columns"]["unit_value_usd_per_metric_ton"]["help"]
     with st.container(key="queue_score_guidance"):
         st.markdown(
             f'<div class="queue-guidance-content">'
             f'<div class="queue-guidance-icon">{render_icon("info")}</div>'
             f'<div><div class="queue-guidance-label">How to read the score</div>'
             f'<div class="queue-guidance-text">{html.escape(copy["score_note"])}</div></div>'
+            f'</div>'
+            f'<div class="queue-guidance-content">'
+            f'<div class="queue-guidance-icon">{render_icon("info")}</div>'
+            f'<div><div class="queue-guidance-label">How unit value is calculated</div>'
+            f'<div class="queue-guidance-text">{html.escape(unit_value_note)}</div></div>'
             f'</div>',
-            unsafe_allow_html=True,
-        )
-
-    with st.container(key="queue_table_notes"):
-        st.markdown(
-            f'<div class="queue-technical-notes" role="note">'
-            f'<p>{html.escape(copy["table_caption_products"].format(mappings=mappings))}</p>'
-            f'<p>{html.escape(copy["table_caption_precision"])}</p></div>',
             unsafe_allow_html=True,
         )
 
 ledger("review_queue", "features", note="scores ranked on real official observations only")
 
-# Reveal the queue's sections (banner, table, guidance, notes) as they scroll in.
+# Reveal the queue's sections (banner, table, guidance) as they scroll in.
 render_scroll_reveal(
     ".st-key-queue_header, .st-key-queue_case_banner, .st-key-queue_table_region, "
-    ".st-key-queue_score_guidance, .st-key-queue_table_notes"
+    ".st-key-queue_score_guidance"
 )

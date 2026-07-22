@@ -155,28 +155,101 @@ def apply_global_styles() -> None:
         margin: 0.35rem 0 0.5rem 0;
     }}
 
-    /* Quiet 'main page' link at the FOOT of the nav: smaller and dimmer than
-       the primary items, set off by a hairline rule so it reads as a return
-       action, not another page. Its transition is already covered by the
-       reduced-motion kill-list (it is a sidebar stPageLink). */
+    /* Icon-only return to the welcome page. It sits in the brand area rather
+       than in a navigation group, so it reads as a global home action. The text
+       stays in the accessibility tree but is visually clipped. */
     .st-key-sidebar_home {{
-        margin: 1.1rem 0 0.2rem 0;
-        padding-top: 0.55rem;
-        border-top: 1px solid rgba(234, 240, 248, 0.16);
+        height: 0;
+        margin: 0;
+        position: relative;
+        z-index: 2;
     }}
+    .st-key-sidebar_home [data-testid="stPageLink"] {{ margin: 0 !important; }}
     .st-key-sidebar_home [data-testid="stPageLink"] a {{
-        padding-top: 0.3rem;
-        padding-bottom: 0.3rem;
-        opacity: 0.7;
-        transition: opacity {hover_ms}ms ease-out, background {hover_ms}ms ease-out;
+        position: absolute;
+        right: 0;
+        bottom: 0.2rem;
+        width: 2.15rem;
+        height: 2.15rem;
+        min-height: 2.15rem;
+        padding: 0 !important;
+        justify-content: center;
+        border: 1px solid rgba(234, 240, 248, 0.22) !important;
+        border-left: 1px solid rgba(234, 240, 248, 0.22) !important;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.04);
+        opacity: 0.78;
+        transition: opacity {hover_ms}ms ease-out,
+                    background {hover_ms}ms ease-out,
+                    border-color {hover_ms}ms ease-out;
     }}
     .st-key-sidebar_home [data-testid="stPageLink"] a p {{
-        font-size: 0.84rem;
-        font-weight: 600;
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
     }}
     .st-key-sidebar_home [data-testid="stPageLink"] a:hover {{
         opacity: 1;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: {teal500} !important;
+        transform: none !important;
     }}
+    .st-key-sidebar_home [data-testid="stPageLink"] a:focus-visible {{
+        outline: 2px solid {teal500};
+        outline-offset: 2px;
+    }}
+
+    /* Pin the foot of the sidebar (the creator "about" block) to
+       the bottom: the sidebar's outer vertical block becomes a full-height flex
+       column, and the layout wrapper holding the bottom block takes the slack. */
+    [data-testid="stSidebarUserContent"] > div > [data-testid="stVerticalBlock"] {{
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 4.5rem);
+    }}
+    [data-testid="stSidebarUserContent"] [data-testid="stLayoutWrapper"]:has(.st-key-sidebar_bottom) {{
+        margin-top: auto;
+        margin-bottom: 2.2rem;  /* clear the fixed human-review boundary ribbon */
+    }}
+    /* Divider that sets the creator block off from the nav above. */
+    .about-sep {{
+        border-top: 1px solid rgba(234, 240, 248, 0.16);
+        margin: 0;
+    }}
+    /* Creator / about block. Links inherit the frost sidebar link colour; they
+       sit slightly dimmed and brighten on hover. */
+    .about-card {{ margin: 0.1rem 0 0.1rem 0.15rem; }}
+    .about-name {{
+        color: {p["sidebar_ink"]};
+        font-size: 0.92rem;
+        font-weight: 700;
+        margin-bottom: 0.12rem;
+    }}
+    .about-bio {{
+        color: {p["sidebar_muted"]};
+        font-size: 0.78rem;
+        line-height: 1.42;
+        margin-bottom: 0.5rem;
+    }}
+    .about-links {{ display: flex; flex-wrap: wrap; gap: 0.3rem 0.85rem; }}
+    .about-link {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        opacity: 0.82;
+        transition: opacity {hover_ms}ms ease-out;
+    }}
+    .about-link svg {{ width: 0.95rem; height: 0.95rem; flex: none; }}
+    .about-link:hover {{ opacity: 1; text-decoration: underline; }}
 
     /* Custom navigation. Streamlit's built-in auto-nav is hidden (it injects a
        fixed vertical gap we can't override); we render st.page_link instead, so
@@ -665,6 +738,8 @@ def apply_global_styles() -> None:
         line-height: 1.5;
         margin-bottom: 0.75rem;
     }}
+    /* Caveat note: a soft-red accent (not the teal interactive colour) marks it
+       as a caution — "a high rank is not a finding", read before the queue. */
     .queue-interpretation-boundary {{
         display: flex;
         align-items: center;
@@ -673,9 +748,9 @@ def apply_global_styles() -> None:
         box-sizing: border-box;
         padding: 0.58rem 0.75rem;
         color: {p["ink"]};
-        background: color-mix(in srgb, {p["accent_soft"]} 68%, white);
-        border: 1px solid color-mix(in srgb, {p["accent"]} 34%, white);
-        border-left: 3px solid {p["accent"]};
+        background: color-mix(in srgb, {challenge_accent} 10%, white);
+        border: 1px solid color-mix(in srgb, {challenge_accent} 30%, white);
+        border-left: 3px solid {challenge_accent};
         border-radius: 8px;
         font-size: 0.9rem;
         line-height: 1.4;
@@ -684,9 +759,28 @@ def apply_global_styles() -> None:
     .queue-interpretation-boundary svg {{
         width: 1rem;
         height: 1rem;
-        color: {p["accent"]};
+        color: {challenge_accent};
         flex: none;
     }}
+
+    /* Export note: an info icon beside the export button whose tooltip carries
+       the rounding / full-precision-export note (was a footer caption). The
+       tooltip is right-anchored so it never runs off the page edge. */
+    .queue-export-info {{
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }}
+    .queue-export-tip.tip {{
+        display: inline-flex;
+        text-decoration: none;
+        color: {p["muted"]};
+        line-height: 1;
+    }}
+    .queue-export-tip.tip:hover, .queue-export-tip.tip:focus-visible {{ color: {outcome_blue}; }}
+    .queue-export-tip.tip svg {{ width: 1.15rem; height: 1.15rem; }}
+    .queue-export-tip.tip::after {{ left: auto; right: 0; }}
+    .queue-export-tip.tip::before {{ left: auto; right: 0.5em; }}
 
     .st-key-dashboard_filter_panel {{
         background: color-mix(in srgb, {p["page_bg"]} 60%, white);
@@ -831,6 +925,12 @@ def apply_global_styles() -> None:
         gap: 0.7rem;
         min-height: 56px;
     }}
+    /* Second note (unit value) stacks under the score note, divided by a rule. */
+    .queue-guidance-content + .queue-guidance-content {{
+        margin-top: 0.5rem;
+        padding-top: 0.65rem;
+        border-top: 1px solid color-mix(in srgb, {outcome_blue} 18%, white);
+    }}
     .queue-guidance-icon {{
         display: grid;
         place-items: center;
@@ -965,6 +1065,11 @@ def apply_global_styles() -> None:
     /* Trade Landscape: push the value/quantity toggle to the right corner. */
     .st-key-pa_scale_mode {{ width: fit-content; margin-left: auto; }}
     .st-key-pa_scale_mode [data-testid="stSegmentedControl"] {{ margin-left: auto; }}
+    /* Selected Case Review: the Chart|Table toggle sits in the top-right corner
+       of the comparison heading row (flush right within its column). */
+    .st-key-case_view_mode_0, .st-key-case_view_mode_1 {{ width: fit-content; margin-left: auto; }}
+    .st-key-case_view_mode_0 [data-testid="stSegmentedControl"],
+    .st-key-case_view_mode_1 [data-testid="stSegmentedControl"] {{ margin-left: auto; }}
     /* Chart sub-headings clear the takeaway above them. */
     .chart-subhead {{
         color: {p["ink"]};
@@ -972,11 +1077,10 @@ def apply_global_styles() -> None:
         font-size: 0.95rem;
         margin: 0.9rem 0 0.25rem 0;
     }}
-    /* Trade Landscape: each Scale / Structure / Market section is a subtle card
-       that lifts off the plane, so the three read as distinct blocks on scroll.
+    /* Trade Landscape: each Scale / Market / Queue Profile section is a subtle
+       card that lifts off the plane, so the three read as distinct blocks on scroll.
        Each fades up on entrance, staggered. */
     .st-key-pa_card_scale,
-    .st-key-pa_card_structure,
     .st-key-pa_card_market,
     .st-key-pa_card_patterns {{
         background: {p["panel_bg"]};
@@ -987,12 +1091,11 @@ def apply_global_styles() -> None:
         margin-bottom: 1.1rem;
         animation: rise-in {entry_ms}ms ease-out both;
     }}
-    .st-key-pa_card_structure {{ animation-delay: {step_ms}ms; }}
-    .st-key-pa_card_market {{ animation-delay: {step_ms * 2}ms; }}
+    .st-key-pa_card_market {{ animation-delay: {step_ms}ms; }}
+    .st-key-pa_card_patterns {{ animation-delay: {step_ms * 2}ms; }}
     /* Breathing room between each section title and the subtitle line under it,
-       across all four landscape cards (scale / structure / market / patterns). */
+       across the three landscape cards (scale / market / queue profile). */
     .st-key-pa_card_scale .case-takeaway,
-    .st-key-pa_card_structure .case-takeaway,
     .st-key-pa_card_market .case-takeaway,
     .st-key-pa_card_patterns .case-takeaway {{
         margin-top: 0.6rem;
@@ -1126,7 +1229,7 @@ def apply_global_styles() -> None:
     }}
     table.data-table td[title] {{ cursor: help; }}
 
-    /* ---- Landing page (Business Problem & Value): narrative sections ---- */
+    /* ---- Landing page (Business Problem and Value): narrative sections ---- */
     .hero-block {{ padding: 0.3rem 0 0.4rem 0; }}
     .hero-block .page-title {{
         font-size: 2.45rem;
@@ -1360,9 +1463,20 @@ def apply_global_styles() -> None:
     .bottom-line-text {{
         color: {p["sidebar_ink"]};
         font-size: 1.06rem;
-        line-height: 1.55;
+        line-height: 1.58;
         font-weight: 500;
-        max-width: 90ch;
+        max-width: 92ch;
+    }}
+    /* Closing statement is rendered as separate paragraphs; keep them spaced. */
+    p.bottom-line-text {{ margin: 0 0 0.75rem 0; }}
+    p.bottom-line-text:last-of-type {{ margin-bottom: 0.9rem; }}
+    /* Data-trust closing footer: match the Bank Implementation Pathway footer
+       type — smaller and full-width — so the two closing panels read the same
+       and the copy fills the panel instead of leaving a wide right margin. */
+    .st-key-dtrq_closing .bottom-line-text {{
+        font-size: 0.88rem;
+        line-height: 1.5;
+        max-width: none;
     }}
     /* Data-trust closing: the navy wrap-up panel that also holds the model-
        evaluation link, so the bottom line and its next step read as one block. */
@@ -1419,7 +1533,7 @@ def apply_global_styles() -> None:
     }}
 
     /* ================================================================
-       Business Problem & Value: balanced narrative grid + manual story
+       Business Problem and Value: balanced narrative grid + manual story
        module. Everything is scoped to the keyed page container so the
        generic landing primitives remain available to other pages.
        ================================================================ */
@@ -1497,12 +1611,14 @@ def apply_global_styles() -> None:
         border-top-color: {challenge_accent};
         padding: 1rem 1.15rem;
         box-shadow: 0 2px 8px {shadow};
-        transition: border-color {standard_ms}ms {motion_easing};
+        transition: border-color {standard_ms}ms {motion_easing},
+                    box-shadow {standard_ms}ms {motion_easing},
+                    transform {standard_ms}ms {motion_easing};
     }}
     .st-key-business_value_page .twin-card.response {{ border-top-color: {p["accent"]}; }}
     .st-key-business_value_page .twin-card:hover {{
-        transform: none;
-        box-shadow: 0 2px 8px {shadow};
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px {shadow};
     }}
     .st-key-business_value_page .twin-card.challenge .twin-label {{ color: {challenge_accent}; }}
 
@@ -1517,10 +1633,13 @@ def apply_global_styles() -> None:
         border-radius: 8px;
         padding: 1rem;
         box-shadow: 0 2px 8px {shadow};
+        transition: border-color {standard_ms}ms {motion_easing},
+                    box-shadow {standard_ms}ms {motion_easing},
+                    transform {standard_ms}ms {motion_easing};
     }}
     .st-key-business_value_page .stat-tile:hover {{
-        transform: none;
-        box-shadow: 0 2px 8px {shadow};
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px {shadow};
     }}
     .st-key-business_value_page .kpi-icon {{ width: 38px; height: 38px; }}
     .st-key-business_value_page .outcome-teal {{ border-top-color: {p["accent"]}; }}
@@ -1602,6 +1721,7 @@ def apply_global_styles() -> None:
         margin: 1rem 0;
     }}
     .st-key-business_value_story .commodity-card {{
+        position: relative;
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -1638,12 +1758,44 @@ def apply_global_styles() -> None:
         line-height: 1.35;
         overflow-wrap: anywhere;
     }}
+    .st-key-business_value_story .commodity-title-row {{
+        display: flex;
+        align-items: center;
+        gap: 0.42rem;
+        min-width: 0;
+    }}
+    .st-key-business_value_story .commodity-info {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.15rem;
+        height: 1.15rem;
+        flex: none;
+        text-decoration: none;
+    }}
+    .st-key-business_value_story .commodity-info svg {{
+        width: 0.95rem;
+        height: 0.95rem;
+    }}
+    .st-key-business_value_story .commodity-info.tip::after {{
+        left: auto;
+        right: 0;
+        width: min(21rem, 70vw);
+        max-width: min(21rem, 70vw);
+    }}
+    .st-key-business_value_story .commodity-info.tip::before {{
+        left: auto;
+        right: 0.25rem;
+    }}
     .st-key-business_value_story .family-crude-palm-oil {{
         border-top-color: {family_colors["crude_palm_oil"]};
     }}
     .st-key-business_value_story .family-crude-palm-oil .commodity-icon {{
         color: {family_colors["crude_palm_oil"]};
         background: color-mix(in srgb, {family_colors["crude_palm_oil"]} 13%, white);
+    }}
+    .st-key-business_value_story .family-crude-palm-oil .commodity-info {{
+        color: {family_colors["crude_palm_oil"]};
     }}
     .st-key-business_value_story .family-refined-copper-cathodes {{
         border-top-color: {family_colors["refined_copper_cathodes"]};
@@ -1652,12 +1804,18 @@ def apply_global_styles() -> None:
         color: {family_colors["refined_copper_cathodes"]};
         background: color-mix(in srgb, {family_colors["refined_copper_cathodes"]} 13%, white);
     }}
+    .st-key-business_value_story .family-refined-copper-cathodes .commodity-info {{
+        color: {family_colors["refined_copper_cathodes"]};
+    }}
     .st-key-business_value_story .family-gold-unwrought {{
         border-top-color: {family_colors["gold_unwrought"]};
     }}
     .st-key-business_value_story .family-gold-unwrought .commodity-icon {{
         color: {family_colors["gold_unwrought"]};
         background: color-mix(in srgb, {family_colors["gold_unwrought"]} 14%, white);
+    }}
+    .st-key-business_value_story .family-gold-unwrought .commodity-info {{
+        color: {family_colors["gold_unwrought"]};
     }}
 
     /* Why-it-matters comparison and connected review-queue flow. */
@@ -1670,6 +1828,12 @@ def apply_global_styles() -> None:
         border-radius: 8px;
         padding: 1rem 1.1rem;
         box-shadow: none;
+        transition: box-shadow {standard_ms}ms {motion_easing},
+                    transform {standard_ms}ms {motion_easing};
+    }}
+    .st-key-business_value_story .quote-card:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px {shadow};
     }}
     .st-key-business_value_story .story-process-flow {{
         display: grid;
@@ -1711,6 +1875,12 @@ def apply_global_styles() -> None:
         border-top: 3px solid var(--process-accent);
         border-radius: 8px;
         animation: bv-panel-in {standard_ms}ms {motion_easing} both;
+        transition: box-shadow {standard_ms}ms {motion_easing},
+                    transform {standard_ms}ms {motion_easing};
+    }}
+    .st-key-business_value_story .story-process-stage:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px {shadow};
     }}
     .st-key-business_value_story .story-process-stage:not(:last-child)::after {{
         content: "→";
@@ -1771,7 +1941,21 @@ def apply_global_styles() -> None:
         padding: 1.25rem 1.35rem;
         box-shadow: 0 2px 8px {shadow};
     }}
-    .st-key-business_value_page .bottom-line-text {{ max-width: none; }}
+    .st-key-business_value_page .bottom-line-text {{
+        max-width: none;
+        font-size: 0.88rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }}
+    .st-key-business_value_page .value-chip-row {{
+        margin-top: 0.6rem;
+        gap: 0.4rem;
+    }}
+    .st-key-business_value_page .value-chip {{
+        padding: 0.14rem 0.6rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }}
 
     @keyframes bv-rise-in {{
         from {{ opacity: 0; transform: translateY(8px); }}
@@ -1814,6 +1998,44 @@ def apply_global_styles() -> None:
         .st-key-business_value_stakeholders,
         .st-key-business_value_story {{ margin-bottom: 3rem; }}
         .st-key-business_value_story .commodity-grid {{ grid-template-columns: 1fr; }}
+        /* On narrow screens, anchor the bubble to the full card instead of the
+           icon so long product names can never push the explanation off-screen. */
+        .st-key-business_value_story .commodity-info.tip::after,
+        .st-key-business_value_story .commodity-info.tip::before {{
+            content: none;
+        }}
+        .st-key-business_value_story .commodity-card::after {{
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            z-index: 80;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            color: {p["sidebar_ink"]};
+            background: {p["sidebar_bg"]};
+            border: 1px solid {p["accent"]};
+            border-radius: 6px;
+            box-shadow: 0 8px 22px rgba(15, 34, 58, 0.22);
+            font-size: 0.76rem;
+            font-weight: 500;
+            line-height: 1.45;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(2px);
+            transition: opacity 160ms ease-out, transform 160ms ease-out,
+                        visibility 0s linear 160ms;
+            pointer-events: none;
+        }}
+        .st-key-business_value_story .commodity-card:focus-within::after,
+        .st-key-business_value_story .commodity-card:has(.commodity-info:hover)::after {{
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-4px);
+            transition: opacity 160ms ease-out, transform 160ms ease-out,
+                        visibility 0s;
+        }}
     }}
     @media (max-width: 600px) {{
         .st-key-business_value_page .stat-band,
@@ -1833,6 +2055,10 @@ def apply_global_styles() -> None:
     }}
 
     /* ---- Bank Implementation Pathway: future-state operating model. ---- */
+    .bank-pathway-hero .page-subtitle {{
+        width: 100%;
+        max-width: none;
+    }}
     .bank-section-heading {{ margin-bottom: 0.85rem; max-width: none; }}
     .bank-section-title {{
         color: {p["ink"]};
@@ -1847,6 +2073,22 @@ def apply_global_styles() -> None:
         border-radius: 2px;
         background: {p["accent"]};
         margin-bottom: 0.45rem;
+    }}
+    .bank-section-info {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.18rem;
+        height: 1.18rem;
+        margin-left: 0.42rem;
+        color: {p["accent"]};
+        vertical-align: -0.16rem;
+        text-decoration: none;
+    }}
+    .bank-section-info svg {{ width: 1.05rem; height: 1.05rem; }}
+    .bank-section-info.tip::after {{
+        width: min(31rem, 78vw);
+        max-width: min(31rem, 78vw);
     }}
     .bank-section-caption {{
         color: {p["muted"]};
@@ -1881,9 +2123,7 @@ def apply_global_styles() -> None:
         /* Inner cards/steps lag their section slightly for a layered reveal. */
         .bank-reveal .bank-icon-card,
         .bank-reveal .bank-fit-step,
-        .bank-reveal .bank-ai-step,
-        .bank-reveal .bank-stage,
-        .bank-reveal .bank-control-item {{
+        .bank-reveal .bank-ai-step {{
             animation-name: bank-scroll-reveal;
             animation-duration: 1ms;
             animation-timing-function: ease-out;
@@ -2026,7 +2266,7 @@ def apply_global_styles() -> None:
         align-items: center;
         gap: 0.45rem;
         align-self: center;
-        color: {source_roles["typology"]["text"]};
+        color: {case_maroon};
         font-size: 0.78rem;
         font-weight: 750;
         line-height: 1.35;
@@ -2108,6 +2348,26 @@ def apply_global_styles() -> None:
         border-left: 4px solid {context_violet};
         padding: 1rem;
     }}
+    .bank-ai-value {{
+        display: grid;
+        grid-template-columns: 1.35rem minmax(0, 1fr);
+        gap: 0.65rem;
+        align-items: start;
+        color: {p["sidebar_ink"]};
+        background: {navy7};
+        border-radius: 6px;
+        padding: 0.75rem 0.85rem;
+        margin-bottom: 0.9rem;
+        font-size: 0.84rem;
+        font-weight: 600;
+        line-height: 1.5;
+    }}
+    .bank-ai-value svg {{
+        width: 1.15rem;
+        height: 1.15rem;
+        color: {outcome_amber};
+        margin-top: 0.12rem;
+    }}
     .bank-ai-flow {{
         display: grid;
         grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 1.15fr) 2.5rem minmax(0, 1fr);
@@ -2149,21 +2409,53 @@ def apply_global_styles() -> None:
         font-weight: 750;
     }}
     .bank-ai-support {{
-        display: grid;
-        grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-        gap: 1rem;
         margin-top: 0.9rem;
         padding-top: 0.85rem;
         border-top: 1px solid color-mix(in srgb, {context_violet} 22%, white);
     }}
     .bank-ai-support-title {{ color: {p["ink"]}; font-size: 0.8rem; font-weight: 750; }}
-    .bank-ai-uses ul {{
-        margin: 0.35rem 0 0 1.05rem;
-        padding: 0;
-        color: {p["muted"]};
-        font-size: 0.8rem;
-        line-height: 1.5;
+    .bank-ai-output-grid {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+        margin-top: 0.45rem;
     }}
+    .bank-ai-output {{
+        --ai-output-tone: {outcome_blue};
+        --ai-output-soft: {source_roles["official"]["soft"]};
+        display: grid;
+        grid-template-columns: 2.25rem minmax(0, 1fr);
+        gap: 0.65rem;
+        align-items: start;
+        min-width: 0;
+        background: {p["panel_bg"]};
+        border-left: 3px solid var(--ai-output-tone);
+        padding: 0.7rem 0.75rem;
+    }}
+    .bank-ai-output-2 {{ --ai-output-tone: {p["accent"]}; --ai-output-soft: {p["accent_soft"]}; }}
+    .bank-ai-output-3 {{ --ai-output-tone: {outcome_amber}; --ai-output-soft: {source_roles["typology"]["soft"]}; }}
+    .bank-ai-output-4 {{ --ai-output-tone: {context_violet}; --ai-output-soft: color-mix(in srgb, {context_violet} 11%, white); }}
+    .bank-ai-output-icon {{
+        width: 2.1rem;
+        height: 2.1rem;
+        background: var(--ai-output-soft);
+        color: var(--ai-output-tone);
+    }}
+    .bank-ai-output-icon svg {{ width: 1.05rem; height: 1.05rem; }}
+    .bank-ai-output-copy {{ min-width: 0; }}
+    .bank-ai-output-title {{
+        color: {p["ink"]};
+        font-size: 0.82rem;
+        font-weight: 750;
+        line-height: 1.35;
+    }}
+    .bank-ai-output-detail {{
+        color: {p["muted"]};
+        font-size: 0.76rem;
+        line-height: 1.45;
+        margin-top: 0.18rem;
+    }}
+    .bank-ai-guardrails {{ margin-top: 0.8rem; }}
     .bank-ai-guardrail-grid {{ display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.4rem; }}
     .bank-ai-guardrail {{
         display: inline-flex;
@@ -2180,89 +2472,21 @@ def apply_global_styles() -> None:
     }}
     .bank-ai-guardrail svg {{ width: 0.85rem; height: 0.85rem; color: {context_violet}; flex: none; }}
 
-    .bank-adoption {{
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0;
-        margin-top: 0.6rem;
-    }}
-    .bank-stage {{
-        position: relative;
-        min-width: 0;
-        padding: 0.1rem 1.25rem 0.1rem 0;
-    }}
-    .bank-stage:not(:last-child)::after {{
-        content: "";
-        position: absolute;
-        top: 1rem;
-        left: 2.2rem;
-        right: 0.45rem;
-        height: 2px;
-        background: {p["border"]};
-        z-index: 0;
-    }}
-    .bank-stage-number {{
-        position: relative;
-        z-index: 1;
-        display: grid;
-        place-items: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        background: {outcome_blue};
-        color: white;
-        font-size: 0.82rem;
-        font-weight: 800;
-        margin-bottom: 0.55rem;
-    }}
-    .bank-stage:nth-child(2) .bank-stage-number {{ background: {outcome_amber}; color: {source_roles["typology"]["text"]}; }}
-    .bank-stage:nth-child(3) .bank-stage-number {{ background: {p["accent"]}; }}
-    .bank-stage-title {{ color: {p["ink"]}; font-size: 0.92rem; font-weight: 750; line-height: 1.35; }}
-    .bank-stage-detail {{
-        color: {p["muted"]};
-        font-size: 0.82rem;
+    /* This is a closing summary, not a second headline. Keep it quieter than
+       the page's explanatory body copy while preserving the navy boundary. */
+    .bank-closing .bottom-line {{ padding: 0.9rem 1rem; }}
+    .bank-closing .bottom-line-text {{
+        max-width: none;
+        font-size: 0.88rem;
         line-height: 1.5;
-        margin-top: 0.25rem;
-        overflow-wrap: anywhere;
+        font-weight: 500;
     }}
-
-    .bank-controls {{
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.7rem 1.2rem;
-        background: {p.get("table_stripe", "#EFF3FA")};
-        border-left: 3px solid {navy7};
-        padding: 0.9rem 1rem;
+    .bank-closing .value-chip-row {{ margin-top: 0.6rem; gap: 0.4rem; }}
+    .bank-closing .value-chip {{
+        padding: 0.14rem 0.6rem;
+        font-size: 0.72rem;
+        font-weight: 600;
     }}
-    .bank-control-item {{
-        display: grid;
-        grid-template-columns: 1.2rem minmax(0, 1fr);
-        gap: 0.55rem;
-        align-items: start;
-        min-width: 0;
-    }}
-    .bank-control-item > svg {{
-        color: {outcome_blue};
-        width: 1.05rem;
-        height: 1.05rem;
-        margin-top: 0.12rem;
-    }}
-    .bank-control-item:nth-child(2) > svg {{ color: {p["accent"]}; }}
-    .bank-control-item:nth-child(3) > svg {{ color: {context_violet}; }}
-    .bank-control-item:nth-child(4) > svg {{ color: {outcome_amber}; }}
-    .bank-control-title {{ color: {p["ink"]}; font-size: 0.86rem; font-weight: 750; }}
-    .bank-control-detail {{
-        color: {p["muted"]};
-        font-size: 0.79rem;
-        line-height: 1.45;
-        margin-top: 0.15rem;
-        overflow-wrap: anywhere;
-    }}
-    .bank-closing .bottom-line {{
-        border-left: 4px solid {outcome_amber};
-        border-radius: 8px;
-    }}
-    .bank-closing .bottom-line-text {{ max-width: none; }}
 
     @media (max-width: 1050px) {{
         .bank-domain-grid, .bank-value-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
@@ -2270,6 +2494,14 @@ def apply_global_styles() -> None:
         .bank-ai-arrow {{ transform: rotate(90deg); min-height: 1.6rem; }}
     }}
     @media (max-width: 780px) {{
+        .bank-section-info.tip::after {{
+            left: auto;
+            right: 0;
+        }}
+        .bank-section-info.tip::before {{
+            left: auto;
+            right: 0.3rem;
+        }}
         .bank-architecture {{ grid-template-columns: 1fr; }}
         .bank-bridge {{ flex-direction: row; justify-content: center; padding: 0.2rem 0; }}
         .bank-bridge svg {{ transform: rotate(90deg); }}
@@ -2282,24 +2514,14 @@ def apply_global_styles() -> None:
             bottom: -1.15rem;
             transform: rotate(90deg);
         }}
-        .bank-ai-support {{ grid-template-columns: 1fr; }}
-        .bank-adoption {{ grid-template-columns: 1fr; gap: 0.9rem; }}
-        .bank-stage {{ padding-right: 0; padding-left: 2.8rem; }}
-        .bank-stage-number {{ position: absolute; left: 0; top: 0; }}
-        .bank-stage:not(:last-child)::after {{
-            top: 2rem;
-            bottom: -0.9rem;
-            left: 0.95rem;
-            right: auto;
-            width: 2px;
-            height: auto;
-        }}
+        .bank-ai-output-grid {{ grid-template-columns: 1fr; }}
     }}
     @media (max-width: 560px) {{
-        .bank-domain-grid, .bank-value-grid, .bank-controls {{ grid-template-columns: 1fr; }}
+        .bank-domain-grid, .bank-value-grid {{ grid-template-columns: 1fr; }}
         .bank-icon-card {{ padding: 0.75rem; }}
         .bank-ai-shell {{ padding: 0.75rem; }}
         .bank-ai-step {{ grid-template-columns: 2.35rem minmax(0, 1fr); padding: 0.75rem; }}
+        .bank-ai-value {{ grid-template-columns: 1.2rem minmax(0, 1fr); }}
         .bank-ai-guardrail {{ width: 100%; }}
     }}
 
@@ -2652,7 +2874,7 @@ def apply_global_styles() -> None:
         transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
     }}
     /* Family cards carry their family colour (top rule + dot), matching the
-       commodity cards on the Business Problem & Value page. */
+       commodity cards on the Business Problem and Value page. */
     /* Each family card takes its family colour: top rule, dot, and the role
        label. Gold and palm are lightened hues, so the role text is deepened
        toward ink for legibility while staying recognisably the family colour. */
@@ -2677,6 +2899,22 @@ def apply_global_styles() -> None:
         font-weight: 650;
         white-space: nowrap;
         width: 34%;
+    }}
+    /* Full inner grid for the key-value fact table. Row separators must read in
+       BOTH columns, so they are set per background: a solid steel line on the
+       white value cells and a frost line on the navy label cells (one light
+       colour would vanish on the navy). A teal divider follows the label column,
+       and a hairline frames the whole grid so the outer edge is defined too. */
+    table.data-table.grid-lines {{
+        border: 1px solid #B4C2D2;
+    }}
+    table.data-table.grid-lines tbody td {{
+        border-top: 1px solid #B4C2D2;
+    }}
+    table.data-table.grid-lines tbody tr:first-child td {{ border-top: none; }}
+    table.data-table.grid-lines tbody td.rec-k {{
+        border-top-color: rgba(248, 250, 253, 0.55);
+        border-right: 2px solid {p["accent"]};
     }}
     .fam-card:hover {{
         transform: translateY(-2px);
@@ -2803,7 +3041,7 @@ def apply_global_styles() -> None:
         margin-bottom: 1.35rem;
     }}
     .prep-record-table {{ margin: 0.15rem 0 0.35rem; }}
-    .prep-record-table table {{ min-width: 980px; }}
+    .prep-record-table table {{ min-width: 1120px; }}
     .prep-record-table table.data-table thead th {{
         background: {p.get("table_stripe", "#EFF3FA")};
         color: {p["muted"]};
@@ -2823,8 +3061,33 @@ def apply_global_styles() -> None:
         font-family: "Consolas", "SFMono-Regular", monospace;
         font-size: 0.76rem;
     }}
+    /* Derived-signals table: same styling as the prepared-row table, but it
+       replicates the eight prepared-row columns and appends three derived
+       signals, so it needs more room and scrolls horizontally on narrow screens. */
+    .prep-signals-table table {{ min-width: 1360px; }}
+    /* Clear break between the "Scoring the {{focus_year}} observation" year strip
+       above and the signals-table intro + table below, so the demonstration
+       reads as its own step rather than crowding the year strip. The element also
+       carries .prep-body (whose `margin: 0 …` shorthand zeroes margin-top), so we
+       raise specificity here to make this top margin win. */
+    [data-scene] p.sig-table-intro {{ margin-top: 3.6rem; margin-bottom: 0.9rem; }}
+    /* Header info icon: a small cue that the column carries a native-title
+       definition (data dictionary). Native title avoids the CSS-tooltip
+       clipping that the table's horizontal-scroll wrapper would cause. */
+    .prep-record-table table.data-table thead th[title] {{ cursor: help; }}
+    .prep-record-table table.data-table thead th .th-info {{
+        margin-left: 0.15rem;
+        color: {p["accent"]};
+        font-size: 0.82em;
+        font-weight: 700;
+        text-transform: none;
+    }}
     /* Time-safety year strip. Final state = what reduced-motion users see:
        history lit, focus framed, later years greyed with a hidden tag. */
+    /* The "Scoring the {{focus_year}} observation" block is centred as a unit —
+       heading, year strip and caption — so it reads as a distinct focal step. */
+    .year-block {{ text-align: center; }}
+    .year-block .year-strip {{ justify-content: center; }}
     .year-strip {{
         display: flex;
         flex-wrap: wrap;
@@ -2847,11 +3110,15 @@ def apply_global_styles() -> None:
         letter-spacing: 0.1em;
         text-transform: uppercase;
     }}
-    .yr.lit {{ background: {p["accent"]}; color: {p["panel_bg"]}; }}
+    /* History years use the review-queue red (severity high, #C65D63) rather than
+       teal — this page already leans heavily on teal. The focus year is a faded
+       red with a thick red border (inset, so the chip keeps the others' size) and
+       dark text, so it stands out without the heavy navy fill that distracted. */
+    .yr.lit {{ background: {challenge_accent}; color: {p["panel_bg"]}; }}
     .yr.focus {{
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-        box-shadow: 0 0 0 2px {b.get("accent", p["accent"])};
+        background: color-mix(in srgb, {challenge_accent} 16%, white);
+        color: {p["ink"]};
+        box-shadow: inset 0 0 0 2.5px {challenge_accent};
     }}
     .yr.hid {{
         background: {p.get("table_stripe", "#EFF3FA")};
@@ -2998,13 +3265,93 @@ def apply_global_styles() -> None:
         font-weight: 650;
     }}
 
+    /* Compact audit facts inside "How these results are calculated". The full
+       formula table below uses the shared Data Dictionary table treatment. */
+    .mc-eval-facts {{
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.65rem;
+        margin: 0.35rem 0 0.8rem 0;
+    }}
+    .mc-eval-fact {{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.25rem;
+        min-height: 4.7rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 8px;
+        padding: 0.65rem 0.75rem;
+    }}
+    .mc-eval-fact span {{
+        color: {p["muted"]};
+        font-size: 0.76rem;
+        line-height: 1.3;
+    }}
+    .mc-eval-fact strong {{
+        color: {p["ink"]};
+        font-size: 1.15rem;
+        font-variant-numeric: tabular-nums;
+    }}
+
+    .method-path {{
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin: 0.65rem 0 1rem 0;
+    }}
+    .method-step {{
+        min-height: 9.25rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 8px;
+        padding: 0.8rem 0.9rem;
+        box-shadow: 0 4px 14px {shadow};
+        transition: transform {hover_ms}ms ease-out,
+                    box-shadow {hover_ms}ms ease-out;
+    }}
+    .method-step:nth-child(2) {{ border-top-color: {case_maroon}; }}
+    .method-step:nth-child(3) {{ border-top-color: {outcome_amber}; }}
+    .method-step:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 7px 18px rgba(35, 53, 77, 0.14);
+    }}
+    .method-step-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        color: {at};
+        background: {p["accent_soft"]};
+        margin-bottom: 0.5rem;
+    }}
+    .method-step-icon svg {{ width: 1.05rem; height: 1.05rem; }}
+    .method-step-title {{
+        color: {p["ink"]};
+        font-size: 0.94rem;
+        font-weight: 750;
+        line-height: 1.3;
+    }}
+    .method-step-detail {{
+        color: {p["muted"]};
+        font-size: 0.82rem;
+        line-height: 1.45;
+        margin-top: 0.25rem;
+    }}
+
     .blend {{ margin: 0.25rem 0 0.5rem 0; }}
     .blend-eq {{
         font-family: "Consolas", "SFMono-Regular", monospace;
         font-size: 1.0rem;
         font-weight: 700;
         color: {p["ink"]};
-        background: {p["accent_soft"]};
+        background: color-mix(in srgb, {case_maroon} 9%, white);
+        border: 1px solid color-mix(in srgb, {case_maroon} 25%, white);
         border-radius: 8px;
         padding: 0.6rem 0.9rem;
         margin-bottom: 0.6rem;
@@ -3026,8 +3373,19 @@ def apply_global_styles() -> None:
         white-space: nowrap;
         overflow: hidden;
     }}
-    .blend-challenger {{ background: {p["accent"]}; }}
+    .blend-challenger {{ background: {case_maroon}; }}
     .blend-rule {{ background: {navy7}; }}
+    .method-rule-eq {{ margin: 0.35rem 0 0.8rem 0; }}
+    .method-tradeoff {{
+        color: {p["ink"]};
+        background: color-mix(in srgb, {case_maroon} 7%, white);
+        border: 1px solid color-mix(in srgb, {case_maroon} 24%, white);
+        border-left: 4px solid {case_maroon};
+        border-radius: 8px;
+        padding: 0.75rem 0.9rem;
+        line-height: 1.5;
+        margin: 0.45rem 0 0.55rem 0;
+    }}
 
     /* "What keeps it honest" — allowed vs not-allowed language as two equal-height
        cards (grid stretch), coloured blue (may say) and rose (may not say) so the
@@ -3075,11 +3433,66 @@ def apply_global_styles() -> None:
     .say-list {{ margin: 0; padding-left: 1.1rem; color: {p["ink"]}; }}
     .say-list li {{ font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.35rem; }}
     .say-list li:last-child {{ margin-bottom: 0; }}
-    .bl-reminder {{
-        color: {p["sidebar_muted"]};
-        font-size: 0.84rem;
+
+    /* ---- Gold Quantity Coverage: finding strip, follow-up cards, pathway
+       comparison band. The caveat box and KPI band reuse shared classes. ---- */
+    .gc-strip {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin: 0.3rem 0 0.75rem 0;
+    }}
+    .gc-strip-chip {{
+        background: {p["accent_soft"]};
+        color: {p["ink"]};
+        border: 1px solid {p["border"]};
+        border-radius: 999px;
+        padding: 0.22rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+    }}
+    .gc-followups {{ margin-top: 0.9rem; }}
+    .gc-card-title {{
+        color: {p["ink"]};
+        font-size: 1.0rem;
+        font-weight: 750;
+        margin: 0.15rem 0 0.3rem 0;
+    }}
+    .gc-card-action {{
+        color: {p["muted"]};
+        font-size: 0.82rem;
+        line-height: 1.45;
+        border-top: 1px dashed {p["border"]};
+        padding-top: 0.5rem;
         margin-top: 0.55rem;
     }}
+    .gc-compare {{
+        border: 1px solid {p["border"]};
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 0.6rem 0 0.9rem 0;
+    }}
+    .gc-compare-head {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: {p["sidebar_bg"]};
+        color: {p["sidebar_ink"]};
+        font-size: 0.86rem;
+        font-weight: 750;
+    }}
+    .gc-compare-head > div {{ padding: 0.6rem 1rem; }}
+    .gc-compare-head > div:last-child {{ border-left: 1px solid rgba(248, 250, 253, 0.25); }}
+    .gc-compare-row {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 1px solid {p["border"]};
+        font-size: 0.86rem;
+        color: {p["ink"]};
+    }}
+    .gc-compare-row > div {{ padding: 0.5rem 1rem; }}
+    .gc-compare-row > div:last-child {{ border-left: 1px solid {p["border"]}; }}
+    .gc-compare-row:nth-child(odd) {{ background: {p.get("table_stripe", "#EFF3FA")}; }}
 
     @media (max-width: 1050px) {{
         .src-grid, .fam-grid {{ grid-template-columns: 1fr; }}
@@ -3091,6 +3504,12 @@ def apply_global_styles() -> None:
         .mc-flow {{ flex-direction: column; }}
         .mc-flow-arrow {{ transform: rotate(90deg); align-self: center; }}
         .scenario-groups {{ grid-template-columns: 1fr; }}
+        .mc-eval-facts {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .method-path {{ grid-template-columns: 1fr; }}
+        .method-step {{ min-height: 0; }}
+    }}
+    @media (max-width: 560px) {{
+        .mc-eval-facts {{ grid-template-columns: 1fr; }}
     }}
 
     /* ---- CSS-only tooltips (no JS executes inside st.markdown HTML). The
@@ -3198,9 +3617,9 @@ def apply_global_styles() -> None:
         [data-testid="stMain"] [data-testid="stBaseButton-secondary"]:hover,
         .anim, .bank-reveal, .bank-icon-card, .bank-ai-arrow,
         .bank-fit-step:not(:last-child)::after,
-        .bank-fit-step, .bank-ai-step, .bank-stage, .bank-control-item,
-        .twin-card, .stat-tile, .flow-step,
-        .bv-entry, .story-panel, .commodity-card, .commodity-icon,
+        .bank-fit-step, .bank-ai-step,
+        .twin-card, .stat-tile, .flow-step, .method-step, .method-step:hover,
+        .bv-entry, .story-panel, .commodity-card, .commodity-icon, .quote-card,
         .story-process-stage,
         .sb, .src-card, .fam-card,
         .yr.lit.yl1, .yr.lit.yl2, .yr.lit.yl3, .yr.lit.yl4, .yr.lit.yl5,
@@ -3210,11 +3629,12 @@ def apply_global_styles() -> None:
         .st-key-dashboard_filter_panel,
         .st-key-queue_case_banner,
         .st-key-queue_table_region,
-        .st-key-pa_card_scale, .st-key-pa_card_structure, .st-key-pa_card_market,
+        .st-key-pa_card_scale, .st-key-pa_card_market,
         .st-key-pa_card_patterns, .st-key-dtrq_closing,
         .welcome-accent, .welcome-eyebrow, .welcome-title, .welcome-sub,
         .st-key-welcome_cta,
         .st-key-welcome_cta [data-testid="stIconMaterial"],
+        .about-link,
         .tip::after, .tip::before {{
             animation: none !important;
             transition: none !important;

@@ -33,13 +33,20 @@ def render_kpi_card(value: str, label: str, detail: str, icon: str) -> None:
     st.markdown(kpi_card_markup(value, html.escape(label), detail, icon), unsafe_allow_html=True)
 
 
-def commodity_card_markup(*, title: str, family_id: str, icon: str) -> str:
+def commodity_card_markup(*, title: str, family_id: str, icon: str, info: str) -> str:
     """Compact editorial product-family card for narrative scope panels."""
     safe_family = html.escape(family_id.replace("_", "-"), quote=True)
+    safe_title = html.escape(title)
+    safe_info = html.escape(info, quote=True)
     return (
-        f'<article class="commodity-card family-{safe_family}">'
+        f'<article class="commodity-card family-{safe_family}" data-tip="{safe_info}">'
         f'{render_icon_badge(icon, class_name="commodity-icon")}'
-        f'<div class="commodity-title">{html.escape(title)}</div></article>'
+        '<div class="commodity-title-row">'
+        f'<div class="commodity-title">{safe_title}</div>'
+        '<span class="commodity-info tip" tabindex="0" role="note" '
+        f'aria-label="About {html.escape(title, quote=True)}" '
+        f'data-tip="{safe_info}">{render_icon("info")}</span>'
+        '</div></article>'
     )
 
 

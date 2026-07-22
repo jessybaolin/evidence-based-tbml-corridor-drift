@@ -71,7 +71,7 @@ python -m pytest tests/ -q
 
 ## Pages
 
-1. **Business Problem & Value** — the AFC prioritisation problem, what the
+1. **Business Problem and Value** — the AFC prioritisation problem, what the
    prototype does, its stakeholder outputs, and its human-review boundary.
 2. **From Data to Review Queue** — official sources, data preparation,
    time-safe feature construction, controlled evaluation, and evidence flow.

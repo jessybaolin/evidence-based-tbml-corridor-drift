@@ -75,6 +75,12 @@ DATA_FILES: dict[str, dict] = {
         "official": False,  # scenario-based evaluation metrics
         "purpose": "Scenario-based model evaluation metrics",
     },
+    "model_scores": {
+        "path": DATA_OUTPUTS / "model_scores.csv",
+        "required": True,
+        "official": False,  # row-level scenario evaluation scores
+        "purpose": "Row-level scenario scores used to evaluate review capacity",
+    },
     "model_selection": {
         "path": DATA_OUTPUTS / "model_selection.json",
         "required": True,
@@ -171,6 +177,12 @@ DATA_FILES: dict[str, dict] = {
         "required": True,
         "official": True,
         "purpose": "Project scope, split years, top-k, conclusion boundary",
+    },
+    "thresholds_config": {
+        "path": CONFIGS / "thresholds.yml",
+        "required": True,
+        "official": True,
+        "purpose": "Documented rule weights and model-selection criteria",
     },
     "hs_families": {
         "path": CONFIGS / "hs_families.yml",

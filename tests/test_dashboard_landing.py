@@ -4,7 +4,7 @@ session-state completion flag, and CTA navigation into the dashboard shell.
 The landing renders through the real entry point (streamlit_app.py +
 st.navigation), exactly like the page tests: the root run must show the hero
 without the sidebar or the boundary ribbon, and the CTA must hand over to
-Business Problem & Value with the full shell restored.
+Business Problem and Value with the full shell restored.
 """
 
 from __future__ import annotations
@@ -89,9 +89,9 @@ def test_cta_completes_landing_and_enters_business_page():
     at.run()
     assert not at.exception
     assert _state(at, LANDING_FLAG) is True
-    # st.switch_page landed on Business Problem & Value with the sidebar shell
-    # restored (that page intentionally omits the boundary footer), and the
-    # one-shot entry flag was consumed.
+    # st.switch_page landed on Business Problem and Value with the sidebar shell
+    # restored (that page carries the boundary footer like every dashboard page),
+    # and the one-shot entry flag was consumed.
     assert "Evidence-First Trade Pattern Triage" in _text(at)
     assert len(at.sidebar.markdown) > 0
     assert _state(at, ENTRY_PENDING, default="consumed") == "consumed"
@@ -106,12 +106,18 @@ def test_dashboard_pages_keep_shell_and_single_ribbon():
 
 
 def test_dashboard_sidebar_offers_a_return_to_main_page():
-    # The landing is hidden from the nav groups, so the sidebar must carry the
-    # one in-session way back to it — a page link labelled "Main Page".
+    # The landing is hidden from the nav groups. Its accessible page-link label
+    # remains available, while CSS presents it as the first, icon-only home
+    # control in the brand area rather than as a footer navigation row.
     at = _run_page("review_queue.py")
     assert not at.exception
-    labels = [str(getattr(link, "label", "")) for link in at.get("page_link")]
+    labels = [str(getattr(link, "label", "")) for link in at.sidebar.get("page_link")]
     assert "Main Page" in labels, "sidebar return-to-main-page link missing"
+    assert labels[0] == "Main Page", "home control should precede content navigation"
+
+    styles = (REPO_ROOT / "dashboard" / "components" / "styles.py").read_text("utf-8")
+    assert ".st-key-sidebar_home" in styles
+    assert "clip: rect(0, 0, 0, 0)" in styles
 
 
 def test_direct_deep_navigation_bypasses_the_landing():

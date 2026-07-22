@@ -76,12 +76,12 @@ def score_rules(features: pd.DataFrame) -> pd.DataFrame:
     quality_penalty = ((6.0 - features["data_quality_score"].clip(0, 6)) / 6.0).fillna(1.0) * float(settings["quality_penalty_weight"])
     # Weighted sum of the positive components (weights are deliberately fixed and documented).
     positive = (
-        0.20 * out["rule_history_component"]
-        + 0.18 * out["rule_benchmark_residual_component"]
-        + 0.18 * out["rule_benchmark_drift_component"]
-        + 0.12 * out["rule_yoy_component"]
-        + 0.12 * out["rule_divergence_component"]
-        + 0.10 * out["rule_peer_component"]
+        float(settings["history_weight"]) * out["rule_history_component"]
+        + float(settings["benchmark_residual_weight"]) * out["rule_benchmark_residual_component"]
+        + float(settings["benchmark_drift_weight"]) * out["rule_benchmark_drift_component"]
+        + float(settings["yoy_weight"]) * out["rule_yoy_component"]
+        + float(settings["divergence_weight"]) * out["rule_divergence_component"]
+        + float(settings["peer_weight"]) * out["rule_peer_component"]
         + float(settings["novelty_weight"]) * out["rule_novelty_component"]
         + float(settings["reactivation_weight"]) * out["rule_reactivation_component"]
         + float(settings["valid_extreme_weight"]) * out["rule_valid_extreme_component"]
@@ -268,9 +268,18 @@ def main() -> None:
 
     # ---- Pick the supervised challenger on VALIDATION only ----
     validation_all = initial_metrics[(initial_metrics["split"] == "validation") & (initial_metrics["family_id"] == "all")]
-    # Select the supervised challenger on validation average precision, with hard-negative FPR as a secondary guardrail.
+    selection_settings = thresholds()["model_selection"]
+    challenger_metric = str(selection_settings["challenger_metric"])
+    hybrid_metric = str(selection_settings["hybrid_metric"])
+    supported_metrics = {"precision_at_k", "recall_at_k", "lift_at_k", "average_precision"}
+    if challenger_metric not in supported_metrics or hybrid_metric not in supported_metrics:
+        raise ValueError("Unsupported model-selection metric in configs/thresholds.yml")
+
+    # Select the supervised challenger across the full validation ranking, with
+    # hard-negative FPR as a secondary guardrail.
     supervised = validation_all[validation_all["model"].isin(["logistic", "xgboost"])].sort_values(
-        ["average_precision", "hard_negative_false_positive_rate"], ascending=[False, True], kind="mergesort"
+        [challenger_metric, "hard_negative_false_positive_rate"],
+        ascending=[False, True], kind="mergesort"
     )
     selected_challenger = str(supervised.iloc[0]["model"])
     selected_col = f"{selected_challenger}_score"  #xgboost_score
@@ -279,12 +288,23 @@ def main() -> None:
     # ---- Pick the hybrid blend weight on VALIDATION only ----
     # Try each configured weight w: hybrid = (1-w)*rule + w*challenger; keep the best on validation.
     candidates = []
-    for w in thresholds()["model_selection"]["hybrid_weights"]:
+    for w in selection_settings["hybrid_weights"]:
         col = f"hybrid_candidate_{w:.2f}"
         scored[col] = (1 - float(w)) * scored["rule_score"] + float(w) * scored[selected_col]
         metrics = metric_at_k(scored[scored["split"] == "validation"], col, top_k)
         candidates.append({"challenger_weight": float(w), **metrics})
-    hybrid_table = pd.DataFrame(candidates).sort_values(["precision_at_k", "hard_negative_false_positive_rate", "average_precision", "challenger_weight"], ascending=[False, True, False, True], kind="mergesort")
+    # The operational queue has a fixed review capacity, so the blend is chosen
+    # on validation precision@k. Average precision remains a deterministic
+    # tie-breaker, followed by the more rules-heavy blend.
+    hybrid_sort = [hybrid_metric, "hard_negative_false_positive_rate"]
+    hybrid_ascending = [False, True]
+    if hybrid_metric != "average_precision":
+        hybrid_sort.append("average_precision")
+        hybrid_ascending.append(False)
+    hybrid_sort.append("challenger_weight")
+    hybrid_ascending.append(True)
+    hybrid_table = pd.DataFrame(candidates).sort_values(
+        hybrid_sort, ascending=hybrid_ascending, kind="mergesort")
     selected_weight = float(hybrid_table.iloc[0]["challenger_weight"])
     scored["hybrid_score"] = (1 - selected_weight) * scored["rule_score"] + selected_weight * scored[selected_col]
     score_cols.append("hybrid_score")
@@ -311,6 +331,8 @@ def main() -> None:
         "selected_hybrid_challenger_weight": selected_weight, #hybrid
         "selected_score_column": "hybrid_score",
         "selection_split": "validation",
+        "challenger_selection_metric": challenger_metric,
+        "hybrid_selection_metric": hybrid_metric,
         "score_language": "Scores are review-priority ranking scores, not calibrated probabilities of crime.",
     }
     write_json(DATA_OUTPUTS / "model_selection.json", selection)

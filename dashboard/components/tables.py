@@ -12,6 +12,7 @@ are shown to 4 decimals (display only — the underlying values are unchanged).
 from __future__ import annotations
 
 import html
+from collections.abc import Callable
 
 import pandas as pd
 import streamlit as st
@@ -32,8 +33,6 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     content = load_content()
     columns_copy = content["pages"]["review_queue"]["columns"]
     stripe = theme["components"]["table"]["stripe_bg"]
-    selected_bg = theme["selection"]["background"]
-    selected_border = theme["selection"]["border"]
     families = theme["families"]
     family_colors = {
         content["family_short_labels"]["gold_unwrought"]: families["gold_unwrought"],
@@ -53,17 +52,10 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
     frame["product"] = frame["product"].map(lambda label: f"●  {label}")
     style_frame = pd.DataFrame("", index=frame.index, columns=frame.columns)
     for row_index, row in frame.iterrows():
-        selected = highlight_row is not None and row_index == highlight_row
-        if selected:
-            selected_style = (
-                f"background-color: {selected_bg}; "
-                f"color: {theme['selection']['text']}"
-            )
-            style_frame.loc[row_index, :] = selected_style
-            style_frame.loc[row_index, "rank"] += (
-                f"; border-left: 3px solid {selected_border}; font-weight: 800"
-            )
-        elif row_index % 2 == 1:
+        # The current case is marked only by its ticked "current_case" checkbox
+        # (and the banner above) — no row-background highlight, so the table stays
+        # calm and the zebra striping is never interrupted.
+        if row_index % 2 == 1:
             style_frame.loc[row_index, :] = f"background-color: {stripe}"
 
         rank = int(row["rank"])
@@ -72,9 +64,8 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
         elif rank <= 3:
             style_frame.loc[row_index, "rank"] += "; font-weight: 700"
 
-        # Flat family colour on the product cell (the "●" dot + label) — skipped on
-        # the amber selected row so the selection ink keeps its contrast.
-        if not selected and product_colors.iloc[row_index]:
+        # Flat family colour on the product cell (the "●" dot + label).
+        if product_colors.iloc[row_index]:
             style_frame.loc[row_index, "product"] += (
                 f"; color: {product_colors.iloc[row_index]}; font-weight: 650"
             )
@@ -132,8 +123,9 @@ def queue_table(display: pd.DataFrame, key: str, highlight_row: int | None = Non
                 help=_copy("quantity_metric_ton")["help"],
             ),
             "unit_value_usd_per_metric_ton": st.column_config.NumberColumn(
+                # No in-grid help: the definition lives in the footer note under
+                # the table (the dataframe positioned the tooltip far from here).
                 _copy("unit_value_usd_per_metric_ton")["label"], format="dollar", width=145,
-                help=_copy("unit_value_usd_per_metric_ton")["help"],
             ),
             "benchmark_price_usd_per_metric_ton": st.column_config.NumberColumn(
                 _copy("benchmark_price_usd_per_metric_ton")["label"], format="dollar", width=140,
@@ -177,12 +169,14 @@ def _cell(value, kind: str) -> str:
 
 
 def plain_table(frame: pd.DataFrame, column_labels: dict[str, str] | None = None,
-                height: int | None = None, zebra: bool = True) -> None:
+                height: int | None = None, zebra: bool = True,
+                formatters: dict[str, Callable[[object], str]] | None = None) -> None:
     # Render a static reference table as themed HTML (see styles .data-table).
     # `height` caps the scroll height in px (sticky header stays visible);
     # `zebra` toggles alternating-row tint.
     columns = list(frame.columns)
     labels = column_labels or {}
+    display_formatters = formatters or {}
     kinds = {col: _column_kind(frame[col]) for col in columns}
     numeric = {col: kinds[col] in ("int", "float") for col in columns}
 
@@ -193,12 +187,15 @@ def plain_table(frame: pd.DataFrame, column_labels: dict[str, str] | None = None
     )
     body_rows = []
     for _, row in frame.iterrows():
-        cells = "".join(
-            f'<td class="num">{_cell(row[col], kinds[col])}</td>' if numeric[col]
-            else f"<td>{_cell(row[col], kinds[col])}</td>"
-            for col in columns
-        )
-        body_rows.append(f"<tr>{cells}</tr>")
+        cells = []
+        for col in columns:
+            if col in display_formatters and not pd.isna(row[col]):
+                value = html.escape(str(display_formatters[col](row[col])))
+            else:
+                value = _cell(row[col], kinds[col])
+            cell_class = ' class="num"' if numeric[col] else ""
+            cells.append(f"<td{cell_class}>{value}</td>")
+        body_rows.append(f'<tr>{"".join(cells)}</tr>')
 
     table_class = "data-table zebra" if zebra else "data-table"
     wrap_style = (

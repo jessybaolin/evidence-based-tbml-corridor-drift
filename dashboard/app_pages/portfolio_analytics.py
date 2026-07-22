@@ -1,10 +1,10 @@
 """Trade Landscape and Patterns — the reading frame before the review queue.
 
-Part 1 sets the context from the full official panel: scale (value by family),
-structure (corridor base + concentration), and market movement (benchmarks).
-Part 2 shows the shape of the fifty flagged cases before the queue table. All
-copy lives in dashboard_content.yml; every number is derived from the loaded
-frames, and every chart is built through a components/charts.py builder.
+Part 1 sets the context from the full official panel: scale (value by family)
+and market movement (benchmarks). Part 2 profiles the Top 50 review queue before
+the queue table. All copy lives in dashboard_content.yml; every number is
+derived from the loaded frames, and every chart is built through a
+components/charts.py builder.
 """
 
 from __future__ import annotations
@@ -14,12 +14,14 @@ import html
 import streamlit as st
 
 from dashboard.components.charts import (
-    bar_by_family, bar_single, lines_by_family, small_multiples_by_family, show,
+    bar_by_family, bar_single, small_multiples_by_family, show,
 )
 from dashboard.components.page_header import ledger, page_header, section_title
 from dashboard.components.scroll_reveal import render_scroll_reveal
+from dashboard.components.tables import plain_table
 from dashboard.services import dashboard_metrics as metrics
 from dashboard.services import data_loader as load
+from dashboard.services import formatting as fm
 
 content = load.load_content()
 copy = content["pages"]["portfolio_analytics"]
@@ -82,7 +84,7 @@ st.markdown(f'<div class="stat-band four">{strip_html}</div>', unsafe_allow_html
 scale_frame = metrics.trade_scale_by_family_year(panel, short_labels)
 
 # Each landscape section is a subtle card (styles.py .st-key-pa_card_*) that
-# lifts off the plane and fades up on entrance, so Scale / Structure / Market
+# lifts off the plane and fades up on entrance, so Scale / Market / Queue Profile
 # read as distinct blocks while scrolling.
 
 # ---- 4.1 Scale (with a value / quantity toggle) ------------------------------
@@ -101,56 +103,75 @@ with st.container(key="pa_card_scale"):
     if mode == sc["toggle_quantity"]:
         _takeaway(sc["takeaway_quantity"])
         show(small_multiples_by_family(scale_frame, "quantity_metric_ton",
-                                       hover_label=sc["y_quantity"], value_suffix=" mt",
-                                       y_title=sc["y_quantity"]),
+                                       hover_label=sc["y_quantity"],
+                                       y_title=sc["y_quantity"],
+                                       hover_values=scale_frame["quantity_metric_ton"].map(
+                                           fm.quantity_mt)),
              key="pa_scale_small_multiples")
     else:
         _takeaway(sc["takeaway_value"].format(
             family=summary["dominant_family_label"], share=f"{summary['dominant_share']:.0f}"))
         show(small_multiples_by_family(scale_frame, "trade_value_usd",
-                                       hover_label=sc["y_value"], value_prefix="$",
-                                       y_title=sc["y_value"]),
+                                       hover_label=sc["y_value"],
+                                       y_title=sc["y_value"],
+                                       hover_values=scale_frame["trade_value_usd"].map(
+                                           fm.compact_usd)),
              key="pa_scale_small_multiples")
     st.caption(sc["caption"])
+
+    table_copy = sc["table"]
+    table_columns = table_copy["columns"]
+    scale_table = (
+        scale_frame[["year", "family_label", "trade_value_usd", "quantity_metric_ton"]]
+        .rename(columns={
+            "year": table_columns["year"],
+            "family_label": table_columns["family"],
+            "trade_value_usd": table_columns["trade_value"],
+            "quantity_metric_ton": table_columns["quantity"],
+        })
+        .sort_values([table_columns["year"], table_columns["family"]],
+                     ascending=[False, True])
+        .reset_index(drop=True)
+    )
+    with st.expander(table_copy["label"], expanded=False):
+        st.caption(table_copy["caption"])
+        plain_table(
+            scale_table,
+            height=390,
+            formatters={
+                table_columns["year"]: lambda value: f"{int(value)}",
+                table_columns["trade_value"]: lambda value: fm.money(value, 2),
+                table_columns["quantity"]: lambda value: f"{float(value):,.3f}",
+            },
+        )
+        st.download_button(
+            table_copy["download_label"],
+            data=scale_table.to_csv(index=False).encode("utf-8"),
+            file_name="trade_scale_by_family_year.csv",
+            mime="text/csv",
+            help=table_copy["download_help"],
+            icon=":material/download:",
+            key="pa_scale_table_download",
+        )
     ledger("panel")
 
-# ---- 4.2 Structure: stable base + concentration ------------------------------
-with st.container(key="pa_card_structure"):
-    stc = copy["structure"]
-    section_title(stc["heading"], icon="layers")
-    _takeaway(stc["takeaway"])
-    left, right = st.columns(2, gap="large")
-    with left:
-        st.markdown(f'<div class="chart-subhead">{_e(stc["corridors_subhead"])}</div>',
-                    unsafe_allow_html=True)
-        show(lines_by_family(scale_frame, "active_corridors", stc["y_corridors"],
-                             stc["y_corridors"]), height=340, key="pa_active_corridors")
-    with right:
-        st.markdown(f'<div class="chart-subhead">{_e(stc["concentration_subhead"])}</div>',
-                    unsafe_allow_html=True)
-        show(bar_by_family(metrics.top_corridor_share_by_family(panel, short_labels),
-                           x="family_label", y="top_share_pct", y_title=stc["y_share"],
-                           hover=["top_corridors"]), height=340, key="pa_top_share")
-    # Full-width captions below both charts, so each reads as one line.
-    st.caption(stc["corridors_caption"])
-    st.caption(stc["caption"])
-    ledger("panel")
-
-# ---- 4.3 Market context: benchmarks moved ------------------------------------
+# ---- 4.2 Market context: benchmarks moved ------------------------------------
 with st.container(key="pa_card_market"):
     mk = copy["market"]
     section_title(mk["heading"], icon="line-chart")
     _takeaway(mk["takeaway"])
-    show(small_multiples_by_family(metrics.benchmark_by_family_year(panel, short_labels),
+    benchmark_frame = metrics.benchmark_by_family_year(panel, short_labels)
+    show(small_multiples_by_family(benchmark_frame,
                                    "benchmark", hover_label=mk["y_benchmark"],
-                                   value_prefix="$", value_suffix="/mt",
-                                   y_title=mk["y_benchmark"]),
+                                   y_title=mk["y_benchmark"],
+                                   hover_values=benchmark_frame["benchmark"].map(
+                                       lambda value: f"{fm.money(value)}/mt")),
          key="pa_benchmark_small_multiples")
     st.caption(mk["caption"])
     ledger("panel")
 
 # =============================================================================
-# PART 2 — WHAT THE FIFTY FLAGGED CASES LOOK LIKE (the queue's shape, trimmed)
+# PART 2 — PROFILE OF THE TOP 50 REVIEW QUEUE (the queue's shape, trimmed)
 # Wrapped in the same subtle card as the landscape sections, so it reads as one
 # more distinct block rather than floating on the plane below them.
 # =============================================================================
@@ -180,6 +201,5 @@ with st.container(key="pa_card_patterns"):
 
 # Reveal each landscape section as it scrolls into view.
 render_scroll_reveal(
-    ".st-key-pa_card_scale, .st-key-pa_card_structure, "
-    ".st-key-pa_card_market, .st-key-pa_card_patterns"
+    ".st-key-pa_card_scale, .st-key-pa_card_market, .st-key-pa_card_patterns"
 )
