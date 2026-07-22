@@ -138,14 +138,15 @@ st.markdown(
     f'<div class="scenario-test-notes">'
     f'<div class="scenario-test-notes-heading">{_e(tested["split_heading"])}</div>'
     f'<ul><li>{_e(split_line)}</li>'
-    f'<li>{_e(sc["separation_note"])}</li>'
-    f'<li>{_e(test_caveat)}</li></ul></div></div>',
+    f'<li>{_e(sc["separation_note"])}</li></ul></div></div>',
     unsafe_allow_html=True,
 )
 
 # ---- 2. How well does it rank the test patterns? ---------------------------
+# The results caveat that used to close section 1 leads here instead, so "the
+# figures below" points at this section's chart rather than the next section.
 works = copy["works"]
-section_title(works["heading"], icon="chart-pie")
+section_title(works["heading"], test_caveat, icon="chart-pie")
 headline = metrics.headline_eval(comparison, selection)
 if headline is None:
     st.info("Evaluation results are unavailable for this run.")
