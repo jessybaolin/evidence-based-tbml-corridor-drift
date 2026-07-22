@@ -13,8 +13,8 @@ def page_header(title: str, subtitle: str, eyebrow: str = "Stakeholder analytics
 
 
 def section_title(title: str, caption: str | None = None,
-                  icon: str = "layers") -> None:
-    render_section_heading(title, caption, icon)
+                  icon: str = "layers", info: str | None = None) -> None:
+    render_section_heading(title, caption, icon, info)
 
 
 def ledger(*file_keys: str, note: str = "") -> None:

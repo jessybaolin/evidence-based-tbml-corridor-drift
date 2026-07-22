@@ -105,7 +105,11 @@ ledger("panel", note="coverage derived live from the official dataset")
 
 # ---- 1 · Is the blind spot material? ----------------------------------------
 s1 = copy["section1"]
-section_title(s1["heading"], icon="chart-pie")
+section_title(
+    s1["heading"], icon="chart-pie",
+    info=s1["takeaway"].format(
+        assessable_value_share=f'{summary["assessable_value_share"]:.4%}'),
+)
 _rule()
 st.markdown(s1["body"].format(
     gap_rows=f'{summary["gap_rows"]:,}',
@@ -127,13 +131,13 @@ with value_col:
     show(coverage_share_bars(products, "value", copy["charts"]["products"]),
          height=300, key="gc_products_value")
 st.caption(s1["note"])
-_takeaway(s1["takeaway"].format(
-    assessable_value_share=f'{summary["assessable_value_share"]:.4%}',
-))
 
 # ---- 2 · Is the blind spot isolated or systematic? -------------------------
 s2 = copy["section2"]
-section_title(s2["heading"], s2["caption"], icon="line-chart")
+section_title(
+    s2["heading"], s2["caption"], icon="line-chart",
+    info=s2["takeaway"].format(gap_value=_billions(summary["gap_value_usd"])),
+)
 _rule()
 st.markdown(s2["body"].format(
     affected=f'{persistence["affected"]:,}',
@@ -176,9 +180,6 @@ st.markdown(
     f'</div>',
     unsafe_allow_html=True,
 )
-_takeaway(s2["takeaway"].format(
-    gap_value=_billions(summary["gap_value_usd"]),
-))
 
 # ---- 3 · Where does the repeat pattern sit? ---------------------------------
 s3 = copy["section3"]

@@ -434,6 +434,19 @@ def apply_global_styles() -> None:
         font-size: 0.88rem;
         margin-bottom: 0.5rem;
     }}
+    /* Optional hover/focus info icon beside a section title (render via
+       section_title(..., info=...)). Quiet by default, accent on interaction. */
+    .section-info {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.4rem;
+        color: {p["muted"]};
+        vertical-align: -0.14em;
+    }}
+    .section-info.tip {{ text-decoration: none; }}
+    .section-info svg {{ width: 0.95rem; height: 0.95rem; }}
+    .section-info:hover, .section-info:focus-visible {{ color: {p["accent"]}; }}
 
     /* Provenance ledger: the signature element. Every panel can state the
        exact file backing it, set small and monospaced like a custody record. */
@@ -2584,14 +2597,16 @@ def apply_global_styles() -> None:
         border-radius: 11px;
         padding: 6px 6px 6px 14px;
     }}
-    .bip-mock-input span {{ flex: 1; font-size: 13.5px; color: #9aa7b4; }}
+    /* Only the placeholder grows; the send button keeps its fixed 34px square
+       (a bare `span` selector would also hit .bip-mock-send and stretch it). */
+    .bip-mock-input > span:first-child {{ flex: 1; font-size: 13.5px; color: #9aa7b4; }}
     .bip-mock-send {{
         width: 34px;
         height: 34px;
         flex: none;
         border-radius: 8px;
         background: #0f2942;
-        color: #fff;
+        color: #d9e0e8;  /* arrow matches the input's border colour */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2873,6 +2888,15 @@ def apply_global_styles() -> None:
         border-top-color: {case_maroon};
     }}
     [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-pattern .stat-label {{
+        color: {case_maroon};
+    }}
+    /* KPI icon tints track each card's accent border (coverage is already teal). */
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-frequency .kpi-icon {{
+        background: color-mix(in srgb, {family_colors["gold_unwrought"]} 16%, white);
+        color: {family_colors["gold_unwrought"]};
+    }}
+    [data-testid="stMain"]:has(.gc-page-marker) .gc-kpi-pattern .kpi-icon {{
+        background: color-mix(in srgb, {case_maroon} 14%, white);
         color: {case_maroon};
     }}
     /* Five-tile trust band (extends the landing stat-band). */

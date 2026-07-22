@@ -9,6 +9,9 @@ primaryColor = "#0F8F8F"          # teal accent (widgets, slider, queue score ba
 backgroundColor = "#F3F6FA"       # bright pale blue-grey plane
 secondaryBackgroundColor = "#FFFFFF"  # white cards + widget/input fills
 textColor = "#22314A"             # navy ink
+# Remove the default grey fill from the st.dataframe header row (the Top 50
+# Review Queue grid) so the header sits on the same white as the cells.
+dataframeHeaderBackgroundColor = "#FFFFFF"
 font = "sans-serif"
 
 [server]

@@ -30,13 +30,21 @@ def render_page_header(title: str, subtitle: str, eyebrow: str = "Stakeholder an
 
 
 def render_section_heading(title: str, caption: str | None = None,
-                           icon: str = "layers") -> None:
+                           icon: str = "layers", info: str | None = None) -> None:
     caption_html = (
         f'<div class="section-caption">{html.escape(caption)}</div>' if caption else ""
     )
+    # Optional hover/focus tooltip beside the title (the shared .tip mechanism).
+    info_html = (
+        '<span class="section-info tip" tabindex="0" role="note" '
+        f'aria-label="More information about {html.escape(title, quote=True)}" '
+        f'data-tip="{html.escape(info, quote=True)}">{render_icon("info")}</span>'
+        if info else ""
+    )
     st.markdown(
         f'<div class="section-heading">{render_icon(icon, class_name="section-icon")}'
-        f'<div><div class="section-label">{html.escape(title)}</div>{caption_html}</div></div>',
+        f'<div><div class="section-label">{html.escape(title)}{info_html}</div>'
+        f'{caption_html}</div></div>',
         unsafe_allow_html=True,
     )
 
