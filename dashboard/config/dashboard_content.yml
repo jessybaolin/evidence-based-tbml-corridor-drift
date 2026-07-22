@@ -37,7 +37,7 @@ boundary_label: "Human-review boundary"
 about:
   section_label: "Behind the Project"
   name: "Jesslyn Guo Baolin"
-  bio: "Creator of this evidence-first, public-data prototype for TBML review triage."
+  bio: "Creator of this project"
   links:
     linkedin: "https://www.linkedin.com/in/jesslyn-baolin/"
     github: "https://github.com/jessybaolin/evidence-based-tbml-corridor-drift"
@@ -711,7 +711,7 @@ pages:
     eyebrow: "Methodology"
     title: "Model Evaluation & Controls"
     subtitle: ""
-    objective: "This page shows how the ranking that builds the Top-50 queue works, end to end: how it is tested, whether it works, which methods were compared and why the blended one is used, and the limits it is held to. Public trade data has no confirmed cases to learn from, so the method is measured on controlled test scenarios, chosen on years it has never seen, and held to firm limits on what it may claim."
+    objective: "This page shows how the Top 50 ranking is tested, whether it works, why the blended method was selected and how its use is controlled."
     # Top-of-page pipeline overview: the four steps from official records to queue.
     queue_build:
       heading: "How the ranking queue is built"
@@ -720,9 +720,9 @@ pages:
         - title: "Clean official records"
           detail: "Verified public trade data — one row per corridor, product and year."
         - title: "Time-safe features"
-          detail: "Each year is described using only earlier years, never the future."
+          detail: "Each row uses current-year market and peer context plus earlier route history; future years are never used."
         - title: "Ranking score"
-          detail: "{blend} scores every record for review priority."
+          detail: "{blend} scores each record with usable value and quantity."
         - title: "Top-{queue_size} review queue"
           detail: "The highest-scoring official records become the queue."
     tested:
@@ -732,8 +732,9 @@ pages:
         tested on patterns we plant ourselves. On a copy of the real data we add
         clear unusual patterns it should catch, plus ordinary-but-large movements
         it should leave alone — then check how well it tells them apart.
-      split_line: "It learns on {train}, the approach is chosen on {validation}, and it is judged once on {test}, so it never sees the years it is tested on."
-      caveat: "These results measure how well the method ranks planted patterns in public data. They are not real-world detection rates."
+      split_heading: "How to read this test"
+      split_line: "The machine-learning model is fitted on {train} data, the scoring approach is selected using {validation}, and its final test is run once on {test}. This keeps the test years out of model fitting and method selection."
+      caveat: "The performance figures below show how well the selected method ranks planted patterns in the held-out {test} public-data test copy. They are not real-world detection rates."
     # "Tested on a copy" visual: the planted patterns it must catch vs the benign
     # look-alikes it must leave alone (replaces the old two-lane wall diagram).
     scenarios:
@@ -763,8 +764,7 @@ pages:
       bar_selected: "The chosen method"
       bar_rule: "Simple fixed rules"
       bar_random: "Random review (expected)"
-      guardrail: "None of the {hard_total} planted benign look-alikes entered the test Top {k}. This is a useful guardrail result, but it applies only to the benign scenarios that were tested."
-      family_limit: "Test performance varies by product family: average precision is highest on {best} and lowest on {worst}."
+      family_limit: "On this controlled test, the method separated planted patterns best for {best} and least well for {worst}. Family sizes and base rates differ, so this is a model-performance warning, not a statement that one commodity is riskier."
       capacity_heading: "What changes when review capacity changes?"
       capacity_body: "A shorter queue is more concentrated but misses more planted patterns. A longer queue finds more of them, but analysts must review more rows that are not planted patterns."
       capacity_precision: "Precision: planted share of queue"
@@ -797,7 +797,7 @@ pages:
         The final ranking combines two different views of unusual trade activity:
         a documented weighted-sum score and an XGBoost model. One applies fixed,
         inspectable weights to known review signals; the other learns combinations
-        of signals from the controlled test scenarios.
+        of signals from the controlled training scenarios.
       story_steps:
         - icon: "sliders"
           title: "Start with fixed weights"
@@ -824,7 +824,7 @@ pages:
           then multiplied by that value. For example, a history signal at 1 can add
           up to 0.20; a history signal at 0.5 adds 0.10. The weights control how
           strongly each signal can move the score.
-        formula: "Weighted-sum score = weighted signals − market-consistency reduction − data-quality reduction"
+        formula: "Weighted-sum score = unusual-pattern evidence − market-explanation adjustment − data-reliability adjustment"
         components_heading: "Fixed weights applied to the review signals"
         columns:
           signal: "Review signal"
@@ -858,13 +858,49 @@ pages:
           - key: "valid_extreme_weight"
             signal: "Valid extreme value"
             meaning: "Whether a usable row is far above or below its benchmark"
-        reductions_heading: "What can reduce the weighted sum"
-        consistency_reduction: "Up to {value}: the movement follows the wider market benchmark."
-        quality_reduction: "Up to {value}: the underlying row has weaker data quality."
-        clipping_note: "The result is limited to the 0-to-1 range. It remains a ranking score, not a likelihood."
+        reductions_heading: "Why the weighted sum can be lowered"
+        reductions_intro: |
+          Both adjustments are penalties in the calculation: they are subtracted from the weighted-signal subtotal, so neither can increase review priority.
+
+          - **Market-explanation adjustment:** compares the corridor's annual implied-unit-value movement with the commodity benchmark. Matching movements subtract 0.15; the penalty declines as the movements differ and reaches zero at a 0.35 movement gap.
+          - **Data-reliability adjustment:** converts the 0-to-6 quality score into a deduction using `0.08 × (6 − quality score) ÷ 6`. A 6-out-of-6 row loses nothing; each point below 6 subtracts about 0.013, up to 0.08.
+        adjustments:
+          - key: "market"
+            icon: "line-chart"
+            title: "Market-explanation adjustment"
+            question: "Did the corridor move with the wider commodity market?"
+            explanation: >
+              The calculation compares the annual change in the corridor's implied
+              unit value with the annual change in its commodity benchmark. If both
+              moved by about the same proportion, the wider market may explain that
+              movement, so the row receives less review-priority credit.
+            effect: >
+              Move together: subtract {max_value}. Move somewhat differently:
+              subtract less. Move clearly differently: subtract nothing. The
+              deduction reaches zero at the configured {reference} movement-gap
+              cutoff.
+            example: >
+              Example: a weighted-signal subtotal of 0.70 becomes 0.55 after the
+              full 0.15 adjustment.
+          - key: "quality"
+            icon: "shield-check"
+            title: "Data-reliability adjustment"
+            question: "How much supporting information does the row have?"
+            explanation: >
+              The data-quality score awards up to 6 points for a valid quantity, a
+              matched benchmark, enough prior history and complete source fields.
+              Fewer points mean there is less evidence behind the comparison, so
+              the row is ranked more cautiously.
+            effect: >
+              A 6-out-of-6 row loses nothing. Each missing quality point subtracts
+              about {per_point}, up to a maximum subtraction of {max_value}.
+            example: >
+              Example: a 3-out-of-6 quality score subtracts 0.04; a 5-out-of-6
+              score subtracts about 0.013.
+        clipping_note: "The nine maximum additions total 1.18, so this is a weighted sum rather than a weighted average. After both deductions, the result is limited to the 0-to-1 range; it remains a ranking score, not a likelihood."
         validation_heading: "How the blend was selected on validation"
         validation_intro: >
-          Average precision selected XGBoost as the supervised challenger across
+          Average precision selected XGBoost as the better machine-learning model across
           the full validation ranking. Precision@50 then selected the blend because
           the operational output is a 50-row review queue.
         validation_columns:
@@ -888,78 +924,118 @@ pages:
         The 25% weighted-sum component is an auditable anchor, not a complete
         explanation of the hybrid. Interpretability also depends on model-
         contribution analysis and the recomputable evidence attached to each case.
-      score_note: "The score sets review order. A higher score means higher review priority. It is not a probability or a finding of financial crime."
     honest:
       heading: "What keeps it honest"
       integrity_fail_intro: "A live data check did not pass:"
       allowed_label: "The dashboard may say"
       not_allowed_label: "The dashboard may not say"
-      boundary_note: "Scores are review-priority signals, not probabilities. Benchmarks are market context, not fair value. Typology references frame caveats; they are never evidence about a specific case."
     drawer:
       label: "Technical details (for model reviewers)"
-      intro: "Full evaluation numbers and model internals. Not needed to read the page above."
+      intro: "Evaluation definitions, reconciled sample counts and selected-model details. The results describe this fixed synthetic test design; they do not estimate live detection performance."
+      protocol_heading: "Evaluation protocol and scope"
+      protocol_points:
+        - "The XGBoost and logistic models are fitted on 2017-2020, model and blend choices use 2021-2022 only, and 2023-2024 is opened once for the final comparison."
+        - "Only rows with usable positive value and quantity are scored. Planted labels remain separate from model features."
+        - "Results are descriptive for this fixed scenario set. No confidence interval, probability calibration, external validation or live-bank outcome is claimed."
+        - "Average precision is used for full-ranking comparison because planted patterns are rare; ROC-AUC is not reported because it can look strong even when the top review queue is weak."
+      counts_heading: "Scenario rows and scoring eligibility"
+      counts_columns:
+        split: "Split"
+        source_rows: "Rows in test copy"
+        scored_rows: "Eligible rows scored"
+        excluded_rows: "Not scored"
+        positives: "Planted patterns scored"
+        hard_negatives: "Benign look-alikes scored"
+      counts_note: "The difference between rows in the test copy and eligible rows scored is the quantity/value eligibility boundary, not model rejection."
       split_label: "Evaluation split"
       family_label: "Product family"
       metrics_heading: "Full metric table"
-      splits_heading: "Scenario counts by split"
-      splits_note: "Scenario identifiers and labels are stored in a separate file, never in the model inputs. The test split was scored once, after the design was frozen."
-      shap_heading: "What the learned model leans on (SHAP)"
-      shap_caveat: "Model-contribution context for reviewers only. It is not evidence about any case and never appears in a case view."
-      params_heading: "Selected model parameters"
-      coeffs_heading: "Transparent-baseline coefficients"
+      metric_columns:
+        model: "Method"
+        n: "Rows scored"
+        positives: "Planted patterns"
+        k: "Queue size"
+        precision: "Precision@k"
+        recall: "Recall@k"
+        lift: "Lift"
+        average_precision: "Average precision"
+        hard_negative_rate: "Benign look-alike rate@k"
+        ordinary_fpr: "Ordinary-negative rate@k"
+      definitions_heading: "How to read the metrics"
+      metric_definitions:
+        - metric: "Precision@k"
+          meaning: "Of the first k rows reviewed, the share that are planted patterns."
+        - metric: "Recall@k"
+          meaning: "Of all planted patterns in the split, the share found in the first k rows."
+        - metric: "Lift"
+          meaning: "Precision@k divided by the planted-pattern rate in the full split; 1x would match random review."
+        - metric: "Average precision"
+          meaning: "A summary of precision across the full ranking, not only the first k rows; higher is better."
+        - metric: "Benign look-alike rate@k"
+          meaning: "Share of all planted benign look-alikes that entered the first k rows; lower is better."
+        - metric: "Ordinary-negative rate@k"
+          meaning: "Share of ordinary non-pattern rows that entered the first k rows; lower is better."
+      definitions_note: "The two rates ending in @k use the score at rank k as the threshold. They are evaluation diagnostics, not observed false-alert rates in a bank."
+      shap_heading: "Which inputs influence XGBoost most overall (SHAP)"
+      shap_caveat: "SHAP measures how strongly each input moved the XGBoost output on average across a fixed sample of 500 eligible official rows. Absolute values show magnitude, not direction or cause; they are not case evidence."
+      params_heading: "Selected XGBoost settings"
+      params_note: "Three small, regularised XGBoost configurations were compared on validation average precision. The selected settings below produced the highest validation value."
+      params_columns:
+        setting: "Setting"
+        value: "Selected value"
+      params_result: "Selected configuration validation average precision: {value:.3f}."
     # Hand-off to the coverage page: once the viewer knows how the queue is
     # built, the natural next question is what could not enter it.
     next_page:
       body: "Synthetic scenarios helped compare and select the scoring approach, and official observations with usable value and quantity produced the Top 50 queue. One question remains: which official gold records never reached that assessment because usable quantity was unavailable?"
-      cta: "Continue to Gold Quantity Coverage"
+      cta: "View Unscored Gold Records"
   gold_quantity_coverage:
     eyebrow: "Methodology"
     title: "Gold Trade Without Usable Quantity"
     subtitle: "Where declared trade value exists but implied unit value cannot be calculated."
     # Opening mental model: why these records sit outside the queue. Every
     # figure on this page is derived live from the official panel.
+    # One combined red "coverage boundary" banner (stamp + body).
     mental_model_stamp: "Coverage boundary"
-    mental_model: "These observations still have declared trade value, but they do not have usable quantity. Without both fields, implied unit value cannot be calculated, so rule and model scores are not produced. The model did not fail and the trade value is not missing — the records simply sit outside unit-value coverage."
-    caveat: "Missing usable quantity is a data-completeness and auditability limitation. It is not an anomaly signal, and it never raises an observation's review priority."
+    mental_model: "These gold observations still have declared trade value but no usable quantity, so implied unit value — and the rule and model scores built on it — cannot be calculated. The model did not fail and the value is not missing; the records simply sit outside unit-value coverage. This is a data-completeness limitation, not an anomaly signal, and it never raises an observation's review priority."
     # {gold_rows} etc. are derived live on the page — never typed here.
     kpis:
       gap_rows:
         label: "Gold rows without usable quantity"
-        detail: "Of {gold_rows} official gold rows in the panel."
+        detail: "Of the {gold_rows} official gold rows in the dataset."
       row_rate:
-        label: "Row coverage-gap rate"
-        detail: "The largest row-level gap of the three product families."
+        label: "Share of gold rows affected"
+        detail: "Higher than copper or palm oil."
       gap_value:
         label: "Declared value on those rows"
-        detail: "Nominal declared value; one record dominates this total."
+        detail: "One 2024 record dominates this total."
       value_share:
         label: "Share of total gold value"
-        detail: "Financially thin relative to all gold value in the panel."
+        detail: "A tiny slice of all gold value in the dataset."
     section1:
       heading: "How much cannot be assessed?"
-      caption: "The same records look very different depending on whether they are counted by rows or by declared value."
-      body: "For gold, {gap_rows} of {gold_rows} rows ({gap_row_rate}) carry no usable quantity, so implied unit value cannot be calculated for them. Their declared value totals {gap_value} — which sounds large, but is only {gap_value_share} of all gold value in the panel. Both shares are shown so the size of the coverage gap is never mistaken for a large share of gold trade value."
+      body: "For gold, {gap_rows} of {gold_rows} rows ({gap_row_rate}) have no usable quantity, so implied unit value cannot be calculated for them. Their declared value adds up to {gap_value} — which sounds large, but is only {gap_value_share} of all gold value in the dataset. So the coverage gap is broad but financially thin: it touches a large share of gold rows yet only a sliver of gold's declared value — a limit to close, not a large slice of gold trade left unexamined."
       chart_rows_title: "Share of rows without usable quantity"
       chart_value_title: "Share of declared value without usable quantity"
-      note: "Gold leads by row share; copper leads by gap value. Gold is examined in depth because its gaps are broad and repeated — not because its dollar figure is largest."
-      takeaway: "This shows where the unit-value method has no coverage. It does not show widespread financial exposure."
+      note: "The same records look very different depending on whether you count them by rows or by declared value. Gold leads by row share; copper leads by gap value. Gold is examined in depth because its gaps are broad and repeated — not because its dollar figure is largest."
+      takeaway: "This shows where the scoring method has nothing to measure. It is not a sign of large financial exposure."
     section2:
       heading: "Large one-offs or repeated gaps?"
-      caption: "Materiality and persistence single out different corridors — and call for different follow-ups."
-      body: "Each point below is a gold corridor with at least one year outside unit-value coverage: how many of its active years lack usable quantity (horizontal) against the declared value on those rows (vertical). The corridors that dominate the dollar total are not the corridors with repeated gaps."
-      log_note: "The vertical axis is logarithmic: equal steps represent multiplicative differences, not equal dollar amounts."
+      caption: "Size and repetition point to different corridors — and different follow-ups."
+      body: "Each point is a gold corridor with at least one year of missing quantity: how many of its active years lack usable quantity (across) against the declared value on those rows (up). The corridors that make up most of the dollar total are not the ones with repeated gaps."
+      log_note: "The vertical axis is logarithmic: equal steps mean multiplied differences, not equal dollar amounts."
       cards:
         oneoff:
           kicker: "Check the large one-off"
           title: "{route} · {year}"
-          body: "One observation carries {value} — {share} of the entire gold gap value. The corridor is active in all {active_years} panel years and lacks usable quantity in only this one, so the gap is episodic, not persistent."
-          action: "Verify this record against the original or mirror trade data before the headline total is quoted."
+          body: "One record carries {value} — {share} of the entire gold gap. This corridor appears in every one of its {active_years} active years and is missing quantity in just this one, so it is a one-off, not a repeated pattern."
+          action: "Check this record against the original or mirror trade data before the headline total is quoted."
         repeated:
           kicker: "Review the repeated gaps"
           title: "{count} corridors lack usable quantity in every year"
-          body: "Of {full_history} gold corridors active in all {n_years} panel years, {count} lack usable quantity in every single year — yet together they carry only {value} ({share} of the gap value), and none appears in the top fifteen by value."
+          body: "Of {full_history} gold corridors active in every one of the {n_years} years, {count} lack usable quantity in all of them — yet together they carry only {value} ({share} of the gap), and none appears in the top fifteen by value."
           action: "Send these routes to a separate source-data review; the cause may be rounding, reporting or processing conventions."
-      takeaway: "Large one-off records and small repeated gaps need different follow-ups — neither belongs in the anomaly queue."
+      takeaway: "Large one-off records and small repeated gaps need different follow-ups — neither belongs in the review queue."
       concentration_label: "Concentration detail — top gap observations"
       concentration_intro: "The largest observations by declared value, with the running share of the total gap value they account for. The top ten cover {top10_share} of it."
       persistence_label: "Persistence detail — most-repeated corridor gaps"
@@ -970,6 +1046,7 @@ pages:
       finding_strip: "{nld_linked} of {persistent} Netherlands-linked · {outbound} outbound · {inbound} inbound · reciprocal partners: {reciprocal}"
       body: "Twelve of the fourteen persistent routes connect to the Netherlands, and three partner relationships appear in both directions. All fourteen together carry about {value} — {share} of the overall gold gap value — so this is a focused source-data pattern to check, not a financially material exposure."
       view_label: "Network view"
+      network_note: "Each arrow points from exporter to importer. Node size shows how many persistent routes touch the country — the Netherlands hub carries twelve, a few partners two, the rest one."
       views:
         all: "All persistent routes"
         nld_outbound: "Netherlands outbound"
@@ -977,6 +1054,12 @@ pages:
         reciprocal: "Reciprocal routes"
         other: "Not Netherlands-linked"
       guardrail: "A Netherlands-linked pattern, not reporter attribution: exporter and importer fields do not identify which reporting party, harmonisation step or source convention caused the missing quantity — and prominence in this network is not country risk."
+      country_map_label: "Countries in view"
+      country_map_columns:
+        iso3: "Code"
+        country: "Country"
+        connections: "Persistent routes"
+      table_label: "The fourteen persistent routes — full table"
       table_intro: "The same fourteen routes as a table, with the exact values behind the network."
       table_columns:
         route: "Route"
@@ -1005,26 +1088,6 @@ pages:
         hover_value: "Declared value"
         hover_outbound: "Persistent routes out"
         hover_inbound: "Persistent routes in"
-    closing:
-      heading: "What happens next"
-      caption: "Two separate pathways — records the model can assess, and records it cannot."
-      compare:
-        left_title: "Unit-value review pathway"
-        right_title: "Quantity-coverage follow-up"
-        rows:
-          - left: "Hybrid-ranked Top 50 review queue"
-            right: "Gold quantity follow-up queue"
-          - left: "Requires valid declared value and usable quantity"
-            right: "Starts where usable quantity is unavailable"
-          - left: "Prioritises unusual, measurable unit-value patterns"
-            right: "Prioritises material or persistent coverage gaps"
-          - left: "Uses rule and model scores"
-            right: "Uses declared value, missing-year persistence and source lineage"
-          - left: "Leads to human case review"
-            right: "Leads to source checks on the underlying records"
-          - left: "Leaves every conclusion to human review"
-            right: "Leaves every conclusion to human review"
-      statement: "The project does more than rank unusual observations. It also shows which gold records could not be scored and routes them to a separate follow-up — missing quantity is handled outside the anomaly score, never treated as a signal."
     trend_label: "Annual detail — gold coverage gap by year"
     trend_intro: "Yearly rows and declared value outside unit-value coverage. The 2024 value spike is the single large observation highlighted above."
     trend_columns:
@@ -1033,15 +1096,6 @@ pages:
       gap_rows: "Rows without usable quantity"
       gap_rate: "Row rate"
       gap_value: "Declared value (USD)"
-    source_label: "Source rows — the follow-up queue"
-    source_intro: "Every gold observation outside unit-value coverage, ordered by declared value, with its lineage identifiers. The download carries all {gap_rows} rows."
-    export_label: "Download follow-up queue (.csv)"
-    export_help: "All gold observations without usable quantity, ordered by declared value, with obs_id, source_row_id and source_version for traceability."
-    # Recommended stakeholder-facing labels for values this page cannot compute.
-    missing_labels:
-      quantity: "No usable quantity in BACI"
-      unit_value: "Not computable: no usable BACI quantity"
-      model_score: "Not scored: outside unit-value coverage"
   bank_implementation_pathway:
     eyebrow: "Future-state design"
     title: "Bank Implementation Pathway"

@@ -173,7 +173,10 @@ def apply_global_styles() -> None:
         height: 2.15rem;
         min-height: 2.15rem;
         padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
         justify-content: center;
+        gap: 0 !important;
         border: 1px solid rgba(234, 240, 248, 0.22) !important;
         border-left: 1px solid rgba(234, 240, 248, 0.22) !important;
         border-radius: 6px;
@@ -182,6 +185,15 @@ def apply_global_styles() -> None:
         transition: opacity {hover_ms}ms ease-out,
                     background {hover_ms}ms ease-out,
                     border-color {hover_ms}ms ease-out;
+    }}
+    .st-key-sidebar_home [data-testid="stPageLink"] a span[data-testid="stIconMaterial"] {{
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100%;
+        height: 100%;
+        margin: 0 !important;
+        line-height: 1 !important;
     }}
     .st-key-sidebar_home [data-testid="stPageLink"] a p {{
         position: absolute !important;
@@ -224,7 +236,7 @@ def apply_global_styles() -> None:
     }}
     /* Creator / about block. Links inherit the frost sidebar link colour; they
        sit slightly dimmed and brighten on hover. */
-    .about-card {{ margin: 0.1rem 0 0.1rem 0.15rem; }}
+    .about-card {{ margin: 1.2rem 0 0.1rem 0.15rem; }}
     .about-name {{
         color: {p["sidebar_ink"]};
         font-size: 0.92rem;
@@ -1244,6 +1256,12 @@ def apply_global_styles() -> None:
     }}
 
     .landing-section {{ margin: 1.5rem 0 0.4rem 0; }}
+    /* Bank Implementation Pathway: generous inter-section spacing matching the
+       Business Problem & Value rhythm (3.75rem between sections), scoped to the
+       page so the shared landing-section spacing elsewhere is untouched. */
+    [data-testid="stMain"]:has(.bank-page-marker) .landing-section {{
+        margin-bottom: 3.75rem;
+    }}
     .landing-heading {{
         color: {p["ink"]};
         font-size: 1.26rem;
@@ -2573,7 +2591,32 @@ def apply_global_styles() -> None:
         top: auto;
         z-index: auto;
     }}
-
+    /* Gold Quantity Coverage: the mental-model banner recoloured as one red
+       "coverage boundary" note — light-red fill, dark text, red accent, icon
+       and stamp — merging the old navy banner and the red caveat box. Rendered
+       static (not sticky) so a red bar never trails the page. */
+    .mental-model.coverage-boundary {{
+        background: color-mix(in srgb, {challenge_accent} 12%, white);
+        color: {p["ink"]};
+        border-left: 3px solid {challenge_accent};
+        box-shadow: 0 4px 14px color-mix(in srgb, {challenge_accent} 16%, transparent);
+    }}
+    .mental-model.coverage-boundary .banner-icon {{
+        background: color-mix(in srgb, {challenge_accent} 18%, white);
+        color: {challenge_accent};
+    }}
+    .mental-model.coverage-boundary .mm-stamp {{ color: {challenge_accent}; }}
+    [data-testid="stElementContainer"]:has(.mental-model.coverage-boundary) {{
+        position: static;
+        top: auto;
+        z-index: auto;
+        margin-bottom: 1.1rem;  /* breathing room before the KPI band */
+    }}
+    /* Generous inter-section spacing on the coverage page (matches the Business
+       Problem & Value rhythm) so each question reads as its own block. */
+    [data-testid="stMain"]:has(.gc-page-marker) .section-heading {{
+        margin-top: 3.4rem;
+    }}
     /* Five-tile trust band (extends the landing stat-band). */
     .stat-band.five {{ grid-template-columns: repeat(5, 1fr); }}
     @media (max-width: 1250px) {{ .stat-band.five {{ grid-template-columns: repeat(3, 1fr); }} }}
@@ -3256,13 +3299,50 @@ def apply_global_styles() -> None:
     .scenario-item:first-of-type {{ border-top: none; }}
     .scenario-item-title {{ color: {p["ink"]}; font-size: 0.9rem; font-weight: 700; }}
     .scenario-item-detail {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.4; margin-top: 0.05rem; }}
-    .scenario-note {{
+    .scenario-test-notes {{
         margin-top: 0.85rem;
-        padding-top: 0.7rem;
-        border-top: 1px dashed {p["border"]};
+        padding: 0.7rem 0.85rem 0.75rem 0.85rem;
+        border: 1px solid {p["border"]};
+        border-radius: 8px;
+        background: {p["page_bg"]};
         color: {p["ink"]};
-        font-size: 0.88rem;
-        font-weight: 650;
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }}
+    .scenario-test-notes-heading {{
+        color: {p["accent"]};
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }}
+    .scenario-test-notes ul {{ margin: 0; padding-left: 1.15rem; }}
+    .scenario-test-notes li {{ margin: 0.25rem 0; padding-left: 0.15rem; }}
+    .scenario-test-notes li::marker {{ color: {p["accent"]}; }}
+
+    /* This narrative page needs clearer pauses between major sections. The
+       marker scopes the spacing to Model Evaluation & Controls only. */
+    [data-testid="stElementContainer"]:has(.mc-page-marker) {{
+        position: absolute;
+        height: 0;
+    }}
+    [data-testid="stMain"]:has(.mc-page-marker) .section-heading {{
+        position: relative;
+        margin-top: 2.15rem;
+        margin-bottom: 0.9rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid {p["border"]};
+    }}
+    [data-testid="stMain"]:has(.mc-page-marker) .section-heading::after {{
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -1px;
+        width: 3.1rem;
+        height: 3px;
+        border-radius: 999px;
+        background: {p["accent"]};
     }}
 
     /* Compact audit facts inside "How these results are calculated". The full
@@ -3376,6 +3456,72 @@ def apply_global_styles() -> None:
     .blend-challenger {{ background: {case_maroon}; }}
     .blend-rule {{ background: {navy7}; }}
     .method-rule-eq {{ margin: 0.35rem 0 0.8rem 0; }}
+    .rule-adjustment-grid {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin: 0.45rem 0 0.75rem 0;
+    }}
+    .rule-adjustment-card {{
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {navy7};
+        border-radius: 8px;
+        background: {p["panel_bg"]};
+        padding: 0.85rem 0.95rem;
+        color: {p["ink"]};
+    }}
+    .rule-adjustment-quality {{ border-top-color: {case_maroon}; }}
+    .rule-adjustment-head {{
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        margin-bottom: 0.55rem;
+    }}
+    .rule-adjustment-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        flex: 0 0 2rem;
+        border-radius: 50%;
+        color: {navy7};
+        background: color-mix(in srgb, {navy7} 10%, white);
+    }}
+    .rule-adjustment-quality .rule-adjustment-icon {{
+        color: {case_maroon};
+        background: color-mix(in srgb, {case_maroon} 10%, white);
+    }}
+    .rule-adjustment-icon svg {{ width: 1rem; height: 1rem; }}
+    .rule-adjustment-title {{ font-size: 0.94rem; font-weight: 800; line-height: 1.3; }}
+    .rule-adjustment-question {{
+        color: {p["muted"]};
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-top: 0.12rem;
+    }}
+    .rule-adjustment-card p {{
+        margin: 0 0 0.6rem 0;
+        font-size: 0.84rem;
+        line-height: 1.5;
+    }}
+    .rule-adjustment-effect {{
+        border-left: 3px solid {navy7};
+        background: color-mix(in srgb, {navy7} 6%, white);
+        padding: 0.55rem 0.65rem;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }}
+    .rule-adjustment-quality .rule-adjustment-effect {{
+        border-left-color: {case_maroon};
+        background: color-mix(in srgb, {case_maroon} 6%, white);
+    }}
+    .rule-adjustment-example {{
+        color: {p["muted"]};
+        font-size: 0.78rem;
+        line-height: 1.4;
+        margin-top: 0.55rem;
+    }}
     .method-tradeoff {{
         color: {p["ink"]};
         background: color-mix(in srgb, {case_maroon} 7%, white);
@@ -3434,6 +3580,61 @@ def apply_global_styles() -> None:
     .say-list li {{ font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.35rem; }}
     .say-list li:last-child {{ margin-bottom: 0; }}
 
+    /* Model-evaluation handoff: one restrained red footer joins the coverage
+       question and its next action without presenting it as another alert. */
+    .st-key-mc_next_page {{
+        background: color-mix(in srgb, {case_maroon} 7%, white);
+        border: 1px solid color-mix(in srgb, {case_maroon} 24%, white);
+        border-left: 4px solid {case_maroon};
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+        margin-top: 1rem;
+    }}
+    .st-key-mc_next_page .mc-next-text {{
+        color: {p["ink"]};
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        margin: 0;
+    }}
+    .st-key-mc_next_page [data-testid="stHorizontalBlock"] {{
+        align-items: center;
+        min-height: 4.5rem;
+    }}
+    .st-key-mc_next_page [data-testid="stColumn"] {{
+        min-height: 4.5rem;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }}
+    .st-key-mc_next_page [data-testid="stVerticalBlock"] {{
+        justify-content: center;
+        min-height: 4.5rem;
+    }}
+    .st-key-mc_next_page [data-testid="stElementContainer"]:has(.mc-next-text) {{
+        min-height: 4.5rem;
+    }}
+    .st-key-mc_next_page [data-testid="stPageLink"] {{
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }}
+    [data-testid="stMain"] .st-key-mc_next_page [data-testid="stPageLink"] a {{
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        background: {case_maroon};
+        border-color: {case_maroon};
+    }}
+    [data-testid="stMain"] .st-key-mc_next_page [data-testid="stPageLink"] a p {{
+        color: #FFFFFF !important;
+        font-size: 0.86rem;
+        text-align: center;
+    }}
+    [data-testid="stMain"] .st-key-mc_next_page [data-testid="stPageLink"] a:hover {{
+        background: color-mix(in srgb, {case_maroon} 88%, black);
+        border-color: color-mix(in srgb, {case_maroon} 88%, black);
+    }}
+
     /* ---- Gold Quantity Coverage: finding strip, follow-up cards, pathway
        comparison band. The caveat box and KPI band reuse shared classes. ---- */
     .gc-strip {{
@@ -3452,12 +3653,65 @@ def apply_global_styles() -> None:
         font-weight: 650;
         font-variant-numeric: tabular-nums;
     }}
-    .gc-followups {{ margin-top: 0.9rem; }}
+    .gc-followups {{ margin-top: 1rem; }}
+    /* The two follow-up cards: amber = the material one-off to check, teal = the
+       repeated source-data pattern. A header row carries an icon, the kicker
+       label and a large emphasis metric so each card leads with its number. */
+    .gc-oneoff {{ border-top-color: {family_colors["gold_unwrought"]}; }}
+    .gc-card-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.45rem;
+    }}
+    .gc-card-icon {{
+        display: inline-flex;
+        width: 1.9rem;
+        height: 1.9rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        flex: none;
+    }}
+    .gc-card-icon svg {{ width: 1.05rem; height: 1.05rem; }}
+    .gc-oneoff .gc-card-icon {{
+        background: color-mix(in srgb, {family_colors["gold_unwrought"]} 16%, white);
+        color: {family_colors["gold_unwrought"]};
+    }}
+    .gc-repeated .gc-card-icon {{
+        background: {p["accent_soft"]};
+        color: {p["accent"]};
+    }}
+    .gc-followups .twin-label {{ margin-bottom: 0; flex: 1; }}
+    .gc-oneoff .twin-label {{ color: {family_colors["gold_unwrought"]}; }}
+    .gc-card-metric {{
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        line-height: 1.05;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: {p["ink"]};
+        font-variant-numeric: tabular-nums;
+    }}
+    .gc-card-metric small {{
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: {p["muted"]};
+    }}
     .gc-card-title {{
         color: {p["ink"]};
-        font-size: 1.0rem;
+        font-size: 1.02rem;
         font-weight: 750;
-        margin: 0.15rem 0 0.3rem 0;
+        margin: 0.15rem 0 0.35rem 0;
+    }}
+    .gc-followups .twin-card p {{
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+        color: {p["ink"]};
     }}
     .gc-card-action {{
         color: {p["muted"]};
@@ -3465,34 +3719,35 @@ def apply_global_styles() -> None:
         line-height: 1.45;
         border-top: 1px dashed {p["border"]};
         padding-top: 0.5rem;
-        margin-top: 0.55rem;
+        margin-top: 0.6rem;
     }}
-    .gc-compare {{
-        border: 1px solid {p["border"]};
-        border-radius: 12px;
-        overflow: hidden;
-        margin: 0.6rem 0 0.9rem 0;
+    /* Section divider — a hairline with a short accent segment at the left,
+       matching the Business Problem & Value section rule. */
+    .gc-rule {{
+        position: relative;
+        height: 1px;
+        background: {p["border"]};
+        margin: 0.55rem 0 1.2rem 0;
     }}
-    .gc-compare-head {{
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        background: {p["sidebar_bg"]};
-        color: {p["sidebar_ink"]};
-        font-size: 0.86rem;
-        font-weight: 750;
+    .gc-rule::before {{
+        content: "";
+        position: absolute;
+        inset: -1px auto auto 0;
+        width: 34px;
+        height: 3px;
+        background: {p["accent"]};
+        border-radius: 2px;
     }}
-    .gc-compare-head > div {{ padding: 0.6rem 1rem; }}
-    .gc-compare-head > div:last-child {{ border-left: 1px solid rgba(248, 250, 253, 0.25); }}
-    .gc-compare-row {{
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        border-top: 1px solid {p["border"]};
-        font-size: 0.86rem;
-        color: {p["ink"]};
+    /* Country-code reference beside the persistent-gap network — a compact
+       label above the shared reference table. */
+    .gc-cmap-head {{
+        color: {p["muted"]};
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
     }}
-    .gc-compare-row > div {{ padding: 0.5rem 1rem; }}
-    .gc-compare-row > div:last-child {{ border-left: 1px solid {p["border"]}; }}
-    .gc-compare-row:nth-child(odd) {{ background: {p.get("table_stripe", "#EFF3FA")}; }}
 
     @media (max-width: 1050px) {{
         .src-grid, .fam-grid {{ grid-template-columns: 1fr; }}
@@ -3507,6 +3762,16 @@ def apply_global_styles() -> None:
         .mc-eval-facts {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
         .method-path {{ grid-template-columns: 1fr; }}
         .method-step {{ min-height: 0; }}
+        .rule-adjustment-grid {{ grid-template-columns: 1fr; }}
+        [data-testid="stMain"]:has(.mc-page-marker) .section-heading {{
+            margin-top: 1.75rem;
+        }}
+        .st-key-mc_next_page [data-testid="stHorizontalBlock"],
+        .st-key-mc_next_page [data-testid="stColumn"],
+        .st-key-mc_next_page [data-testid="stVerticalBlock"],
+        .st-key-mc_next_page [data-testid="stElementContainer"]:has(.mc-next-text) {{
+            min-height: 0;
+        }}
     }}
     @media (max-width: 560px) {{
         .mc-eval-facts {{ grid-template-columns: 1fr; }}

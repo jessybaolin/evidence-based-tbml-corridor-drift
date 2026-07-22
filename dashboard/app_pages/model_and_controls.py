@@ -2,8 +2,8 @@
 
 A single stakeholder narrative, top to bottom: how the ranking is tested, whether
 it works (in plain terms), why this method was chosen, and the controls that keep
-it honest. The technical layer — full
-metric tables, SHAP, model parameters, source hashes — sits in one collapsed
+it honest. The technical layer — metric definitions, reconciled sample counts,
+SHAP and selected model parameters — sits in one collapsed
 drawer at the end. Every number is derived from the pipeline artefacts; all copy
 lives in dashboard_content.yml. No Plotly or colour is built in this page.
 """
@@ -32,6 +32,8 @@ content = load.load_content()
 copy = content["pages"]["model_and_controls"]
 short_labels = content["family_short_labels"]
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
+st.markdown('<span class="mc-page-marker" aria-hidden="true"></span>',
+            unsafe_allow_html=True)
 
 comparison = load.load_model_comparison()
 selection = load.load_model_selection()
@@ -97,6 +99,14 @@ st.markdown(tested["body"])
 # "Tested on a copy" visual: the planted patterns the method must catch vs the
 # benign look-alikes it must leave alone (replaces the old two-lane wall).
 sc = copy["scenarios"]
+split_line = tested["split_line"].format(
+    train=fm.year_span(project["train_years"]),
+    validation=fm.year_span(project["validation_years"]),
+    test=fm.year_span(project["test_years"]),
+)
+test_caveat = tested["caveat"].format(
+    test=fm.year_span(project["test_years"]),
+)
 
 
 def _scenario_items(items: list) -> str:
@@ -125,16 +135,13 @@ st.markdown(
     f'<div class="scenario-group-head">{render_icon("line-chart", class_name="scenario-ic")}'
     f'<span>{_e(sc["ignore_heading"])}</span></div>'
     f'{_scenario_items(sc["ignore_items"])}</div></div>'
-    f'<div class="scenario-note">{_e(sc["separation_note"])}</div></div>',
+    f'<div class="scenario-test-notes">'
+    f'<div class="scenario-test-notes-heading">{_e(tested["split_heading"])}</div>'
+    f'<ul><li>{_e(split_line)}</li>'
+    f'<li>{_e(sc["separation_note"])}</li>'
+    f'<li>{_e(test_caveat)}</li></ul></div></div>',
     unsafe_allow_html=True,
 )
-
-st.markdown(tested["split_line"].format(
-    train=fm.year_span(project["train_years"]),
-    validation=fm.year_span(project["validation_years"]),
-    test=fm.year_span(project["test_years"]),
-))
-st.info(tested["caveat"], icon=":material/science:")
 
 # ---- 2. How well does it rank the test patterns? ---------------------------
 works = copy["works"]
@@ -161,10 +168,6 @@ else:
         emphasis_color=model_emphasis,
     ),
          height=240, key="mc_headline")
-    if int(evidence["hard_negative_top"]) == 0:
-        st.caption(works["guardrail"].format(
-            hard_total=evidence["hard_negative_total"], k=evidence["k"],
-        ))
     st.caption(works["family_limit"].format(
         best=_family(headline["best_family_id"]),
         worst=_family(headline["worst_family_id"])))
@@ -294,10 +297,40 @@ with st.expander(weighted["label"]):
     ])
     plain_table(component_rows)
     st.markdown(f"**{weighted['reductions_heading']}**")
-    st.markdown("- " + weighted["consistency_reduction"].format(
-        value=f"{float(rule_settings['benchmark_consistency_credit']):.2f}"))
-    st.markdown("- " + weighted["quality_reduction"].format(
-        value=f"{float(rule_settings['quality_penalty_weight']):.2f}"))
+    st.markdown(weighted["reductions_intro"])
+    market_max = float(rule_settings["benchmark_consistency_credit"])
+    market_reference = float(rule_settings.get("benchmark_consistency_reference", 0.35))
+    quality_max = float(rule_settings["quality_penalty_weight"])
+    quality_per_point = quality_max / 6.0
+    adjustment_cards: list[str] = []
+    for adjustment in weighted["adjustments"]:
+        if adjustment["key"] == "market":
+            values = {
+                "max_value": f"{market_max:.2f}",
+                "reference": f"{market_reference:.2f}",
+            }
+        else:
+            values = {
+                "max_value": f"{quality_max:.2f}",
+                "per_point": f"{quality_per_point:.3f}",
+            }
+        adjustment_cards.append(
+            f'<div class="rule-adjustment-card rule-adjustment-{_e(adjustment["key"])}">'
+            f'<div class="rule-adjustment-head">'
+            f'<span class="rule-adjustment-icon">{render_icon(adjustment["icon"])}</span>'
+            f'<div><div class="rule-adjustment-title">{_e(adjustment["title"])}</div>'
+            f'<div class="rule-adjustment-question">{_e(adjustment["question"])}</div></div>'
+            f'</div>'
+            f'<p>{_e(adjustment["explanation"])}</p>'
+            f'<div class="rule-adjustment-effect"><strong>Score effect:</strong> '
+            f'{_e(adjustment["effect"].format(**values))}</div>'
+            f'<div class="rule-adjustment-example">{_e(adjustment["example"])}</div>'
+            f'</div>'
+        )
+    st.markdown(
+        f'<div class="rule-adjustment-grid anim">{"".join(adjustment_cards)}</div>',
+        unsafe_allow_html=True,
+    )
     st.caption(weighted["clipping_note"])
 
     st.markdown(f"**{weighted['validation_heading']}**")
@@ -340,7 +373,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.caption(method["explainability_note"])
-st.caption(method["score_note"])
 ledger("model_selection", "hybrid_candidates")
 
 # ---- 4. What keeps it honest ------------------------------------------------
@@ -381,61 +413,128 @@ st.markdown(
     f'<ul class="say-list">{_not_allowed}</ul></div></div>',
     unsafe_allow_html=True,
 )
-st.caption(honest["boundary_note"])
-
 # ---- Technical details (one collapsed drawer; nothing above depends on it) ---
 drawer = copy["drawer"]
 with st.expander(drawer["label"]):
     st.caption(drawer["intro"])
 
+    st.markdown(f"**{_e(drawer['protocol_heading'])}**")
+    st.markdown("\n".join(f"- {point}" for point in drawer["protocol_points"]))
+
+    manifest = load.load_scenario_split_manifest()
+    if manifest:
+        st.markdown(f"**{_e(drawer['counts_heading'])}**")
+        scored_counts = model_scores.groupby("split", sort=False).agg(
+            scored_rows=("obs_id", "size"),
+            positives=("synthetic_review_priority", "sum"),
+            hard_negatives=("hard_negative", "sum"),
+        )
+        count_columns = drawer["counts_columns"]
+        count_rows = []
+        for split_name in ("train", "validation", "test"):
+            source_rows = int(manifest["counts_by_split"].get(split_name, 0))
+            scored = int(scored_counts.loc[split_name, "scored_rows"])
+            count_rows.append({
+                count_columns["split"]: split_name.title(),
+                count_columns["source_rows"]: f"{source_rows:,}",
+                count_columns["scored_rows"]: f"{scored:,}",
+                count_columns["excluded_rows"]: f"{source_rows - scored:,}",
+                count_columns["positives"]: (
+                    f"{int(scored_counts.loc[split_name, 'positives']):,}"
+                ),
+                count_columns["hard_negatives"]: (
+                    f"{int(scored_counts.loc[split_name, 'hard_negatives']):,}"
+                ),
+            })
+        plain_table(pd.DataFrame(count_rows))
+        st.caption(drawer["counts_note"])
+
     # Full metric table, with the evaluation-split and family selectors that used
     # to sit on the main page. mc_split stays the page's FIRST selectbox.
     d1, d2 = st.columns(2)
     with d1:
-        split = st.selectbox(drawer["split_label"], ["test", "validation"], key="mc_split")
+        split = st.selectbox(
+            drawer["split_label"], ["test", "validation"], key="mc_split",
+            format_func=str.title,
+        )
     with d2:
         family_options = ["all"] + sorted(set(comparison["family_id"]) - {"all"})
-        family = st.selectbox(drawer["family_label"], family_options, key="mc_family")
+        family = st.selectbox(
+            drawer["family_label"], family_options, key="mc_family",
+            format_func=lambda value: (
+                "All product families" if value == "all" else _family(value)
+            ),
+        )
     st.markdown(f"**{_e(drawer['metrics_heading'])}**")
     view = metrics.comparison_view(comparison, split, family)
     if not view.empty:
-        show(model_metric_bar(view, "precision_at_k", "Precision at k",
-                              {headline["selected_model"] if headline else "hybrid"}),
+        chart_view = view.assign(
+            model=view["model"].map(metrics.METHOD_LABELS).fillna(view["model"]),
+            precision_pct=view["precision_at_k"],
+        )
+        selected_label = metrics.METHOD_LABELS.get(
+            headline["selected_model"] if headline else "hybrid", "Hybrid blend",
+        )
+        show(model_metric_bar(
+            chart_view, "precision_pct", "Precision at queue size k",
+            {selected_label}, emphasis_color=model_emphasis,
+        ),
              height=320, key="mc_metric_bar")
-        plain_table(view[[
-            "model", "n", "positives", "k", "precision_at_k", "recall_at_k",
-            "lift_at_k", "average_precision", "hard_negative_false_positive_rate",
-            "ordinary_false_positive_rate",
-        ]])
+        metric_columns = drawer["metric_columns"]
+        metric_rows = []
+        for _, row in view.iterrows():
+            metric_rows.append({
+                metric_columns["model"]: metrics.METHOD_LABELS.get(
+                    str(row["model"]), str(row["model"]),
+                ),
+                metric_columns["n"]: f"{int(row['n']):,}",
+                metric_columns["positives"]: f"{int(row['positives']):,}",
+                metric_columns["k"]: f"{int(row['k']):,}",
+                metric_columns["precision"]: f"{float(row['precision_at_k']):.1%}",
+                metric_columns["recall"]: f"{float(row['recall_at_k']):.1%}",
+                metric_columns["lift"]: f"{float(row['lift_at_k']):.1f}x",
+                metric_columns["average_precision"]: (
+                    f"{float(row['average_precision']):.1%}"
+                ),
+                metric_columns["hard_negative_rate"]: (
+                    f"{float(row['hard_negative_false_positive_rate']):.1%}"
+                ),
+                metric_columns["ordinary_fpr"]: (
+                    f"{float(row['ordinary_false_positive_rate']):.2%}"
+                ),
+            })
+        plain_table(pd.DataFrame(metric_rows))
 
-    manifest = load.load_scenario_split_manifest()
-    if manifest:
-        st.markdown(f"**{_e(drawer['splits_heading'])}**")
-        counts = pd.DataFrame([
-            {"split": name,
-             "rows": manifest["counts_by_split"].get(name, 0),
-             "synthetic positives": manifest["positive_counts_by_split"].get(name, 0),
-             "hard negatives": manifest["hard_negative_counts_by_split"].get(name, 0)}
-            for name in ["train", "validation", "test"]
-        ])
-        plain_table(counts)
-        st.caption(drawer["splits_note"])
+    st.markdown(f"**{_e(drawer['definitions_heading'])}**")
+    plain_table(pd.DataFrame([
+        {"Metric": item["metric"], "What it means": item["meaning"]}
+        for item in drawer["metric_definitions"]
+    ]))
+    st.caption(drawer["definitions_note"])
 
     shap_values = load.load_shap_summary_values()
     if shap_values is not None:
         st.markdown(f"**{_e(drawer['shap_heading'])}**")
         st.caption(drawer["shap_caveat"])
-        show(shap_importance_bar(shap_values), height=420, key="mc_shap")
+        show(shap_importance_bar(shap_values, emphasis_color=model_emphasis),
+             height=420, key="mc_shap")
 
     xgb = load.load_xgboost_parameters()
     if xgb:
         st.markdown(f"**{_e(drawer['params_heading'])}**")
-        st.json(xgb)
-
-    coefficients = load.load_logistic_coefficients()
-    if coefficients is not None:
-        st.markdown(f"**{_e(drawer['coeffs_heading'])}**")
-        plain_table(coefficients)
+        st.caption(drawer["params_note"])
+        param_columns = drawer["params_columns"]
+        selected_params = xgb.get("selected_parameters", {})
+        plain_table(pd.DataFrame([
+            {
+                param_columns["setting"]: str(name).replace("_", " ").title(),
+                param_columns["value"]: value,
+            }
+            for name, value in selected_params.items()
+        ]))
+        st.caption(drawer["params_result"].format(
+            value=float(xgb.get("validation_average_precision", float("nan"))),
+        ))
 
     ledger("model_comparison", "model_selection", "shap_summary_values")
 
@@ -444,15 +543,20 @@ with st.expander(drawer["label"]):
 # coverage page answers what happened to the gold records outside that boundary.
 next_page = copy["next_page"]
 with st.container(key="mc_next_page"):
-    st.markdown(f'<div class="case-takeaway">{_e(next_page["body"])}</div>',
-                unsafe_allow_html=True)
-    st.page_link("app_pages/gold_quantity_coverage.py",
-                 label=f'{next_page["cta"]} →', icon=":material/rule:")
+    next_text, next_action = st.columns(
+        [4.2, 1.35], vertical_alignment="center", gap="large",
+    )
+    with next_text:
+        st.markdown(f'<p class="mc-next-text">{_e(next_page["body"])}</p>',
+                    unsafe_allow_html=True)
+    with next_action:
+        st.page_link("app_pages/gold_quantity_coverage.py",
+                     label=f'{next_page["cta"]} →')
 
 # Reveal the narrative sections and the remaining stakeholder charts as
 # they scroll into view. The drawer's own bold sub-headings are not .section-
 # heading, so they stay unaffected.
 render_scroll_reveal(
     ".section-heading, .st-key-mc_headline, .st-key-mc_capacity_tradeoff, "
-    ".st-key-mc_method_compare"
+    ".st-key-mc_method_compare, .st-key-mc_next_page"
 )

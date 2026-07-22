@@ -368,6 +368,8 @@ def test_navigation_group_order_and_renamed_reference_page():
     assert source.index('"Methodology"') < source.index('"Future State"')
     assert source.index('"Future State"') < source.index('"Appendix"')
     assert '"title": "Model Evaluation & Controls"' in source
+    assert '"title": "Gold Without Usable Quantity"' in source
+    assert '"title": "Gold Quantity Coverage"' not in source
     assert '"title": "Bank Implementation Pathway"' in source
     assert '"title": "Data Dictionary"' in source
 

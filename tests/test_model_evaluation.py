@@ -13,7 +13,9 @@ import pytest
 import yaml
 from streamlit.testing.v1 import AppTest
 
-from dashboard.components.charts import headline_bar, review_capacity_tradeoff
+from dashboard.components.charts import (
+    headline_bar, model_metric_bar, review_capacity_tradeoff, shap_importance_bar,
+)
 from dashboard.services import dashboard_metrics as metrics
 from dashboard.services import data_loader as load
 
@@ -138,6 +140,25 @@ def test_model_bar_charts_accept_the_page_red_emphasis():
     assert colors["Selected"] == red
     assert colors["Baseline"] != red
 
+    metric_view = pd.DataFrame({
+        "model": ["Hybrid blend", "XGBoost"],
+        "precision_pct": [0.48, 0.50],
+    })
+    metric_fig = model_metric_bar(
+        metric_view, "precision_pct", "Precision", {"Hybrid blend"},
+        emphasis_color=red,
+    )
+    metric_colors = dict(zip(metric_fig.data[0].y, metric_fig.data[0].marker.color))
+    assert metric_colors["Hybrid blend"] == red
+    assert metric_colors["XGBoost"] != red
+    assert metric_fig.layout.xaxis.tickformat == ".0%"
+
+    shap_fig = shap_importance_bar(pd.DataFrame({
+        "feature_name": ["Feature A", "Feature B"],
+        "mean_abs_shap": [0.5, 0.25],
+    }), emphasis_color=red)
+    assert shap_fig.data[0].marker.color == red
+
     assert "emphasis_color=model_emphasis" in PAGE_SOURCE
     styles = (REPO_ROOT / "dashboard" / "components" / "styles.py").read_text("utf-8")
     assert ".blend-challenger {{ background: {case_maroon}; }}" in styles
@@ -184,12 +205,19 @@ def test_page_renders_the_plain_narrative(artefacts):
     assert "48.0%" in text
     assert "22.2%" in text
     assert "26.8x" in text
-    assert "72 planted benign look-alikes" in text
+    assert "None of the 72 planted benign look-alikes" not in text
     # The "tested on a copy" visual (replaces the old two-lane wall): patterns to
     # catch, look-alikes to ignore, and the leakage-guard separation line.
     assert "Planted unusual patterns" in text
     assert "Benign look-alikes" in text
     assert "Test rows never mix into the queue" in text
+    assert "The machine-learning model is fitted on 2017–2020 data" in text
+    assert "This keeps the test years out of model fitting and method selection" in text
+    assert "It learns on 2017–2020" not in text
+    assert "Only the chosen method returns to score the real records" in text
+    assert "The performance figures below show how well the selected method ranks" in text
+    assert "held-out 2023–2024 public-data test copy" in text
+    assert "Public trade data has no confirmed cases to learn from, so the method is measured" not in text
     # Why-this-method: the methods compared, the honest hybrid-vs-XGBoost trade,
     # the two score sources, and the blend formula with its validation evidence.
     assert "XGBoost" in text
@@ -205,9 +233,22 @@ def test_page_renders_the_plain_narrative(artefacts):
     assert "transparent fixed-rule score" not in text
     assert "documented points" not in text
     assert "The retained ranking formula" in text
+    assert "The score sets review order" not in text
+    assert "Market-explanation adjustment" in text
+    assert "Data-reliability adjustment" in text
+    assert "Both adjustments are penalties in the calculation" in text
+    assert "0.08 × (6 − quality score) ÷ 6" in text
+    assert "a weighted-signal subtotal of 0.70 becomes 0.55" in text
+    assert "Each missing quality point subtracts about 0.013" in text
+    assert "maximum additions total 1.18" in text
     weight = float(selection["selected_hybrid_challenger_weight"])
     assert f"{round(weight * 100)}%" in text          # challenger share, e.g. 75%
     assert f"{round((1 - weight) * 100)}%" in text     # rule share, e.g. 25%
+    assert "which official gold records never reached that assessment" in text
+    assert any("View Unscored Gold Records" in str(link.label)
+               for link in at.get("page_link"))
+    assert "Scores are review-priority signals, not probabilities" not in text
+    assert "challenger model" not in text.lower()
 
 
 def test_method_comparison_matches_table(artefacts):
@@ -243,6 +284,7 @@ def test_model_selection_metrics_and_rule_weights_are_explicit():
     }
     for key, value in expected_weights.items():
         assert float(rules[key]) == pytest.approx(value)
+    assert float(rules["benchmark_consistency_reference"]) == pytest.approx(0.35)
 
     pipeline = (REPO_ROOT / "src" / "06_train_evaluate_models.py").read_text("utf-8")
     for key in expected_weights:
@@ -284,9 +326,22 @@ def test_technical_machinery_lives_in_the_drawer():
     at = _run()
     assert any("Technical details" in str(e.label) for e in at.expander)
     drawer_start = PAGE_SOURCE.index("with st.expander(drawer[")
-    for technical in ("shap_importance_bar(", "model_metric_bar(", "st.json("):
+    for technical in ("shap_importance_bar(", "model_metric_bar("):
         assert PAGE_SOURCE.index(technical) > drawer_start, technical
-    assert "Source files and checksums" not in _text(at)
+    text = _text(at)
+    for expected in (
+        "Evaluation protocol and scope", "Scenario rows and scoring eligibility",
+        "How to read the metrics", "Rows in test copy", "Eligible rows scored",
+        "ROC-AUC is not reported", "Selected XGBoost settings",
+    ):
+        assert expected in text
+    assert "6,658" in text
+    assert "6,033" in text
+    assert "625" in text
+    assert "Transparent-baseline coefficients" not in text
+    assert "transformed_feature" not in text
+    assert "st.json(" not in PAGE_SOURCE
+    assert "Source files and checksums" not in text
     assert "load_source_file_inventory" not in PAGE_SOURCE
 
 

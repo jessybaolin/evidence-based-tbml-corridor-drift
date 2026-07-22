@@ -127,13 +127,13 @@ def test_page_renders_three_question_story():
     assert "Greece, Ireland, Latvia" in text
     assert "not reporter attribution" in text
     assert "not country risk" in text
-    # The closing comparison band and the coverage boundary framing.
-    assert "Unit-value review pathway" in text
-    assert "Quantity-coverage follow-up" in text
+    # The coverage-boundary framing in the single red banner.
     assert "not an anomaly signal" in text
+    # The 'What happens next' comparison band was removed from the page.
+    assert "Unit-value review pathway" not in text
 
 
-def test_page_offers_followup_download_and_views():
+def test_page_offers_network_views():
     at = _run_page()
     assert not at.exception
     # The network view filter exists with the all-routes default selected.

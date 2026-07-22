@@ -69,12 +69,15 @@ def family_color_map() -> dict[str, str]:
     return {labels.get(fam, fam): color for fam, color in theme["families"].items()}
 
 
-def show(fig: go.Figure, height: int | None = None, key: str | None = None) -> None:
+def show(fig: go.Figure, height: int | None = None, key: str | None = None,
+         config: dict | None = None) -> None:
     # Keys must be STABLE across reruns (a changing key remounts the chart and
     # discards zoom/pan state) and unique per page — callers pass a literal.
+    # Most charts hide the mode bar; pass `config` to opt into pan/zoom (e.g. the
+    # explorable network), but never scroll-zoom — it would hijack page scroll.
     apply_chart_theme(fig, height)
     st.plotly_chart(fig, width="stretch", key=key,
-                    config={"displayModeBar": False})
+                    config=config or {"displayModeBar": False})
 
 
 def apply_chart_theme(fig: go.Figure, height: int | None = None) -> go.Figure:
@@ -232,33 +235,45 @@ def severity_stack(frame: pd.DataFrame) -> go.Figure:
 # ---- Model comparison ----------------------------------------------------------
 
 def model_metric_bar(view: pd.DataFrame, metric: str, metric_label: str,
-                     emphasis_models: set[str]) -> go.Figure:
+                     emphasis_models: set[str],
+                     emphasis_color: str | None = None) -> go.Figure:
     # Emphasis chart: the selected scorer(s) in accent, baselines in gray.
     theme = load_theme()["chart"]
     ordered = view.sort_values(metric, ascending=True)
+    selected_color = emphasis_color or theme["emphasis"]
     colors = [
-        theme["emphasis"] if model in emphasis_models else theme["context_gray"]
+        selected_color if model in emphasis_models else theme["context_gray"]
         for model in ordered["model"]
     ]
+    percentage = metric.endswith("_pct")
+    text = ([f"{value:.1%}" for value in ordered[metric]] if percentage
+            else [f"{value:.3f}" for value in ordered[metric]])
+    hover = ("%{y}: %{x:.1%}<extra></extra>" if percentage
+             else "%{y}: %{x:.4f}<extra></extra>")
     fig = go.Figure(go.Bar(
         x=ordered[metric], y=ordered["model"], orientation="h",
         marker_color=colors, marker_line_width=0, width=0.55,
-        text=[f"{v:.3f}" for v in ordered[metric]], textposition="outside",
-        hovertemplate="%{y}: %{x:.4f}<extra></extra>",
+        text=text, textposition="outside", hovertemplate=hover,
     ))
-    fig.update_layout(xaxis_title=metric_label, yaxis_title="")
+    fig.update_layout(
+        xaxis_title=metric_label, yaxis_title="",
+        xaxis=dict(tickformat=".0%") if percentage else None,
+    )
     return fig
 
 
-def shap_importance_bar(values: pd.DataFrame) -> go.Figure:
-    """Global challenger contribution ranking using the shared emphasis colour."""
+def shap_importance_bar(values: pd.DataFrame,
+                        emphasis_color: str | None = None) -> go.Figure:
+    """Global XGBoost contribution ranking using the requested emphasis colour."""
     ranked = values.sort_values("mean_abs_shap", ascending=True)
     fig = go.Figure(go.Bar(
         x=ranked["mean_abs_shap"], y=ranked["feature_name"], orientation="h",
-        marker_color=load_theme()["chart"]["emphasis"], marker_line_width=0, width=0.55,
+        marker_color=emphasis_color or load_theme()["chart"]["emphasis"],
+        marker_line_width=0, width=0.55,
         hovertemplate="%{y}: %{x:.3f}<extra></extra>",
     ))
-    fig.update_layout(xaxis_title="Mean |SHAP| (challenger model)", yaxis_title="")
+    fig.update_layout(xaxis_title="Average absolute SHAP contribution (XGBoost)",
+                      yaxis_title="")
     return fig
 
 
@@ -298,7 +313,8 @@ def review_capacity_tradeoff(frame: pd.DataFrame, current_k: int,
     fig.add_scatter(
         x=frame["capacity"], y=frame["precision_pct"],
         mode="lines+markers", name=precision_label,
-        line=dict(color=chart["case_corridor"], width=3), marker=dict(size=8),
+        line=dict(color=chart["case_corridor"], width=3),
+        marker=dict(color=chart["case_corridor"], size=8),
         customdata=frame[["found", "capacity"]],
         hovertemplate=("<b>%{fullData.name}</b><br>Review %{x} rows"
                        "<br>%{y:.1f}% of the queue are planted patterns"
@@ -516,8 +532,11 @@ def coverage_share_bars(products: pd.DataFrame, mode: str, copy: dict) -> go.Fig
         width=0.55, text=text, textposition="outside", customdata=custom,
         hovertemplate=hover, showlegend=False,
     ))
+    # Headroom above the tallest bar so its "outside" percentage label is never
+    # clipped at the plot's top edge.
+    top = float(max(y)) if len(y) else 1.0
     fig.update_layout(
-        yaxis=dict(tickformat=tickformat, rangemode="tozero"),
+        yaxis=dict(tickformat=tickformat, range=[0, top * 1.22]),
         xaxis_title="", yaxis_title="",
     )
     return fig
@@ -599,11 +618,10 @@ def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
     theme = load_theme()
     chart = theme["chart"]
     p = theme["palette"]
-    amber = theme["families"]["gold_unwrought"]
     styles = {
-        "nld_outbound": dict(color=amber, dash="solid"),
-        "nld_inbound": dict(color=chart["emphasis"], dash="solid"),
-        "other": dict(color=chart["context_gray"], dash="dot"),
+        "nld_outbound": dict(color=chart["network_outbound"], dash="solid"),
+        "nld_inbound": dict(color=chart["network_inbound"], dash="solid"),
+        "other": dict(color=chart["network_other"], dash="dot"),
     }
     if view == "reciprocal":
         shown = edges[edges["reciprocal"]]
@@ -622,7 +640,7 @@ def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
         category = str(edge["category"])
         fig.add_scatter(
             x=xs, y=ys, mode="lines",
-            line=dict(color=style["color"], dash=style["dash"], width=2.2),
+            line=dict(color=style["color"], dash=style["dash"], width=2.0),
             name=copy["edge_" + category], legendgroup=category,
             showlegend=category not in seen, hoverinfo="skip",
         )
@@ -650,11 +668,17 @@ def persistent_gap_network(nodes: pd.DataFrame, edges: pd.DataFrame,
                            + ": $%{customdata[4]:,.0f}<extra></extra>"),
         )
 
-    dimmed = nodes["iso3"].map(lambda c: 1.0 if c in involved else 0.3)
-    sizes = 16 + nodes["connections"] * 2.6
+    # Node size steps clearly across the three route counts (1 · 2 · 12); the
+    # highest-degree hub takes the dark navy while the rest stay muted slate, so
+    # the centre reads by colour as well as size.
+    max_conn = int(nodes["connections"].max())
+    node_colors = [chart["network_hub"] if int(c) == max_conn else chart["network_node"]
+                   for c in nodes["connections"]]
+    sizes = (13 + nodes["connections"] * 6).clip(upper=54)
+    dimmed = nodes["iso3"].map(lambda c: 1.0 if c in involved else 0.28)
     fig.add_scatter(
         x=nodes["x"], y=nodes["y"], mode="markers+text",
-        marker=dict(size=sizes, color=p["sidebar_bg"],
+        marker=dict(size=sizes, color=node_colors,
                     opacity=dimmed, line=dict(color=p["panel_bg"], width=2)),
         text=nodes["iso3"], textposition="bottom center",
         textfont=dict(size=11, color=p["ink"]),

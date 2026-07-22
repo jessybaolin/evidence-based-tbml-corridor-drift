@@ -128,6 +128,10 @@ render_info_banner(
     icon="shield-check",
     class_name="future-boundary",
 )
+# Page marker: scopes the generous inter-section spacing (matching Business
+# Problem & Value) to this page only.
+st.markdown('<span class="bank-page-marker" aria-hidden="true"></span>',
+            unsafe_allow_html=True)
 
 role = copy["role"]
 st.markdown(

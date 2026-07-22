@@ -206,8 +206,15 @@ def load_project_config() -> dict:
 
 
 @st.cache_data(show_spinner=False)
+def _load_thresholds_config(path_text: str, modified_ns: int) -> dict:
+    # Keep the file modification time in the cache key so a live dashboard does
+    # not retain an older rule dictionary after thresholds.yml changes.
+    return yaml.safe_load(Path(path_text).read_text(encoding="utf-8"))
+
+
 def load_thresholds_config() -> dict:
-    return yaml.safe_load(_resolve("thresholds_config").read_text(encoding="utf-8"))
+    path = _resolve("thresholds_config")
+    return _load_thresholds_config(str(path), path.stat().st_mtime_ns)
 
 
 @st.cache_data(show_spinner=False)
@@ -239,10 +246,18 @@ def load_theme() -> dict:
 
 
 @st.cache_data(show_spinner=False)
-def load_content() -> dict:
+def _load_content(path_text: str, modified_ns: int) -> dict:
+    # modified_ns is intentionally part of the cache key. Streamlit otherwise
+    # keeps an old dictionary after dashboard_content.yml changes during a live
+    # development session, while page code may already expect the new fields.
     return yaml.safe_load(
-        (paths.DASHBOARD_CONFIG / "dashboard_content.yml").read_text(encoding="utf-8")
+        Path(path_text).read_text(encoding="utf-8")
     )
+
+
+def load_content() -> dict:
+    path = paths.DASHBOARD_CONFIG / "dashboard_content.yml"
+    return _load_content(str(path), path.stat().st_mtime_ns)
 
 
 # ---- Markdown reference documents -------------------------------------------

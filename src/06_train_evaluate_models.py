@@ -72,7 +72,14 @@ def score_rules(features: pd.DataFrame) -> pd.DataFrame:
     out["rule_reactivation_component"] = features["corridor_reactivation_flag"].fillna(0).clip(0, 1).astype(float)
     out["rule_valid_extreme_component"] = features["valid_extreme_flag"].fillna(False).astype(float)
     # Credit for movement that is consistent with the benchmark (less suspicious); penalty for low data quality.
-    consistency_credit = (1.0 - bounded_abs(features["benchmark_consistency_gap"], 0.35)) * float(settings["benchmark_consistency_credit"])
+    consistency_credit = (
+        1.0 - bounded_abs(
+            features["benchmark_consistency_gap"],
+            # 0.35 was the original fixed reference. The fallback preserves
+            # that behaviour when an older thresholds file is still in use.
+            float(settings.get("benchmark_consistency_reference", 0.35)),
+        )
+    ) * float(settings["benchmark_consistency_credit"])
     quality_penalty = ((6.0 - features["data_quality_score"].clip(0, 6)) / 6.0).fillna(1.0) * float(settings["quality_penalty_weight"])
     # Weighted sum of the positive components (weights are deliberately fixed and documented).
     positive = (

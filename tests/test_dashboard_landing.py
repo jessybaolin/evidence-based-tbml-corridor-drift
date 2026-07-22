@@ -117,6 +117,7 @@ def test_dashboard_sidebar_offers_a_return_to_main_page():
 
     styles = (REPO_ROOT / "dashboard" / "components" / "styles.py").read_text("utf-8")
     assert ".st-key-sidebar_home" in styles
+    assert "align-items: center !important" in styles
     assert "clip: rect(0, 0, 0, 0)" in styles
 
 

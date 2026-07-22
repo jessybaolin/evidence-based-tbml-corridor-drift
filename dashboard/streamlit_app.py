@@ -67,7 +67,6 @@ def _render_about(about: dict | None) -> None:
         )
     st.markdown(
         f'<div class="about-sep"></div>'
-        f'<div class="nav-group">{html.escape(str(about.get("section_label", "About")))}</div>'
         f'<div class="about-card">'
         f'<div class="about-name">{html.escape(str(about.get("name", "")))}</div>'
         f'<div class="about-bio">{html.escape(str(about.get("bio", "")))}</div>'
@@ -107,8 +106,8 @@ PAGE_GROUPS = {
     "Methodology": [
         {"path": "app_pages/model_and_controls.py", "title": "Model Evaluation & Controls",
          "icon": ":material/verified_user:"},
-        {"path": "app_pages/gold_quantity_coverage.py", "title": "Gold Quantity Coverage",
-         "icon": ":material/rule:"},
+        {"path": "app_pages/gold_quantity_coverage.py", "title": "Gold Without Usable Quantity",
+         "icon": ":material/data_alert:"},
     ],
     "Future State": [
         {"path": "app_pages/bank_implementation_pathway.py", "title": "Bank Implementation Pathway",

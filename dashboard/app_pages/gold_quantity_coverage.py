@@ -61,14 +61,19 @@ def _takeaway(text: str) -> None:
     st.markdown(f'<div class="case-takeaway">{_e(text)}</div>', unsafe_allow_html=True)
 
 
-# ---- Header: title · coverage mental model · caveat · KPI band ---------------
+def _rule() -> None:
+    # Section divider — a hairline with a short accent segment, matching the
+    # Business Problem & Value section rule.
+    st.markdown('<div class="gc-rule"></div>', unsafe_allow_html=True)
+
+
+# ---- Header: title · one combined red coverage-boundary banner · KPI band -----
 page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
-render_info_banner(copy["mental_model_stamp"], copy["mental_model"], icon="shield-check")
-st.markdown(
-    f'<div class="queue-interpretation-boundary" role="note">'
-    f'{render_icon("info")}<span>{_e(copy["caveat"])}</span></div>',
-    unsafe_allow_html=True,
-)
+# Page marker: lets the CSS scope the generous inter-section spacing to this page.
+st.markdown('<span class="gc-page-marker" aria-hidden="true"></span>',
+            unsafe_allow_html=True)
+render_info_banner(copy["mental_model_stamp"], copy["mental_model"],
+                   icon="info", class_name="coverage-boundary")
 
 kpis = copy["kpis"]
 tiles = [
@@ -87,11 +92,12 @@ tiles_html = "".join(
     for (value, label, detail), icon in zip(tiles, KPI_ICONS)
 )
 st.markdown(f'<div class="stat-band anim">{tiles_html}</div>', unsafe_allow_html=True)
-ledger("panel", note="coverage derived live from the official panel")
+ledger("panel", note="coverage derived live from the official dataset")
 
 # ---- 1 · How much cannot be assessed? ----------------------------------------
 s1 = copy["section1"]
-section_title(s1["heading"], s1["caption"], icon="chart-pie")
+section_title(s1["heading"], icon="chart-pie")
+_rule()
 st.markdown(s1["body"].format(
     gap_rows=f'{summary["gap_rows"]:,}',
     gold_rows=f'{summary["gold_rows"]:,}',
@@ -116,6 +122,7 @@ _takeaway(s1["takeaway"])
 # ---- 2 · Large one-offs or repeated gaps? ------------------------------------
 s2 = copy["section2"]
 section_title(s2["heading"], s2["caption"], icon="line-chart")
+_rule()
 st.markdown(s2["body"])
 
 largest = summary["largest"]
@@ -132,13 +139,24 @@ st.caption(s2["log_note"])
 cards = s2["cards"]
 oneoff = cards["oneoff"]
 repeated = cards["repeated"]
+oneoff_route = f'{largest["exporter_name"]} → {largest["importer_name"]}'
+oneoff_metric = f'{largest["share_of_gap_value"]:.1%}'
+repeated_metric = f'{persistence["persistent"]}'
 st.markdown(
     f'<div class="twin-grid gc-followups">'
-    f'<div class="twin-card"><div class="twin-label">{_e(oneoff["kicker"])}</div>'
-    f'<div class="gc-card-title">{_e(oneoff["title"].format(route=f"{largest["exporter_name"]} → {largest["importer_name"]}", year=largest["year"]))}</div>'
-    f'<p>{_e(oneoff["body"].format(value=fm.compact_usd(largest["value_usd"]), share=f"{largest["share_of_gap_value"]:.1%}", active_years=n_years))}</p>'
+    f'<div class="twin-card gc-oneoff">'
+    f'<div class="gc-card-head">'
+    f'<span class="gc-card-icon">{render_icon("file-search")}</span>'
+    f'<span class="twin-label">{_e(oneoff["kicker"])}</span>'
+    f'<span class="gc-card-metric">{_e(oneoff_metric)}<small>of gap value</small></span></div>'
+    f'<div class="gc-card-title">{_e(oneoff["title"].format(route=oneoff_route, year=largest["year"]))}</div>'
+    f'<p>{_e(oneoff["body"].format(value=fm.compact_usd(largest["value_usd"]), share=oneoff_metric, active_years=n_years))}</p>'
     f'<div class="gc-card-action">{_e(oneoff["action"])}</div></div>'
-    f'<div class="twin-card response"><div class="twin-label">{_e(repeated["kicker"])}</div>'
+    f'<div class="twin-card response gc-repeated">'
+    f'<div class="gc-card-head">'
+    f'<span class="gc-card-icon">{render_icon("rotate-cw")}</span>'
+    f'<span class="twin-label">{_e(repeated["kicker"])}</span>'
+    f'<span class="gc-card-metric">{_e(repeated_metric)}<small>corridors</small></span></div>'
     f'<div class="gc-card-title">{_e(repeated["title"].format(count=persistence["persistent"]))}</div>'
     f'<p>{_e(repeated["body"].format(full_history=persistence["full_history"], n_years=n_years, count=persistence["persistent"], value=fm.compact_usd(persistence["persistent_value_usd"]), share=f"{persistence['persistent_value_usd'] / summary['gap_value_usd']:.4%}"))}</p>'
     f'<div class="gc-card-action">{_e(repeated["action"])}</div></div>'
@@ -178,6 +196,7 @@ with st.expander(s2["persistence_label"]):
 # ---- 3 · Where do the repeated gaps occur? -----------------------------------
 s3 = copy["section3"]
 section_title(s3["heading"], s3["caption"], icon="package")
+_rule()
 strip_items = s3["finding_strip"].format(
     nld_linked=findings["nld_linked"], persistent=findings["persistent"],
     outbound=findings["nld_outbound"], inbound=findings["nld_inbound"],
@@ -198,39 +217,45 @@ picked = st.segmented_control(
     key="gc_network_view", default=view_labels["all"],
 )
 view = next((k for k, label in view_labels.items() if label == picked), "all")
-show(persistent_gap_network(nodes, edges, view, copy["charts"]["network"]),
-     height=430, key="gc_network")
+
+# Network on the left (explorable: drag to zoom, pan, reset via the hover mode
+# bar) with a country-code reference panel on the right so ISO3 node labels
+# resolve to full names at a glance.
+graph_col, map_col = st.columns([2.6, 1], gap="medium")
+with graph_col:
+    show(persistent_gap_network(nodes, edges, view, copy["charts"]["network"]),
+         height=460, key="gc_network",
+         config={"displaylogo": False,
+                 "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
+with map_col:
+    # Country-code reference in the shared reference-table treatment (navy
+    # header, zebra rows), capped so it aligns with the graph rather than
+    # dangling into the caption below.
+    cmap = nodes.sort_values(["connections", "iso3"], ascending=[False, True])
+    cols = s3["country_map_columns"]
+    st.markdown(f'<div class="gc-cmap-head">{_e(s3["country_map_label"])}</div>',
+                unsafe_allow_html=True)
+    plain_table(
+        cmap[["iso3", "country", "connections"]],
+        column_labels={"iso3": cols["iso3"], "country": cols["country"],
+                       "connections": cols["connections"]},
+        height=428,
+    )
+st.caption(s3["network_note"])
 st.caption(s3["guardrail"])
 
-network_table = edges.assign(
-    route=edges["exporter_name"] + " → " + edges["importer_name"],
-    gap_value_usd=edges["gap_value_usd"].map(fm.money),
-)[["route", "active_years", "gap_years", "gap_value_usd"]]
-with st.container(key="gc_network_table"):
+with st.expander(s3["table_label"]):
     st.caption(s3["table_intro"])
+    network_table = edges.assign(
+        route=edges["exporter_name"] + " → " + edges["importer_name"],
+        gap_value_usd=edges["gap_value_usd"].map(fm.money),
+    )[["route", "active_years", "gap_years", "gap_value_usd"]]
     plain_table(network_table, column_labels={
         "route": s3["table_columns"]["route"],
         "active_years": s3["table_columns"]["active_years"],
         "gap_years": s3["table_columns"]["gap_years"],
         "gap_value_usd": s3["table_columns"]["gap_value"],
     })
-
-# ---- Closing: the two pathways side by side ----------------------------------
-closing = copy["closing"]
-section_title(closing["heading"], closing["caption"], icon="checklist")
-compare_rows = "".join(
-    f'<div class="gc-compare-row"><div>{_e(row["left"])}</div>'
-    f'<div>{_e(row["right"])}</div></div>'
-    for row in closing["compare"]["rows"]
-)
-st.markdown(
-    f'<div class="gc-compare">'
-    f'<div class="gc-compare-head"><div>{_e(closing["compare"]["left_title"])}</div>'
-    f'<div>{_e(closing["compare"]["right_title"])}</div></div>'
-    f'{compare_rows}</div>',
-    unsafe_allow_html=True,
-)
-_takeaway(closing["statement"])
 
 # ---- Supporting evidence (kept out of the main flow) -------------------------
 with st.expander(copy["trend_label"]):
@@ -248,32 +273,10 @@ with st.expander(copy["trend_label"]):
         "gap_value_usd": copy["trend_columns"]["gap_value"],
     })
 
-with st.expander(copy["source_label"]):
-    st.caption(copy["source_intro"].format(gap_rows=f'{summary["gap_rows"]:,}'))
-    export = gc.followup_export(panel)
-    preview = export.head(15).assign(
-        trade_value_usd=export.head(15)["trade_value_usd"].map(fm.money),
-        quantity=str(copy["missing_labels"]["quantity"]),
-    )[["obs_id", "source_row_id", "year", "route", "trade_value_usd",
-       "quantity", "source_version"]]
-    plain_table(preview, column_labels={
-        "obs_id": "Observation ID", "source_row_id": "Source row",
-        "year": "Year", "route": "Route",
-        "trade_value_usd": "Declared value (USD)", "quantity": "Quantity",
-        "source_version": "Source version",
-    })
-    st.download_button(
-        copy["export_label"],
-        data=export.to_csv(index=False).encode("utf-8"),
-        file_name="gold_quantity_followup_queue.csv",
-        mime="text/csv", help=copy["export_help"],
-        icon=":material/download:",
-    )
-
 ledger("panel", "features", note="no gap row is model-eligible")
 
 # Reveal the story sections and charts as they scroll into view.
 render_scroll_reveal(
     ".section-heading, .st-key-gc_products_rows, .st-key-gc_products_value, "
-    ".st-key-gc_scatter, .st-key-gc_network, .st-key-gc_network_table"
+    ".st-key-gc_scatter, .st-key-gc_network"
 )

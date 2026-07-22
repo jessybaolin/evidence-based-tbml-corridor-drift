@@ -16,6 +16,7 @@ rules:
   valid_extreme_weight: 0.14
   quality_penalty_weight: 0.08
   benchmark_consistency_credit: 0.15
+  benchmark_consistency_reference: 0.35
 model_selection:
   challenger_metric: average_precision
   hybrid_metric: precision_at_k
