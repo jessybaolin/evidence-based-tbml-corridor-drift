@@ -27,6 +27,26 @@ landing:
     - "Trade-Based Money Laundering (TBML)"
     - "Triage System"
   cta: "Enter the dashboard"
+  # Decorative top-bar labels (text only — routing is unchanged; the real Home
+  # control is the sidebar house icon on dashboard pages). First item is active.
+  nav:
+    - "Home"
+    - "Methodology"
+    - "Review queue"
+  # "How it works" connected pipeline — three nodes, public data to human call.
+  pipeline:
+    - step: "Step 01"
+      title: "Public trade data"
+      body: "Official country-to-country product totals, compared against broad market prices."
+    - step: "Step 02"
+      title: "Ranked queue"
+      body: "The strongest unusual corridor–product–year patterns rise to the top."
+    - step: "Step 03"
+      title: "Human review"
+      body: "An analyst reads the evidence behind each case and makes the call."
+  scroll_cue: "See the product"
+  product_caption: "Live product · Top 50 Review Queue"
+  product_url: "tbml-triage.app / top-50-review-queue"
 
 boundary_label: "Human-review boundary"
 
@@ -1098,17 +1118,9 @@ pages:
     boundary:
       label: "Future-state boundary"
       body: "Future-state design only. Connections to private bank data, case-management systems and production decisions have not been built."
-    role:
+    fit:
       heading: "Where the prototype could fit"
-      info: >-
-        Inside a wholesale bank, this queue could be an early signal for review.
-        It would highlight an unusual corridor or product, then help an analyst find
-        the customers and transactions behind it. The analyst could compare the
-        public pattern with the customer profile, trade documents, shipments and
-        payments. This would sit alongside transaction monitoring, sanctions
-        screening and case management, not replace them. The bank's records and the
-        analyst's judgement would determine what the activity means and what happens
-        next.
+      caption: "Public data points to a pattern. Bank records add the detail. An analyst decides what it means."
       steps:
         - label: "Public signal"
           question: "What looks unusual in the corridor, product or market?"
@@ -1119,9 +1131,6 @@ pages:
         - label: "Human decision"
           question: "Do the records explain the pattern, or does it need a closer review?"
           icon: "shield-check"
-    architecture:
-      heading: "How the prototype could fit into a bank review"
-      caption: "Public data points to a pattern. Bank records add the detail. An analyst decides what it means."
       today:
         kicker: "Today"
         title: "Public-data prototype"
@@ -1145,7 +1154,12 @@ pages:
             detail: "The analyst checks the records, logs the outcome and decides the next step."
           - title: "Review outcomes improve later testing"
             detail: "Completed reviews may help assess and tune the queue after quality and bias checks."
-      feedback_note: "Analyst decisions can provide useful feedback, but they are not perfect labels. Before using them to test or tune the model, the bank would need to check how many cases were reviewed, whether reviewers applied the same standards and which cases were never selected."
+    product:
+      kicker: "The product"
+      title: "Top 50 Review Queue"
+      url: "tbml-review-triage.streamlit.app / top-50-review-queue"
+      caption: "Top 50 Review Queue — full interactive table in-app"
+      alt: "Top 50 Review Queue table: ranked corridors with year, product, trade value, quantity, unit value, benchmark price and review-priority score."
     data_domains:
       heading: "What bank records add"
       caption: "Public data can show that a trade pattern is unusual. These bank-held records help an investigator understand who was involved, what was agreed, whether goods moved and how payment was made."
@@ -1201,6 +1215,81 @@ pages:
           title: "Lay out the case for the analyst"
           detail: "Build a timeline and relationship view, show which records support or challenge each possible explanation, and suggest the questions that still need an answer."
           icon: "shield-check"
+      mockup:
+        title: "How it would behave inside the product"
+        badge: "Concept mockup"
+        chrome: "Selected Case Review · Rank 1 · ESP → NLD"
+        case:
+          kicker: "Flagged case"
+          route: "ESP → NLD"
+          tag: "Gold · 2022"
+          score: "0.989"
+          score_label: "review-priority score"
+          rows:
+            - label: "Trade value"
+              value: "$11,787,415"
+            - label: "Quantity"
+              value: "0.032 t"
+            - label: "Unit value"
+              value: "$368,356,718.75/t"
+              tone: "alert"
+            - label: "Benchmark price"
+              value: "$57,890,634.27/t"
+        assistant:
+          name: "Evidence assistant"
+          tagline: "Connects records · never decides"
+          badge: "Powered by AI"
+          records_heading: "Records compared"
+          records:
+            - verdict: "Match"
+              text: "Customer relationship fits the ESP → NLD gold route"
+              source: "KYC/CDD"
+            - verdict: "Conflict"
+              text: "Invoice unit value sits far above the market benchmark"
+              source: "Invoice #4471"
+            - verdict: "Gap"
+              text: "No customs weight found for the declared 0.032 t"
+              source: "Customs — none"
+            - verdict: "Match"
+              text: "Payment routed through the expected correspondent bank"
+              source: "SWIFT MT103"
+            - verdict: "Review"
+              text: "Adverse-media item on a connected entity needs a look"
+              source: "Adverse-media"
+            - verdict: "Gap"
+              text: "Ultimate owner of the buyer not yet confirmed"
+              source: "Ownership — partial"
+          ask_heading: "Ask the case"
+          question: "Any sanctions or adverse-media hits on the counterparties?"
+          answer_chips: ["No sanctions match", "1 item to review"]
+          answer: "No sanctions-list match on either counterparty. One adverse-media item on a connected entity — flagged for a separate human review."
+          answer_source: "Screened: sanctions & adverse-media service"
+          input_placeholder: "Ask about this case…"
+          note: "Answers cite their sources · the assistant does not decide the outcome."
+        linked:
+          heading: "Linked bank records"
+          badge: "Integrated"
+          caption: "Open the source files behind this case."
+          items:
+            - title: "KYC/CDD"
+              meta: "Customer profile · 2 files"
+              icon: "landmark"
+            - title: "Trade-finance documents"
+              meta: "Invoice, contract · 3 files"
+              icon: "file-text"
+            - title: "Shipment & customs"
+              meta: "Bill of lading · 1 file"
+              icon: "package"
+            - title: "Payments & correspondent"
+              meta: "SWIFT MT103 · 2 files"
+              icon: "line-chart"
+            - title: "Sanctions & adverse media"
+              meta: "Watchlist + media screen"
+              icon: "search"
+            - title: "Beneficial ownership"
+              meta: "UBO structure · 2 files"
+              icon: "users"
+          footnote: "Every fact links to its source. The decision stays with the analyst."
       outputs_heading: "What the analyst would receive"
       outputs:
         - title: "Related activity in one view"

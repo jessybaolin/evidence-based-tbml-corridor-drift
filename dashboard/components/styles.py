@@ -2080,17 +2080,18 @@ def apply_global_styles() -> None:
     .bank-section-heading {{ margin-bottom: 0.85rem; max-width: none; }}
     .bank-section-title {{
         color: {p["ink"]};
-        font-size: 1.26rem;
-        font-weight: 750;
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
     }}
     .bank-section-title::before {{
         content: "";
         display: block;
-        width: 26px;
+        width: 34px;
         height: 3px;
         border-radius: 2px;
         background: {p["accent"]};
-        margin-bottom: 0.45rem;
+        margin-bottom: 0.55rem;
     }}
     .bank-section-info {{
         display: inline-flex;
@@ -2312,7 +2313,14 @@ def apply_global_styles() -> None:
     }}
 
     .bank-domain-grid, .bank-value-grid {{ display: grid; gap: 0.8rem; }}
-    .bank-domain-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
+    /* Varied "what bank records add" grid (design): two wide, three medium and
+       one full-width dark summary card. */
+    .bank-domain-grid {{ grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: stretch; }}
+    .bank-domain-grid .bank-card-1, .bank-domain-grid .bank-card-2 {{ grid-column: span 3; }}
+    .bank-domain-grid .bank-card-3,
+    .bank-domain-grid .bank-card-4,
+    .bank-domain-grid .bank-card-5 {{ grid-column: span 2; }}
+    .bank-domain-grid .bank-card-6 {{ grid-column: span 6; align-items: center; }}
     .bank-value-grid {{ grid-template-columns: repeat(4, minmax(0, 1fr)); }}
     .bank-icon-card {{
         --bank-tone: {p["accent"]};
@@ -2340,9 +2348,21 @@ def apply_global_styles() -> None:
     .bank-icon-card.domain.bank-card-3,
     .bank-icon-card.value.bank-card-2 {{ --bank-tone: {p["accent"]}; --bank-soft: {p["accent_soft"]}; }}
     .bank-icon-card.domain.bank-card-4 {{ --bank-tone: {case_maroon}; --bank-soft: color-mix(in srgb, {case_maroon} 10%, white); }}
-    .bank-icon-card.domain.bank-card-5,
+    .bank-icon-card.domain.bank-card-5 {{ --bank-tone: {p["ledger_ink"]}; --bank-soft: color-mix(in srgb, {p["ledger_ink"]} 12%, white); }}
     .bank-icon-card.value.bank-card-4 {{ --bank-tone: {context_violet}; --bank-soft: color-mix(in srgb, {context_violet} 11%, white); }}
-    .bank-icon-card.domain.bank-card-6 {{ --bank-tone: {navy7}; --bank-soft: color-mix(in srgb, {navy7} 10%, white); }}
+    /* Beneficial ownership: a full-width dark navy summary card (design) with a
+       teal icon and light copy — the section's closing "who really owns this" note. */
+    .bank-icon-card.domain.bank-card-6 {{
+        --bank-tone: {p["accent"]};
+        background: {navy7};
+        border-color: {navy7};
+    }}
+    .bank-icon-card.domain.bank-card-6 .bank-card-icon {{
+        background: color-mix(in srgb, {p["accent"]} 24%, {navy7});
+        color: {p["accent_soft"]};
+    }}
+    .bank-icon-card.domain.bank-card-6 .bank-card-title {{ color: {p["sidebar_ink"]}; }}
+    .bank-icon-card.domain.bank-card-6 .bank-card-detail {{ color: {p["sidebar_muted"]}; }}
     .bank-card-icon {{ background: var(--bank-soft); color: var(--bank-tone); flex: none; }}
     .bank-card-copy {{ min-width: 0; }}
     .bank-card-title {{
@@ -2506,10 +2526,434 @@ def apply_global_styles() -> None:
         font-weight: 600;
     }}
 
+    /* ---- The product: Top 50 Review Queue shown in a browser frame. ---- */
+    .bank-product-head {{ margin-bottom: 1rem; }}
+    .bank-product-kicker {{
+        color: {p["accent"]};
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }}
+    .bank-product-kicker::before {{
+        content: "";
+        display: block;
+        width: 34px;
+        height: 3px;
+        border-radius: 2px;
+        background: {p["accent"]};
+        margin-bottom: 0.55rem;
+    }}
+    .bank-product-title {{
+        color: {p["ink"]};
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        margin-top: 0.3rem;
+    }}
+    .bank-browser {{
+        border: 1px solid {p["border"]};
+        border-radius: 14px;
+        overflow: hidden;
+        background: {p["panel_bg"]};
+        box-shadow: 0 26px 60px -32px rgba(15, 41, 66, 0.5), 0 6px 20px -10px rgba(15, 41, 66, 0.22);
+    }}
+    .bank-browser-bar {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 2.6rem;
+        padding: 0 0.9rem;
+        background: {source_roles["official"]["soft"]};
+        border-bottom: 1px solid {p["border"]};
+    }}
+    .bank-browser-dot {{ width: 0.72rem; height: 0.72rem; border-radius: 50%; flex: none; }}
+    .bank-browser-dot.d1 {{ background: {case_maroon}; }}
+    .bank-browser-dot.d2 {{ background: {outcome_amber}; }}
+    .bank-browser-dot.d3 {{ background: {family_colors["crude_palm_oil"]}; }}
+    .bank-browser-omni {{
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        max-width: 26rem;
+        margin: 0 auto;
+        height: 1.65rem;
+        padding: 0 0.85rem;
+        background: {p["page_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 7px;
+        color: {p["muted"]};
+        font-size: 0.72rem;
+        font-family: {theme["typography"]["mono_family"]};
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    .bank-browser-omni svg {{ width: 0.72rem; height: 0.72rem; flex: none; }}
+    .bank-browser-shot {{ position: relative; line-height: 0; }}
+    .bank-browser-shot img {{ display: block; width: 100%; }}
+    .bank-browser-fade {{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 7rem;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), {p["panel_bg"]});
+    }}
+    .bank-browser-caption {{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0.85rem;
+        text-align: center;
+        color: {p["muted"]};
+        font-size: 0.78rem;
+        font-family: {theme["typography"]["mono_family"]};
+    }}
+
+    /* ---- AI evidence-assistant concept mockup (design). ---- */
+    .bank-mock-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin: 0.4rem 0 0.9rem;
+    }}
+    .bank-mock-head-title {{ color: {p["ink"]}; font-size: 1rem; font-weight: 750; }}
+    .bank-mock-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        color: {context_violet};
+        background: color-mix(in srgb, {context_violet} 12%, white);
+        border: 1px solid color-mix(in srgb, {context_violet} 30%, white);
+        border-radius: 999px;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }}
+    .bank-mock-badge svg {{ width: 0.8rem; height: 0.8rem; }}
+    .bank-mock {{
+        border: 1px solid {p["border"]};
+        border-radius: 14px;
+        overflow: hidden;
+        background: {p["panel_bg"]};
+        box-shadow: 0 26px 60px -34px rgba(15, 41, 66, 0.42), 0 6px 20px -12px rgba(15, 41, 66, 0.2);
+    }}
+    .bank-mock-chrome {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 2.5rem;
+        padding: 0 0.9rem;
+        background: {source_roles["official"]["soft"]};
+        border-bottom: 1px solid {p["border"]};
+    }}
+    .bank-mock-chrome .bank-browser-dot {{ width: 0.66rem; height: 0.66rem; }}
+    .bank-mock-chrome-label {{
+        flex: 1;
+        text-align: center;
+        color: {p["muted"]};
+        font-size: 0.72rem;
+        font-family: {theme["typography"]["mono_family"]};
+    }}
+    .bank-mock-body {{
+        display: grid;
+        grid-template-columns: 0.64fr 1.36fr;
+    }}
+    .bank-mock-case {{
+        padding: 1.05rem 1.1rem;
+        border-right: 1px solid {p["border"]};
+        background: color-mix(in srgb, {p["page_bg"]} 55%, white);
+    }}
+    .bank-mock-kicker {{
+        color: {p["muted"]};
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 0.55rem;
+    }}
+    .bank-mock-route {{ display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }}
+    .bank-mock-route-name {{ color: {p["ink"]}; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }}
+    .bank-mock-tag {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: {source_roles["typology"]["text"]};
+        background: {source_roles["typology"]["soft"]};
+        border-radius: 999px;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.72rem;
+        font-weight: 650;
+    }}
+    .bank-mock-tag::before {{
+        content: "";
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 50%;
+        background: {family_colors["gold_unwrought"]};
+    }}
+    .bank-mock-score {{ display: flex; align-items: baseline; gap: 0.5rem; margin: 0.9rem 0 1rem; }}
+    .bank-mock-score-value {{ color: {p["ink"]}; font-size: 2rem; font-weight: 850; line-height: 1; }}
+    .bank-mock-score-label {{ color: {p["muted"]}; font-size: 0.74rem; }}
+    .bank-mock-metrics {{ display: grid; }}
+    .bank-mock-metric {{
+        display: flex;
+        justify-content: space-between;
+        gap: 0.6rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid {p["border"]};
+        font-size: 0.82rem;
+    }}
+    .bank-mock-metric:last-child {{ border-bottom: none; }}
+    .bank-mock-metric-label {{ color: {p["muted"]}; }}
+    .bank-mock-metric-value {{ color: {p["ink"]}; font-weight: 650; font-variant-numeric: tabular-nums; }}
+    .bank-mock-metric.alert .bank-mock-metric-value {{ color: {case_maroon}; }}
+    .bank-mock-assist {{ padding: 0.95rem 1.05rem; min-width: 0; }}
+    .bank-mock-assist-head {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid {p["border"]};
+    }}
+    .bank-mock-assist-id {{ display: flex; align-items: center; gap: 0.55rem; min-width: 0; }}
+    .bank-mock-assist-avatar {{
+        display: inline-grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        background: {navy7};
+        color: {p["accent_soft"]};
+        flex: none;
+    }}
+    .bank-mock-assist-avatar svg {{ width: 1.05rem; height: 1.05rem; }}
+    .bank-mock-assist-name {{ color: {p["ink"]}; font-size: 0.86rem; font-weight: 750; }}
+    .bank-mock-assist-sub {{ color: {p["muted"]}; font-size: 0.72rem; }}
+    .bank-mock-subhead {{
+        color: {p["muted"]};
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin: 0.9rem 0 0.55rem;
+    }}
+    .bank-mock-records {{ display: grid; gap: 0.5rem; }}
+    .bank-mock-record {{ display: flex; align-items: center; gap: 0.6rem; }}
+    .bank-mock-verdict {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.28rem;
+        flex: none;
+        width: 4.7rem;
+        border-radius: 6px;
+        padding: 0.24rem 0;
+        font-size: 0.68rem;
+        font-weight: 750;
+    }}
+    .bank-mock-verdict svg {{ width: 0.78rem; height: 0.78rem; }}
+    .bank-mock-verdict.v-match {{ color: {p["accent"]}; background: {p["accent_soft"]}; }}
+    .bank-mock-verdict.v-conflict {{ color: {case_maroon}; background: color-mix(in srgb, {case_maroon} 12%, white); }}
+    .bank-mock-verdict.v-gap {{ color: {p["ledger_ink"]}; background: color-mix(in srgb, {p["ledger_ink"]} 12%, white); }}
+    .bank-mock-verdict.v-review {{ color: {source_roles["typology"]["text"]}; background: {source_roles["typology"]["soft"]}; }}
+    .bank-mock-record-text {{ flex: 1; min-width: 0; color: {p["ink"]}; font-size: 0.82rem; line-height: 1.4; }}
+    .bank-mock-record-src {{ color: {p["muted"]}; font-size: 0.68rem; font-family: {theme["typography"]["mono_family"]}; white-space: nowrap; }}
+    .bank-mock-chat {{ display: grid; gap: 0.55rem; }}
+    .bank-mock-q {{
+        justify-self: end;
+        max-width: 82%;
+        background: {navy7};
+        color: {p["sidebar_ink"]};
+        font-size: 0.8rem;
+        line-height: 1.45;
+        border-radius: 13px 13px 4px 13px;
+        padding: 0.5rem 0.75rem;
+    }}
+    .bank-mock-a {{ display: flex; gap: 0.5rem; align-items: flex-start; max-width: 94%; }}
+    .bank-mock-a-avatar {{
+        display: inline-grid;
+        place-items: center;
+        width: 1.6rem;
+        height: 1.6rem;
+        flex: none;
+        border-radius: 7px;
+        background: {navy7};
+        color: {p["accent_soft"]};
+    }}
+    .bank-mock-a-avatar svg {{ width: 0.85rem; height: 0.85rem; }}
+    .bank-mock-a-bubble {{
+        background: {p["page_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 13px 13px 13px 4px;
+        padding: 0.6rem 0.75rem;
+    }}
+    .bank-mock-a-chips {{ display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }}
+    .bank-mock-chip {{ border-radius: 5px; padding: 0.12rem 0.42rem; font-size: 0.68rem; font-weight: 700; }}
+    .bank-mock-chip.ok {{ color: {p["accent"]}; background: {p["accent_soft"]}; }}
+    .bank-mock-chip.warn {{ color: {source_roles["typology"]["text"]}; background: {source_roles["typology"]["soft"]}; }}
+    .bank-mock-a-text {{ color: {p["ink"]}; font-size: 0.8rem; line-height: 1.5; }}
+    .bank-mock-a-src {{ color: {p["muted"]}; font-size: 0.68rem; font-family: {theme["typography"]["mono_family"]}; margin-top: 0.4rem; }}
+    .bank-mock-input {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.6rem;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 10px;
+        padding: 0.3rem 0.3rem 0.3rem 0.8rem;
+    }}
+    .bank-mock-input span {{ flex: 1; color: {p["muted"]}; font-size: 0.78rem; }}
+    .bank-mock-send {{
+        display: inline-grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        flex: none;
+        border-radius: 8px;
+        background: {navy7};
+        color: {p["sidebar_ink"]};
+    }}
+    .bank-mock-send svg {{ width: 0.95rem; height: 0.95rem; }}
+    .bank-mock-note {{ color: {p["muted"]}; font-size: 0.7rem; margin-top: 0.5rem; }}
+    .bank-mock-linked {{
+        border-top: 1px solid {p["border"]};
+        background: color-mix(in srgb, {p["page_bg"]} 55%, white);
+        padding: 1rem 1.1rem;
+    }}
+    .bank-mock-linked-head {{ display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }}
+    .bank-mock-linked-title {{ color: {p["ink"]}; font-size: 0.9rem; font-weight: 750; }}
+    .bank-mock-linked-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        color: {p["accent"]};
+        background: {p["accent_soft"]};
+        border: 1px solid color-mix(in srgb, {p["accent"]} 30%, white);
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }}
+    .bank-mock-linked-badge::before {{
+        content: "";
+        width: 0.36rem;
+        height: 0.36rem;
+        border-radius: 50%;
+        background: {p["accent"]};
+    }}
+    .bank-mock-linked-caption {{ color: {p["muted"]}; font-size: 0.76rem; margin-top: 0.25rem; }}
+    .bank-mock-files {{
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.6rem;
+        margin-top: 0.85rem;
+    }}
+    .bank-mock-file {{
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 10px;
+        padding: 0.65rem 0.7rem;
+        transition: box-shadow {hover_ms}ms ease-out, transform {hover_ms}ms ease-out, border-color {hover_ms}ms ease-out;
+    }}
+    .bank-mock-file:hover {{
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, {p["accent"]} 40%, {p["border"]});
+        box-shadow: {surfaces["shadow_hover"]};
+    }}
+    .bank-mock-file-top {{ display: flex; align-items: center; justify-content: space-between; }}
+    .bank-mock-file-icon {{
+        display: inline-grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        background: var(--file-soft, {p["accent_soft"]});
+        color: var(--file-tone, {p["accent"]});
+    }}
+    .bank-mock-file-icon svg {{ width: 1rem; height: 1rem; }}
+    .bank-mock-file-top > svg {{ width: 0.9rem; height: 0.9rem; color: {p["muted"]}; }}
+    .bank-mock-file-1 {{ --file-tone: {outcome_blue}; --file-soft: {source_roles["official"]["soft"]}; }}
+    .bank-mock-file-2 {{ --file-tone: {source_roles["typology"]["text"]}; --file-soft: {source_roles["typology"]["soft"]}; }}
+    .bank-mock-file-3 {{ --file-tone: {p["accent"]}; --file-soft: {p["accent_soft"]}; }}
+    .bank-mock-file-4 {{ --file-tone: {case_maroon}; --file-soft: color-mix(in srgb, {case_maroon} 12%, white); }}
+    .bank-mock-file-5 {{ --file-tone: {p["ledger_ink"]}; --file-soft: color-mix(in srgb, {p["ledger_ink"]} 12%, white); }}
+    .bank-mock-file-6 {{ --file-tone: {navy7}; --file-soft: color-mix(in srgb, {navy7} 12%, white); }}
+    .bank-mock-file-title {{ color: {p["ink"]}; font-size: 0.78rem; font-weight: 700; line-height: 1.3; margin-top: 0.55rem; }}
+    .bank-mock-file-meta {{ color: {p["muted"]}; font-size: 0.68rem; margin-top: 0.15rem; }}
+    .bank-mock-foot {{
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: {p["muted"]};
+        font-size: 0.72rem;
+        margin-top: 0.85rem;
+    }}
+    .bank-mock-foot svg {{ width: 0.85rem; height: 0.85rem; color: {p["accent"]}; flex: none; }}
+
+    /* ---- Numbered "how this could help" value band (design). ---- */
+    .bank-value-band {{
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-radius: 14px;
+        overflow: hidden;
+    }}
+    .bank-band-cell {{
+        --band-tone: {outcome_blue};
+        --band-soft: {source_roles["official"]["soft"]};
+        padding: 1.25rem 1.1rem;
+        border-right: 1px solid {p["border"]};
+    }}
+    .bank-band-cell:last-child {{ border-right: none; }}
+    .bank-band-cell-2 {{ --band-tone: {p["accent"]}; --band-soft: {p["accent_soft"]}; }}
+    .bank-band-cell-3 {{ --band-tone: {source_roles["typology"]["text"]}; --band-soft: {source_roles["typology"]["soft"]}; }}
+    .bank-band-cell-4 {{ --band-tone: {context_violet}; --band-soft: color-mix(in srgb, {context_violet} 12%, white); }}
+    .bank-band-num {{
+        color: color-mix(in srgb, {p["border"]} 72%, white);
+        font-size: 1.9rem;
+        font-weight: 900;
+        line-height: 1;
+    }}
+    .bank-band-icon {{
+        display: inline-grid;
+        place-items: center;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 11px;
+        background: var(--band-soft);
+        color: var(--band-tone);
+        margin: 0.85rem 0;
+    }}
+    .bank-band-icon svg {{ width: 1.15rem; height: 1.15rem; }}
+    .bank-band-title {{ color: {p["ink"]}; font-size: 0.94rem; font-weight: 750; line-height: 1.3; }}
+    .bank-band-detail {{ color: {p["muted"]}; font-size: 0.8rem; line-height: 1.5; margin-top: 0.4rem; }}
+
     @media (max-width: 1050px) {{
-        .bank-domain-grid, .bank-value-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .bank-domain-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .bank-domain-grid .bank-card-1, .bank-domain-grid .bank-card-2,
+        .bank-domain-grid .bank-card-3, .bank-domain-grid .bank-card-4,
+        .bank-domain-grid .bank-card-5 {{ grid-column: span 1; }}
+        .bank-domain-grid .bank-card-6 {{ grid-column: span 2; }}
+        .bank-value-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .bank-value-band {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+        .bank-band-cell:nth-child(2) {{ border-right: none; }}
+        .bank-band-cell:nth-child(1), .bank-band-cell:nth-child(2) {{ border-bottom: 1px solid {p["border"]}; }}
         .bank-ai-flow {{ grid-template-columns: 1fr; }}
         .bank-ai-arrow {{ transform: rotate(90deg); min-height: 1.6rem; }}
+        .bank-mock-body {{ grid-template-columns: 1fr; }}
+        .bank-mock-case {{ border-right: none; border-bottom: 1px solid {p["border"]}; }}
+        .bank-mock-files {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
     }}
     @media (max-width: 780px) {{
         .bank-section-info.tip::after {{
@@ -2533,14 +2977,21 @@ def apply_global_styles() -> None:
             transform: rotate(90deg);
         }}
         .bank-ai-output-grid {{ grid-template-columns: 1fr; }}
+        .bank-mock-files {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
     }}
     @media (max-width: 560px) {{
         .bank-domain-grid, .bank-value-grid {{ grid-template-columns: 1fr; }}
+        .bank-domain-grid .bank-card-6 {{ grid-column: span 1; }}
+        .bank-value-band {{ grid-template-columns: 1fr; }}
+        .bank-band-cell {{ border-right: none; border-bottom: 1px solid {p["border"]}; }}
+        .bank-band-cell:last-child {{ border-bottom: none; }}
         .bank-icon-card {{ padding: 0.75rem; }}
         .bank-ai-shell {{ padding: 0.75rem; }}
         .bank-ai-step {{ grid-template-columns: 2.35rem minmax(0, 1fr); padding: 0.75rem; }}
         .bank-ai-value {{ grid-template-columns: 1.2rem minmax(0, 1fr); }}
         .bank-ai-guardrail {{ width: 100%; }}
+        .bank-mock-record {{ flex-wrap: wrap; }}
+        .bank-mock-record-src {{ margin-left: 5.3rem; }}
     }}
 
     /* ================================================================
@@ -4101,218 +4552,439 @@ def apply_global_styles() -> None:
 def apply_landing_styles() -> None:
     """Welcome-screen sheet, injected AFTER the global sheet on the root route only.
 
-    Turns the frame into a full-viewport institutional navy hero: sidebar space
-    and collapse control hidden, ribbon clearance gone, the hero centred with
-    margin-auto (so short viewports degrade to normal scrolling instead of
-    clipping), a restrained staggered entrance, and one teal CTA. Reduced motion
-    for the .welcome-* elements is killed by the consolidated block in the
-    global sheet — it loads first but wins through !important.
+    Rebuilds the root route as the design-handoff landing (see
+    references/design_handoff_landing_and_showcase): a deep-navy scrolling page
+    with a restrained teal glow + faint masked grid, a top bar, a centred hero,
+    a three-node "how it works" pipeline, a scroll cue, and a browser-framed
+    screenshot of the live Top 50 Review Queue. Sidebar/header chrome is hidden;
+    the two CTAs are real Streamlit buttons styled as pills. All motion is CSS
+    keyframes with a prefers-reduced-motion guard at the end.
     """
     theme = load_theme()
     p = theme["palette"]
     b = theme["boundary"]
     layout = theme["layout"]
     motion = theme.get("motion", {})
-    # Welcome-specific pacing: deliberately slower than the dashboard pages'
-    # entry_ms/entry_step_ms so the hero reads as a curtain-up, not a blink.
-    entry_ms = int(motion.get("welcome_entry_ms", 640))
-    step_ms = int(motion.get("welcome_stagger_ms", 130))
     hover_ms = int(motion.get("hover_ms", 180))
-    easing = motion.get("easing", "ease-out")
-    teal500 = p.get("teal_500", p["accent"])
+    ease = motion.get("easing", "cubic-bezier(0.22, 1, 0.36, 1)")
     narrow = int(theme["breakpoints"]["narrow_px"])
+    mono = theme["typography"]["mono_family"]
+    pad = int(layout["desktop_padding_px"])
+    # Tokens that equal the design palette; design-specific shades kept literal.
+    teal = p.get("teal_500", p["accent"])                          # #29B3AA
+    ink = p["sidebar_ink"]                                          # #F8FAFD
+    muted = p["sidebar_muted"]                                      # #9FB0C8
+    navy_mid = p["sidebar_bg"]                                      # #1D2D46
+    navy_deep = b["border"]                                         # #16233A
+    tl_red = theme["status"]["severity"]["high"]["color"]          # #C65D63
+    tl_amber = p["amber"]                                           # #F2B544
+    tl_green = theme["status"]["quality"]["fully_usable"]["color"]  # #2F9B78
     css = f"""
     <style>
-    /* ---- Welcome screen: the only route without the dashboard chrome. ---- */
+    /* ============ Welcome / landing — design-handoff full-bleed hero. ============ */
+    /* No dashboard chrome on the root route. */
     [data-testid="stSidebar"],
-    [data-testid="stSidebarCollapsedControl"] {{
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stHeader"] {{
         display: none !important;
     }}
 
-    /* Deep institutional navy with a very subtle tonal lift toward the top. */
-    html, body, .stApp {{
-        background: {b["border"]};
-    }}
+    /* Deep navy page + a fixed teal glow and faint masked grid behind content. */
+    html, body, .stApp {{ background: {navy_deep}; }}
     [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, {p["navy_700"]} 34%, {p["sidebar_bg"]}) 0%,
-            {p["sidebar_bg"]} 46%,
-            {b["border"]} 100%);
+        position: relative;
+        background: linear-gradient(180deg, #2a3b54 0%, {navy_mid} 46%, {navy_deep} 100%);
     }}
-    [data-testid="stMain"],
-    [data-testid="stHeader"] {{
-        background: transparent;
+    [data-testid="stAppViewContainer"]::before {{
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+            radial-gradient(1100px 620px at 76% -6%, rgba(41,179,170,.16), transparent 60%),
+            radial-gradient(820px 560px at 6% 14%, rgba(51,73,102,.5), transparent 62%);
     }}
-    [data-testid="stHeader"] [data-testid="stToolbar"] {{
-        color: {p["sidebar_muted"]};
+    [data-testid="stAppViewContainer"]::after {{
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        opacity: .45;
+        background-image:
+            linear-gradient(rgba(248,250,253,.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(248,250,253,.04) 1px, transparent 1px);
+        background-size: 62px 62px;
+        -webkit-mask-image: radial-gradient(1150px 680px at 50% 26%, #000 38%, transparent 84%);
+        mask-image: radial-gradient(1150px 680px at 50% 26%, #000 38%, transparent 84%);
     }}
+    [data-testid="stMain"] {{ background: transparent; }}
 
-    /* Viewport-centred hero column. margin-auto centring (not justify-content)
-       keeps the top reachable when the viewport is short. */
-    [data-testid="stMain"] {{
-        display: flex;
-        flex-direction: column;
-    }}
+    /* Full-width scrolling column; each section owns its own max-width. Zero the
+       inter-element gap so section margins reproduce the design spacing exactly. */
     [data-testid="stMain"] .block-container {{
-        margin-top: auto;
-        margin-bottom: auto;
-        max-width: 900px;
+        position: relative;
+        z-index: 1;
+        max-width: 1240px;
         width: 100%;
-        padding: 3rem {int(layout["desktop_padding_px"])}px 3.5rem;
+        padding: 0 0 96px;
     }}
-
-    .welcome-hero {{
-        text-align: center;
-        color: {p["sidebar_ink"]};
-    }}
-    /* Streamlit appends a heading-anchor element inside markdown h1; on the
-       hero it renders as a phantom third line plus link chrome on hover. */
-    .welcome-hero [data-testid="stHeaderActionElements"] {{
-        display: none;
-    }}
-    /* Style-only markdown containers each cost one flex-gap slot above the
-       hero. Collapse them — on this route every <style> carrier is style-only
-       (same pattern as the ribbon wrapper) — so the hero sits at optical
-       centre instead of ~20px low. */
+    [data-testid="stMain"] [data-testid="stVerticalBlock"] {{ gap: 0; }}
     [data-testid="stMain"] [data-testid="stElementContainer"]:has(style) {{
         position: absolute;
         height: 0;
         overflow: hidden;
     }}
-    .welcome-accent {{
+    .lp-hero [data-testid="stHeaderActionElements"] {{ display: none; }}
+
+    /* ---- Top bar (decorative nav, text only) ---- */
+    .lp-topbar {{
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 26px {pad}px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }}
+    .lp-nav {{
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        font-size: 14.5px;
+        color: {muted};
+    }}
+    /* Real links; scoped two-class selectors outrank Streamlit's markdown <a>. */
+    .lp-nav .lp-nav-item {{
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: {muted};
+        text-decoration: none;
+        transition: color {hover_ms}ms {ease};
+    }}
+    .lp-nav .lp-nav-item:hover {{ color: {ink}; text-decoration: none; }}
+    .lp-nav .lp-nav-item.active {{ color: {ink}; }}
+    .lp-nav-item svg {{ width: 15px; height: 15px; }}
+
+    /* ---- Hero ---- */
+    .lp-hero {{
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 52px {pad}px 0;
+        text-align: center;
+        color: {ink};
+    }}
+    .lp-accent {{
         width: 62px;
         height: 3px;
         border-radius: 999px;
-        margin: 0 auto 32px;
-        background: {teal500};
+        background: {teal};
+        margin: 0 auto 30px;
     }}
-    .welcome-eyebrow {{
+    .lp-eyebrow {{
         font-size: 13px;
         font-weight: 700;
-        letter-spacing: 0.19em;
+        letter-spacing: .19em;
         text-transform: uppercase;
-        color: {p["sidebar_muted"]};
+        color: {muted};
         margin-bottom: 26px;
     }}
-    /* Element+class selectors: Streamlit styles markdown h1/p through
-       [data-testid="stMarkdownContainer"] rules; these must outrank them or
-       the hero loses its margins (auto-centring) and type scale. The size is
-       capped so the longest phrase line ("Trade-Based Money Laundering
-       (TBML)") stays on one line within the 900px column; per-line wrapping
-       still kicks in on narrow viewports. */
-    .welcome-hero h1.welcome-title {{
+    /* Element+class selectors outrank Streamlit's [data-testid="stMarkdownContainer"]
+       h1/p rules — otherwise the hero loses its margins (the subtitle's
+       margin:auto centring in particular) and type scale. */
+    .lp-hero h1.lp-h1 {{
         margin: 0 0 30px;
-        padding: 0; /* Streamlit gives markdown h1 default block padding */
-        font-size: clamp(30px, 4vw, 44px);
+        padding: 0;
+        font-size: clamp(32px, 4.4vw, 52px);
+        line-height: 1.14;
         font-weight: 800;
-        letter-spacing: -0.008em;
-        line-height: 1.2;
-        color: {p["sidebar_ink"]};
+        letter-spacing: -.01em;
+        color: {ink};
+        text-wrap: balance;
     }}
-    .welcome-title-line {{
-        display: block;
-    }}
-    .welcome-hero p.welcome-sub {{
+    .lp-h1 span {{ display: block; }}
+    .lp-hero p.lp-sub {{
         margin: 0 auto;
         max-width: 33em;
-        font-size: clamp(16px, 2vw, 19px);
+        font-size: clamp(16px, 2vw, 20px);
         line-height: 1.66;
-        color: color-mix(in srgb, {p["sidebar_muted"]} 78%, {p["sidebar_ink"]});
+        color: #c2cddc;
+        text-align: center;
+        text-wrap: pretty;
     }}
 
-    /* The one primary action: real Streamlit button, centred. Styled as a
-       quiet ghost pill — frost outline on navy, no heavy fill or glow — with
-       the arrow nudging right on hover as the single micro-interaction. The
-       keyed container is a flex column (stVerticalBlock): centring at that
-       level works whatever width the inner wrappers take. */
-    .st-key-welcome_cta {{
-        margin-top: 40px;
+    /* ---- CTAs: real Streamlit buttons as pills (label then arrow). ---- */
+    .st-key-welcome_cta, .st-key-welcome_cta_closing {{
         align-items: center;
+        margin-top: 40px;
     }}
     .st-key-welcome_cta [data-testid="stElementContainer"],
-    .st-key-welcome_cta [data-testid="stButton"] {{
+    .st-key-welcome_cta [data-testid="stButton"],
+    .st-key-welcome_cta_closing [data-testid="stElementContainer"],
+    .st-key-welcome_cta_closing [data-testid="stButton"] {{
         display: flex;
         justify-content: center;
         width: auto;
     }}
-    /* Label first, arrow after — Streamlit renders the icon before the label
-       inside the button's inner flex span. */
-    .st-key-welcome_cta [data-testid="stButton"] button [data-has-shortcut] {{
+    .st-key-welcome_cta [data-testid="stButton"] button [data-has-shortcut],
+    .st-key-welcome_cta_closing [data-testid="stButton"] button [data-has-shortcut] {{
         flex-direction: row-reverse;
+        gap: 10px;
     }}
-    .st-key-welcome_cta [data-testid="stButton"] button {{
+    .st-key-welcome_cta [data-testid="stButton"] button,
+    .st-key-welcome_cta_closing [data-testid="stButton"] button {{
         min-height: 50px;
         padding: 0 30px;
         border-radius: 999px;
         font-size: 15.5px;
         font-weight: 600;
-        letter-spacing: 0.01em;
-        background: color-mix(in srgb, {p["sidebar_ink"]} 5%, transparent);
-        border: 1px solid color-mix(in srgb, {p["sidebar_ink"]} 30%, transparent);
-        color: {p["sidebar_ink"]};
+        letter-spacing: .01em;
         box-shadow: none;
-        transition: border-color {hover_ms}ms {easing},
-                    background {hover_ms}ms {easing},
-                    box-shadow {hover_ms}ms {easing},
-                    transform {hover_ms}ms {easing};
+        transition: border-color {hover_ms}ms {ease}, background {hover_ms}ms {ease},
+                    box-shadow {hover_ms}ms {ease}, transform {hover_ms}ms {ease};
     }}
-    .st-key-welcome_cta [data-testid="stButton"] button [data-testid="stIconMaterial"] {{
-        transition: transform {hover_ms}ms {easing};
+    .st-key-welcome_cta [data-testid="stButton"] button [data-testid="stIconMaterial"],
+    .st-key-welcome_cta_closing [data-testid="stButton"] button [data-testid="stIconMaterial"] {{
+        transition: transform {hover_ms}ms {ease};
     }}
-    /* Hover/active must out-rank the global stMain primary rules (same trick
-       as the Replay variant): the ghost warms toward teal and the arrow leads
-       the eye forward — never the global light-surface hover that recedes on
-       navy. */
+    /* Ghost hero CTA — frost outline on navy. */
+    .st-key-welcome_cta [data-testid="stButton"] button {{
+        color: {ink};
+        background: rgba(248,250,253,.05);
+        border: 1px solid rgba(248,250,253,.3);
+    }}
     [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:hover:not(:disabled) {{
-        background: color-mix(in srgb, {teal500} 14%, transparent);
-        border-color: {teal500};
-        color: {p["sidebar_ink"]};
+        border-color: {teal};
+        background: rgba(41,179,170,.14);
+        color: {ink};
         transform: translateY(-1px);
-        box-shadow: 0 10px 26px color-mix(in srgb, {b["border"]} 55%, transparent);
+        box-shadow: 0 10px 26px rgba(22,35,58,.55);
     }}
-    [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:hover:not(:disabled) [data-testid="stIconMaterial"] {{
+    /* Solid closing CTA — filled teal. */
+    .st-key-welcome_cta_closing [data-testid="stButton"] button {{
+        color: #04231f;
+        background: {teal};
+        border: 1px solid {teal};
+    }}
+    [data-testid="stMain"] .st-key-welcome_cta_closing [data-testid="stBaseButton-primary"]:hover:not(:disabled) {{
+        color: #04231f;
+        background: {teal};
+        border-color: {teal};
+        transform: translateY(-1px);
+        box-shadow: 0 16px 38px -14px rgba(41,179,170,.7);
+    }}
+    [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:hover:not(:disabled) [data-testid="stIconMaterial"],
+    [data-testid="stMain"] .st-key-welcome_cta_closing [data-testid="stBaseButton-primary"]:hover:not(:disabled) [data-testid="stIconMaterial"] {{
         transform: translateX(3px);
     }}
-    [data-testid="stMain"] .st-key-welcome_cta [data-testid="stBaseButton-primary"]:active:not(:disabled) {{
-        transform: translateY(0);
-        background: color-mix(in srgb, {teal500} 22%, transparent);
-    }}
-    .st-key-welcome_cta [data-testid="stButton"] button:focus-visible {{
-        outline: 3px solid {teal500};
+    .st-key-welcome_cta [data-testid="stButton"] button:focus-visible,
+    .st-key-welcome_cta_closing [data-testid="stButton"] button:focus-visible {{
+        outline: 3px solid {teal};
         outline-offset: 3px;
     }}
 
-    /* Restrained entrance: accent+eyebrow, then title, description, CTA.
-       Slightly longer travel suits the slower welcome pacing. */
-    @keyframes welcome-rise {{
-        from {{ opacity: 0; transform: translateY(14px); }}
-        to   {{ opacity: 1; transform: translateY(0); }}
+    /* ---- How it works: connected pipeline ---- */
+    .lp-pipeline {{
+        position: relative;
+        max-width: 980px;
+        margin: 82px auto 0;
+        padding: 0 {pad}px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 36px;
     }}
-    .welcome-accent,
-    .welcome-eyebrow,
-    .welcome-title,
-    .welcome-sub,
-    .st-key-welcome_cta {{
-        animation: welcome-rise {entry_ms}ms {easing} both;
+    .lp-track {{
+        position: absolute;
+        top: 27px;
+        left: calc(16.66% + 10px);
+        right: calc(16.66% + 10px);
+        height: 2px;
+        background: linear-gradient(90deg, rgba(95,208,195,.55), rgba(95,208,195,.28));
+        z-index: 0;
     }}
-    .welcome-title {{ animation-delay: {step_ms}ms; }}
-    .welcome-sub {{ animation-delay: {step_ms * 2}ms; }}
-    .st-key-welcome_cta {{ animation-delay: {step_ms * 3}ms; }}
+    .lp-node-col {{ position: relative; z-index: 1; text-align: center; }}
+    .lp-node {{
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        border: 2px solid {teal};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }}
+    .lp-node-open {{ background: {navy_mid}; color: #5fd0c3; box-shadow: 0 0 0 6px rgba(41,179,170,.08); }}
+    .lp-node-fill {{ background: {teal}; color: #04231f; box-shadow: 0 0 0 6px rgba(41,179,170,.14); }}
+    .lp-step {{
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: rgba(95,208,195,.7);
+        margin-bottom: 8px;
+    }}
+    .lp-node-title {{ font-size: 17px; font-weight: 700; color: {ink}; }}
+    .lp-node-body {{
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: {muted};
+        max-width: 20em;
+        margin: 7px auto 0;
+    }}
+
+    /* ---- Scroll cue ---- */
+    .lp-scrollcue {{ display: flex; justify-content: center; margin-top: 56px; }}
+    .lp-cue-inner {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        color: #7f93aa;
+        animation: lp-float 3.2s ease-in-out infinite;
+    }}
+    .lp-cue-label {{ font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }}
+    .lp-mouse {{
+        width: 24px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(159,176,200,.5);
+        position: relative;
+    }}
+    .lp-dot {{
+        position: absolute;
+        left: 50%;
+        top: 8px;
+        width: 3px;
+        height: 6px;
+        border-radius: 2px;
+        background: #5fd0c3;
+        transform: translateX(-50%);
+        animation: lp-dot 1.9s cubic-bezier(.4,0,.2,1) infinite;
+    }}
+    .lp-chev {{ animation: lp-chev 1.9s ease-in-out infinite; }}
+
+    /* ---- Product preview ---- */
+    .lp-product {{ position: relative; max-width: 1140px; margin: 44px auto 0; padding: 0 {pad}px; }}
+    .lp-pedestal {{
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: 70%;
+        height: 120px;
+        background: radial-gradient(60% 100% at 50% 100%, rgba(41,179,170,.16), transparent 72%);
+        filter: blur(8px);
+        pointer-events: none;
+    }}
+    .lp-frame {{
+        border-radius: 16px 16px 0 0;
+        overflow: hidden;
+        border: 1px solid rgba(248,250,253,.14);
+        border-bottom: none;
+        background: #33455f;
+        box-shadow: 0 0 0 1px rgba(95,208,195,.18), 0 24px 70px -24px rgba(41,179,170,.22),
+                    0 40px 90px -30px rgba(0,0,0,.65);
+        animation: lp-frame 1.7s {ease} both;
+    }}
+    .lp-chrome {{
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        background: linear-gradient(180deg, #3b4f6b, #33455f);
+        border-bottom: 1px solid rgba(248,250,253,.1);
+        box-shadow: inset 0 2px 0 rgba(95,208,195,.35);
+    }}
+    .lp-light {{ width: 11px; height: 11px; border-radius: 50%; flex: none; }}
+    .lp-light.r {{ background: {tl_red}; }}
+    .lp-light.y {{ background: {tl_amber}; }}
+    .lp-light.g {{ background: {tl_green}; }}
+    .lp-chrome-center {{ flex: 1; display: flex; justify-content: center; }}
+    .lp-url {{
+        height: 26px;
+        min-width: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 12px;
+        background: #22314A;
+        border: 1px solid rgba(248,250,253,.12);
+        border-radius: 7px;
+        color: #a7b6c9;
+        font-size: 12.5px;
+        font-family: {mono};
+    }}
+    .lp-url svg {{ width: 12px; height: 12px; flex: none; }}
+    .lp-screen {{ position: relative; height: 520px; overflow: hidden; background: #fff; }}
+    .lp-shot {{ width: 100%; display: block; }}
+    .lp-scan {{
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 120px;
+        background: linear-gradient(180deg, transparent, rgba(41,179,170,.16), transparent);
+        animation: lp-scan 9.5s cubic-bezier(.4,0,.2,1) 1s 1 forwards;
+    }}
+    .lp-fade {{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 200px;
+        background: linear-gradient(180deg, transparent, {navy_deep});
+    }}
+    .lp-caption {{
+        text-align: center;
+        margin-top: 22px;
+        font-size: 13.5px;
+        color: #8194ab;
+        font-family: {mono};
+    }}
+
+    /* ---- Keyframes ---- */
+    @keyframes lp-rise {{ from {{ opacity: 0; transform: translateY(14px); }} to {{ opacity: 1; transform: none; }} }}
+    @keyframes lp-frame {{ from {{ opacity: 0; transform: translateY(40px) scale(.975); }} to {{ opacity: 1; transform: none; }} }}
+    @keyframes lp-scan {{ 0% {{ transform: translateY(-120px); }} 100% {{ transform: translateY(560px); }} }}
+    @keyframes lp-float {{ 0%, 100% {{ transform: translateY(0); }} 50% {{ transform: translateY(-6px); }} }}
+    @keyframes lp-dot {{
+        0% {{ transform: translateX(-50%) translateY(0); opacity: 0; }}
+        25% {{ opacity: 1; }}
+        70% {{ transform: translateX(-50%) translateY(14px); opacity: 0; }}
+        100% {{ opacity: 0; }}
+    }}
+    @keyframes lp-chev {{ 0%, 100% {{ opacity: .25; transform: translateY(0); }} 50% {{ opacity: 1; transform: translateY(3px); }} }}
+
+    /* On-load staggered rise (hero elements, nav, scroll cue). */
+    .lp-anim {{ opacity: 0; animation: lp-rise .82s {ease} forwards; }}
+    .lp-d-accent, .lp-d-eyebrow {{ animation-delay: 0s; }}
+    .lp-d-nav {{ animation-delay: .12s; }}
+    .lp-d-h1 {{ animation-delay: .175s; }}
+    .lp-d-sub {{ animation-delay: .35s; }}
+    .lp-d-cue {{ animation-delay: .8s; }}
+    .st-key-welcome_cta {{ animation: lp-rise .82s {ease} .525s both; }}
 
     @media (max-width: {narrow}px) {{
-        [data-testid="stMain"] .block-container {{
-            padding-left: 24px;
-            padding-right: 24px;
-        }}
-        .st-key-welcome_cta {{
-            align-items: stretch;
-        }}
+        .lp-pipeline {{ grid-template-columns: 1fr; gap: 30px; }}
+        .lp-track {{ display: none; }}
+        .lp-hero {{ padding-top: 40px; }}
+        .st-key-welcome_cta, .st-key-welcome_cta_closing {{ align-items: stretch; }}
         .st-key-welcome_cta [data-testid="stElementContainer"],
         .st-key-welcome_cta [data-testid="stButton"],
-        .st-key-welcome_cta [data-testid="stButton"] button {{
-            width: 100%;
-        }}
+        .st-key-welcome_cta [data-testid="stButton"] button,
+        .st-key-welcome_cta_closing [data-testid="stElementContainer"],
+        .st-key-welcome_cta_closing [data-testid="stButton"],
+        .st-key-welcome_cta_closing [data-testid="stButton"] button {{ width: 100%; }}
+    }}
+
+    @media (prefers-reduced-motion: reduce) {{
+        .lp-anim, .st-key-welcome_cta {{ animation: none !important; opacity: 1 !important; }}
+        .lp-frame {{ animation: none !important; }}
+        .lp-scan {{ display: none !important; }}
+        .lp-cue-inner, .lp-dot, .lp-chev {{ animation: none !important; }}
     }}
     </style>
     """

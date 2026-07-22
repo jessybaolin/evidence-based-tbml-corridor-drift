@@ -296,10 +296,14 @@ def test_bank_implementation_pathway_is_explicitly_future_state():
         "Future-state design only. Connections to private bank data, "
         "case-management systems and production decisions have not been built."
     ) in text
-    assert "this queue could be an early signal for review" in text
-    assert "sit alongside transaction monitoring" in text
-    assert "bank-section-info tip" in text
-    assert "Analyst decisions can provide useful feedback" in text
+    # The merged "Where the prototype could fit" section: public signal ->
+    # bank context -> human decision, then the today -> future operating model.
+    assert "Public data points to a pattern" in text
+    assert "Public-data prototype" in text and "Bank-integrated design" in text
+    assert "Completed reviews may help assess and tune the queue" in text
+    # The product itself is shown as a framed screenshot of the live queue.
+    assert "Top 50 Review Queue" in text
+    assert "full interactive table in-app" in text
 
 
 def test_bank_implementation_pathway_names_required_bank_context():
@@ -334,6 +338,13 @@ def test_bank_implementation_pathway_bounds_the_ai_extension():
         "Ask questions about the case",
     ):
         assert output in text
+    # The AI section carries an explicitly-labelled concept mockup: a flagged
+    # case, a record-linking evidence assistant, and the linked source files.
+    assert "How it would behave inside the product" in text
+    assert "Concept mockup" in text
+    assert "Records compared" in text
+    assert "Linked bank records" in text
+    assert "the assistant does not decide the outcome" in text
     assert "Practical extensions" not in text
     assert "Keep a log and use fixed templates if validation fails" in text
     assert "Public data points to a pattern" in text
