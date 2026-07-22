@@ -2072,926 +2072,712 @@ def apply_global_styles() -> None:
         }}
     }}
 
-    /* ---- Bank Implementation Pathway: future-state operating model. ---- */
+    /* ---- Bank Implementation Pathway: future-state product showcase. -------
+       A scrolling storytelling page. Design colours are intentionally its own
+       (design-handoff teal #1f7d72 etc.), so most values here are literal rather
+       than theme tokens. Full-bleed bands cancel the block-container's 32px
+       (18px narrow) horizontal padding so navy / cool-tint sections span the
+       whole main column. Motion: `.reveal` sections fade via the shared scroll
+       observer; the product `.bip-scan` sweep and reduced-motion guard are at
+       the end of this block. ---------------------------------------------------- */
+    .bip-band {{
+        margin-left: -{int(layout["desktop_padding_px"])}px;
+        margin-right: -{int(layout["desktop_padding_px"])}px;
+        border-radius: 22px;
+        overflow: hidden;
+        position: relative;
+    }}
+
+    /* Header -------------------------------------------------------------- */
+    .bank-pathway-hero .page-eyebrow {{ color: #1f7d72; letter-spacing: .16em; }}
+    .bank-pathway-hero .page-title {{
+        font-size: clamp(34px, 4.4vw, 52px);
+        font-weight: 900;
+        letter-spacing: -.02em;
+        line-height: 1.05;
+        color: #12253a;
+    }}
     .bank-pathway-hero .page-subtitle {{
-        width: 100%;
-        max-width: none;
+        font-size: clamp(16px, 2vw, 20px);
+        line-height: 1.5;
+        color: #516171;
+        max-width: 760px;
     }}
-    .bank-section-heading {{ margin-bottom: 0.85rem; max-width: none; }}
-    .bank-section-title {{
-        color: {p["ink"]};
-        font-size: 1.5rem;
-        font-weight: 800;
-        letter-spacing: -0.01em;
+
+    /* Future-state boundary banner (navy, stacked label over body). ------- */
+    .bip-boundary {{
+        margin-top: 2rem;
+        background: #0f2942;
+        border-radius: 14px;
+        border-left: 5px solid #2b9d8f;
+        padding: 22px 26px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
     }}
-    .bank-section-title::before {{
-        content: "";
-        display: block;
-        width: 34px;
-        height: 3px;
-        border-radius: 2px;
-        background: {p["accent"]};
-        margin-bottom: 0.55rem;
-    }}
-    .bank-section-info {{
-        display: inline-flex;
+    .bip-boundary-icon {{
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        border-radius: 11px;
+        background: #173b57;
+        color: #5ec4b6;
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 1.18rem;
-        height: 1.18rem;
-        margin-left: 0.42rem;
-        color: {p["accent"]};
-        vertical-align: -0.16rem;
-        text-decoration: none;
     }}
-    .bank-section-info svg {{ width: 1.05rem; height: 1.05rem; }}
-    .bank-section-info.tip::after {{
-        width: min(31rem, 78vw);
-        max-width: min(31rem, 78vw);
-    }}
-    .bank-section-caption {{
-        color: {p["muted"]};
-        font-size: 0.96rem;
-        line-height: 1.55;
-        margin-top: 0.3rem;
-    }}
-    .bank-role .landing-prose {{
-        max-width: none;
-        font-size: 1.04rem;
-        line-height: 1.66;
-        margin-bottom: 0.75rem;
-    }}
-
-    /* Scroll-driven reveal: each bank section fades and rises in as it scrolls
-       into view (pure CSS — no JS). Deliberately clear on this text-heavy page,
-       so scrolling has a sense of progression. Browsers without animation-timeline
-       simply show the sections; reduced-motion users are pinned visible below. */
-    @keyframes bank-scroll-reveal {{
-        from {{ opacity: 0; transform: translateY(30px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
-    @supports (animation-timeline: view()) {{
-        .bank-reveal {{
-            animation-name: bank-scroll-reveal;
-            animation-duration: 1ms;
-            animation-timing-function: ease-out;
-            animation-fill-mode: both;
-            animation-timeline: view();
-            animation-range: entry 0% cover 34%;
-        }}
-        /* Inner cards/steps lag their section slightly for a layered reveal. */
-        .bank-reveal .bank-icon-card,
-        .bank-reveal .bank-fit-step,
-        .bank-reveal .bank-ai-step {{
-            animation-name: bank-scroll-reveal;
-            animation-duration: 1ms;
-            animation-timing-function: ease-out;
-            animation-fill-mode: both;
-            animation-timeline: view();
-            animation-range: entry 0% cover 42%;
-        }}
-    }}
-
-    .bank-fit-rail {{
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-        margin-top: 1.05rem;
-    }}
-    .bank-fit-step {{
-        --bank-tone: {outcome_blue};
-        --bank-soft: {source_roles["official"]["soft"]};
-        position: relative;
-        display: grid;
-        grid-template-columns: 2.55rem minmax(0, 1fr);
-        gap: 0.75rem;
-        align-items: start;
-        min-height: 6.4rem;
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-top: 3px solid var(--bank-tone);
-        border-radius: 8px;
-        padding: 0.85rem;
-        box-shadow: 0 4px 14px {shadow};
-    }}
-    .bank-fit-step-2 {{ --bank-tone: {outcome_amber}; --bank-soft: {source_roles["typology"]["soft"]}; }}
-    .bank-fit-step-3 {{ --bank-tone: {p["accent"]}; --bank-soft: {p["accent_soft"]}; }}
-    .bank-fit-step:not(:last-child)::after {{
-        content: "→";
-        position: absolute;
-        z-index: 2;
-        right: -0.83rem;
-        top: calc(50% - 0.7rem);
-        color: {p["muted"]};
-        font-size: 1.25rem;
+    .bip-boundary-icon svg {{ width: 22px; height: 22px; }}
+    .bip-boundary-label {{
+        font-size: 12px;
         font-weight: 700;
-    }}
-    .bank-fit-icon {{ background: var(--bank-soft); color: var(--bank-tone); }}
-    .bank-fit-copy {{ min-width: 0; }}
-    .bank-fit-label {{
-        color: var(--bank-tone);
-        font-size: 0.7rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
+        letter-spacing: .14em;
         text-transform: uppercase;
+        color: #7fd4c7;
+        margin-bottom: 6px;
     }}
-    .bank-fit-question {{
-        color: {p["ink"]};
-        font-size: 0.9rem;
-        font-weight: 650;
-        line-height: 1.45;
-        margin-top: 0.2rem;
-    }}
+    .bip-boundary-body {{ font-size: 16px; color: #dbe6ee; line-height: 1.5; }}
 
-    .bank-architecture {{
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 7.5rem minmax(0, 1fr);
-        gap: 1rem;
-        align-items: stretch;
-        margin-top: 0.9rem;
+    /* Section headings (teal rule + h2 + lead). --------------------------- */
+    .bip-section {{ margin-top: 5rem; }}
+    .bip-rule {{ width: 34px; height: 3px; background: #1f7d72; border-radius: 2px; margin-bottom: 16px; }}
+    .bip-h2 {{
+        font-size: clamp(24px, 3vw, 30px);
+        font-weight: 800;
+        letter-spacing: -.01em;
+        color: #12253a;
+        margin: 0 0 8px;
     }}
-    .bank-state {{
+    .bip-lead {{ font-size: 17px; color: #516171; line-height: 1.55; margin: 0 0 34px; max-width: 820px; }}
+
+    /* Connected 3-stage flow with ringed circular nodes + arrow connectors. */
+    .bip-flow {{ display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }}
+    .bip-stage {{
+        flex: 1 1 240px;
         min-width: 0;
-        height: 100%;
-        padding: 1rem;
-        background: {source_roles["official"]["soft"]};
-        border-top: 3px solid {outcome_blue};
+        background: #fff;
+        border: 1px solid #e2e7ee;
+        border-top: 3px solid var(--bip-accent);
+        border-radius: 14px;
+        padding: 26px 24px;
     }}
-    .bank-state-future {{
-        background: {p["accent_soft"]};
-        border-top-color: {p["accent"]};
-    }}
-    .bank-state-kicker {{
-        color: {source_roles["official"]["text"]};
-        font-size: 0.7rem;
-        font-weight: 800;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-    }}
-    .bank-state-future .bank-state-kicker {{ color: {at}; }}
-    .bank-state-title {{
-        color: {p["ink"]};
-        font-size: 1.08rem;
-        font-weight: 750;
-        margin: 0.15rem 0 0.7rem 0;
-    }}
-    .bank-flow {{ display: grid; gap: 0.45rem; }}
-    .bank-flow-node {{
-        display: grid;
-        grid-template-columns: 1.65rem minmax(0, 1fr);
-        gap: 0.65rem;
-        align-items: start;
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-radius: 6px;
-        padding: 0.7rem 0.75rem;
-    }}
-    .bank-node-index {{
-        display: inline-grid;
-        place-items: center;
-        width: 1.65rem;
-        height: 1.65rem;
+    .bip-node {{
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
-        background: {source_roles["official"]["soft"]};
-        border: 1px solid {p["border"]};
-        color: {source_roles["official"]["text"]};
-        font-size: 0.76rem;
-        font-weight: 800;
+        background: #fff;
+        border: 2px solid var(--bip-accent);
+        box-shadow: 0 0 0 5px var(--bip-ring);
+        color: var(--bip-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
     }}
-    .bank-state-future .bank-node-index {{ background: {p["accent_soft"]}; color: {at}; }}
-    .bank-node-copy {{ min-width: 0; }}
-    .bank-node-title {{
-        color: {p["ink"]};
-        font-size: 0.9rem;
+    .bip-node svg {{ width: 22px; height: 22px; }}
+    .bip-stage-kicker {{
+        font-size: 12px;
         font-weight: 700;
-        line-height: 1.35;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--bip-accent);
+        margin-bottom: 8px;
     }}
-    .bank-node-detail {{
-        color: {p["muted"]};
-        font-size: 0.8rem;
-        line-height: 1.4;
-        margin-top: 0.12rem;
-        overflow-wrap: anywhere;
+    .bip-stage-q {{ font-size: 17px; font-weight: 600; color: #22344a; line-height: 1.4; }}
+    .bip-stage-h {{ font-size: 18px; font-weight: 700; color: #22344a; line-height: 1.35; margin-bottom: 12px; }}
+    .bip-stage-d {{ color: #61707f; font-size: 14.5px; line-height: 1.55; }}
+    .bip-arrow {{ flex: 0 0 44px; display: flex; align-items: center; justify-content: center; color: #a9b6c3; }}
+    .bip-arrow svg {{ width: 22px; height: 22px; }}
+    /* Journey accents: public signal (blue) -> bank context (amber) -> decision (teal). */
+    .bip-stage.acc-blue {{ --bip-accent: #3a6ea5; --bip-ring: rgba(58,110,165,.1); }}
+    .bip-stage.acc-amber {{ --bip-accent: #c08a1f; --bip-ring: rgba(192,138,31,.1); border-top-color: #d29a2c; }}
+    .bip-stage.acc-teal {{ --bip-accent: #1f7d72; --bip-ring: rgba(31,125,114,.1); }}
+    .bip-stage.acc-violet {{ --bip-accent: #6b5b95; --bip-ring: rgba(107,91,149,.1); }}
+
+    /* Today vs Future comparison. ---------------------------------------- */
+    .bip-tf {{ margin-top: 30px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; }}
+    .bip-tf-col {{
+        background: #fff;
+        border: 1px solid #e2e7ee;
+        border-top: 3px solid var(--bip-accent);
+        border-radius: 14px;
+        padding: 28px 30px;
     }}
-    .bank-flow-arrow {{
-        color: {p["muted"]};
-        font-size: 0.95rem;
-        line-height: 0.8;
-        text-align: center;
+    .bip-tf-today {{ --bip-accent: #3a6ea5; --bip-tf-num-bg: #eaf1f8; }}
+    .bip-tf-future {{ --bip-accent: #2b5573; --bip-tf-num-bg: #e7eef4; }}
+    .bip-tf-kicker {{
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--bip-accent);
+        margin-bottom: 4px;
     }}
-    .bank-bridge {{
+    .bip-tf-title {{ font-size: 22px; font-weight: 800; color: #12253a; margin-bottom: 22px; }}
+    .bip-tf-steps {{ display: flex; flex-direction: column; gap: 14px; }}
+    .bip-tf-step {{ display: flex; gap: 14px; }}
+    .bip-tf-num {{
+        width: 28px;
+        height: 28px;
+        flex: 0 0 28px;
+        border-radius: 50%;
+        background: var(--bip-tf-num-bg);
+        color: var(--bip-accent);
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }}
+    .bip-tf-step-title {{ font-weight: 700; color: #22344a; font-size: 16px; }}
+    .bip-tf-step-detail {{ color: #61707f; font-size: 14.5px; line-height: 1.5; margin-top: 3px; }}
+    .bip-tf-connector {{
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.45rem;
-        align-self: center;
-        color: {p["muted"]};
-        font-size: 0.78rem;
-        font-weight: 750;
-        line-height: 1.35;
-        text-align: center;
+        justify-content: center;
+        padding: 0 26px;
     }}
-    .bank-bridge svg {{ width: 1.45rem; height: 1.45rem; }}
-    .bank-feedback-note {{
-        display: flex;
-        align-items: flex-start;
-        gap: 0.55rem;
-        color: {p["muted"]};
-        background: {p["panel_bg"]};
-        border-left: 3px solid {outcome_amber};
-        padding: 0.75rem 0.9rem;
-        margin-top: 0.75rem;
-        font-size: 0.82rem;
-        line-height: 1.45;
-    }}
-    .bank-feedback-note svg {{
-        color: {source_roles["typology"]["text"]};
-        width: 1.05rem;
-        height: 1.05rem;
-        flex: none;
-        margin-top: 0.08rem;
-    }}
-
-    .bank-domain-grid, .bank-value-grid {{ display: grid; gap: 0.8rem; }}
-    /* Varied "what bank records add" grid (design): two wide, three medium and
-       one full-width dark summary card. */
-    .bank-domain-grid {{ grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: stretch; }}
-    .bank-domain-grid .bank-card-1, .bank-domain-grid .bank-card-2 {{ grid-column: span 3; }}
-    .bank-domain-grid .bank-card-3,
-    .bank-domain-grid .bank-card-4,
-    .bank-domain-grid .bank-card-5 {{ grid-column: span 2; }}
-    .bank-domain-grid .bank-card-6 {{ grid-column: span 6; align-items: center; }}
-    .bank-value-grid {{ grid-template-columns: repeat(4, minmax(0, 1fr)); }}
-    .bank-icon-card {{
-        --bank-tone: {p["accent"]};
-        --bank-soft: {p["accent_soft"]};
-        display: flex;
-        gap: 0.75rem;
-        align-items: flex-start;
-        min-width: 0;
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-top: 3px solid var(--bank-tone);
-        border-radius: 8px;
-        padding: 0.85rem;
-        box-shadow: 0 4px 14px {shadow};
-        transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
-    }}
-    .bank-icon-card:hover {{
-        transform: translateY(-2px);
-        box-shadow: {surfaces["shadow_hover"]};
-    }}
-    .bank-icon-card.domain.bank-card-1,
-    .bank-icon-card.value.bank-card-1 {{ --bank-tone: {outcome_blue}; --bank-soft: {source_roles["official"]["soft"]}; }}
-    .bank-icon-card.domain.bank-card-2,
-    .bank-icon-card.value.bank-card-3 {{ --bank-tone: {outcome_amber}; --bank-soft: {source_roles["typology"]["soft"]}; }}
-    .bank-icon-card.domain.bank-card-3,
-    .bank-icon-card.value.bank-card-2 {{ --bank-tone: {p["accent"]}; --bank-soft: {p["accent_soft"]}; }}
-    .bank-icon-card.domain.bank-card-4 {{ --bank-tone: {case_maroon}; --bank-soft: color-mix(in srgb, {case_maroon} 10%, white); }}
-    .bank-icon-card.domain.bank-card-5 {{ --bank-tone: {p["ledger_ink"]}; --bank-soft: color-mix(in srgb, {p["ledger_ink"]} 12%, white); }}
-    .bank-icon-card.value.bank-card-4 {{ --bank-tone: {context_violet}; --bank-soft: color-mix(in srgb, {context_violet} 11%, white); }}
-    /* Beneficial ownership: a full-width dark navy summary card (design) with a
-       teal icon and light copy — the section's closing "who really owns this" note. */
-    .bank-icon-card.domain.bank-card-6 {{
-        --bank-tone: {p["accent"]};
-        background: {navy7};
-        border-color: {navy7};
-    }}
-    .bank-icon-card.domain.bank-card-6 .bank-card-icon {{
-        background: color-mix(in srgb, {p["accent"]} 24%, {navy7});
-        color: {p["accent_soft"]};
-    }}
-    .bank-icon-card.domain.bank-card-6 .bank-card-title {{ color: {p["sidebar_ink"]}; }}
-    .bank-icon-card.domain.bank-card-6 .bank-card-detail {{ color: {p["sidebar_muted"]}; }}
-    .bank-card-icon {{ background: var(--bank-soft); color: var(--bank-tone); flex: none; }}
-    .bank-card-copy {{ min-width: 0; }}
-    .bank-card-title {{
-        color: {p["ink"]};
-        font-size: 0.9rem;
-        font-weight: 750;
-        line-height: 1.35;
-    }}
-    .bank-card-detail {{
-        color: {p["muted"]};
-        font-size: 0.8rem;
-        line-height: 1.45;
-        margin-top: 0.25rem;
-        overflow-wrap: anywhere;
-    }}
-
-    /* AI reads as an assistive layer via a soft violet wash; the prominent
-       left accent bar was dropped as distracting. */
-    .bank-ai-shell {{
-        background: color-mix(in srgb, {context_violet} 7%, white);
-        border-radius: 10px;
-        padding: 1rem;
-    }}
-    .bank-ai-value {{
-        display: grid;
-        grid-template-columns: 1.35rem minmax(0, 1fr);
-        gap: 0.65rem;
-        align-items: start;
-        color: {p["sidebar_ink"]};
-        background: {navy7};
-        border-radius: 6px;
-        padding: 0.75rem 0.85rem;
-        margin-bottom: 0.9rem;
-        font-size: 0.84rem;
-        font-weight: 600;
-        line-height: 1.5;
-    }}
-    .bank-ai-value svg {{
-        width: 1.15rem;
-        height: 1.15rem;
-        color: {outcome_amber};
-        margin-top: 0.12rem;
-    }}
-    .bank-ai-flow {{
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 1.15fr) 2.5rem minmax(0, 1fr);
-        gap: 0.65rem;
-        align-items: stretch;
-    }}
-    .bank-ai-step {{
-        --ai-tone: {outcome_blue};
-        --ai-soft: {source_roles["official"]["soft"]};
-        display: grid;
-        grid-template-columns: 2.65rem minmax(0, 1fr);
-        gap: 0.75rem;
-        align-items: start;
-        min-width: 0;
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-top: 3px solid var(--ai-tone);
-        border-radius: 8px;
-        padding: 0.85rem;
-    }}
-    .bank-ai-step-2 {{ --ai-tone: {context_violet}; --ai-soft: color-mix(in srgb, {context_violet} 11%, white); }}
-    .bank-ai-step-3 {{ --ai-tone: {outcome_amber}; --ai-soft: {source_roles["typology"]["soft"]}; }}
-    .bank-ai-icon {{ background: var(--ai-soft); color: var(--ai-tone); }}
-    .bank-ai-copy {{ min-width: 0; }}
-    .bank-ai-kicker {{
-        color: var(--ai-tone);
-        font-size: 0.66rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }}
-    .bank-ai-title {{ color: {p["ink"]}; font-size: 0.94rem; font-weight: 750; margin-top: 0.12rem; }}
-    .bank-ai-detail {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.48; margin-top: 0.22rem; }}
-    .bank-ai-arrow {{
-        display: grid;
-        place-items: center;
-        color: {context_violet};
-        font-size: 1.35rem;
-        font-weight: 750;
-    }}
-    .bank-ai-support {{
-        margin-top: 0.9rem;
-        padding-top: 0.85rem;
-        border-top: 1px solid color-mix(in srgb, {context_violet} 22%, white);
-    }}
-    .bank-ai-support-title {{ color: {p["ink"]}; font-size: 0.8rem; font-weight: 750; }}
-    .bank-ai-output-grid {{
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.65rem;
-        margin-top: 0.45rem;
-    }}
-    .bank-ai-output {{
-        --ai-output-tone: {outcome_blue};
-        --ai-output-soft: {source_roles["official"]["soft"]};
-        display: grid;
-        grid-template-columns: 2.25rem minmax(0, 1fr);
-        gap: 0.65rem;
-        align-items: start;
-        min-width: 0;
-        background: {p["panel_bg"]};
-        border-left: 3px solid var(--ai-output-tone);
-        padding: 0.7rem 0.75rem;
-    }}
-    .bank-ai-output-2 {{ --ai-output-tone: {p["accent"]}; --ai-output-soft: {p["accent_soft"]}; }}
-    .bank-ai-output-3 {{ --ai-output-tone: {outcome_amber}; --ai-output-soft: {source_roles["typology"]["soft"]}; }}
-    .bank-ai-output-4 {{ --ai-output-tone: {context_violet}; --ai-output-soft: color-mix(in srgb, {context_violet} 11%, white); }}
-    .bank-ai-output-icon {{
-        width: 2.1rem;
-        height: 2.1rem;
-        background: var(--ai-output-soft);
-        color: var(--ai-output-tone);
-    }}
-    .bank-ai-output-icon svg {{ width: 1.05rem; height: 1.05rem; }}
-    .bank-ai-output-copy {{ min-width: 0; }}
-    .bank-ai-output-title {{
-        color: {p["ink"]};
-        font-size: 0.82rem;
-        font-weight: 750;
-        line-height: 1.35;
-    }}
-    .bank-ai-output-detail {{
-        color: {p["muted"]};
-        font-size: 0.76rem;
-        line-height: 1.45;
-        margin-top: 0.18rem;
-    }}
-    .bank-ai-guardrails {{ margin-top: 0.8rem; }}
-    .bank-ai-guardrail-grid {{ display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.4rem; }}
-    .bank-ai-guardrail {{
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        color: {navy7};
-        background: {p["panel_bg"]};
-        border: 1px solid color-mix(in srgb, {context_violet} 30%, white);
-        border-radius: 999px;
-        padding: 0.35rem 0.55rem;
-        font-size: 0.74rem;
-        font-weight: 650;
-        line-height: 1.25;
-    }}
-    .bank-ai-guardrail svg {{ width: 0.85rem; height: 0.85rem; color: {context_violet}; flex: none; }}
-
-    /* This is a closing summary, not a second headline. Keep it quieter than
-       the page's explanatory body copy while preserving the navy boundary. */
-    .bank-closing .bottom-line {{ padding: 0.9rem 1rem; }}
-    .bank-closing .bottom-line-text {{
-        max-width: none;
-        font-size: 0.88rem;
-        line-height: 1.5;
-        font-weight: 500;
-    }}
-    .bank-closing .value-chip-row {{ margin-top: 0.6rem; gap: 0.4rem; }}
-    .bank-closing .value-chip {{
-        padding: 0.14rem 0.6rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-    }}
-
-    /* ---- The product: Top 50 Review Queue shown in a browser frame. ---- */
-    .bank-product-head {{ margin-bottom: 1rem; }}
-    .bank-product-kicker {{
-        color: {p["accent"]};
-        font-size: 0.76rem;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-    }}
-    .bank-product-kicker::before {{
-        content: "";
-        display: block;
-        width: 34px;
-        height: 3px;
-        border-radius: 2px;
-        background: {p["accent"]};
-        margin-bottom: 0.55rem;
-    }}
-    .bank-product-title {{
-        color: {p["ink"]};
-        font-size: 1.5rem;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-        margin-top: 0.3rem;
-    }}
-    .bank-browser {{
-        border: 1px solid {p["border"]};
+    .bip-tf-connector-node {{
+        width: 56px;
+        height: 56px;
         border-radius: 14px;
-        overflow: hidden;
-        background: {p["panel_bg"]};
-        box-shadow: 0 26px 60px -32px rgba(15, 41, 66, 0.5), 0 6px 20px -10px rgba(15, 41, 66, 0.22);
-    }}
-    .bank-browser-bar {{
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        height: 2.6rem;
-        padding: 0 0.9rem;
-        background: {source_roles["official"]["soft"]};
-        border-bottom: 1px solid {p["border"]};
-    }}
-    .bank-browser-dot {{ width: 0.72rem; height: 0.72rem; border-radius: 50%; flex: none; }}
-    .bank-browser-dot.d1 {{ background: {case_maroon}; }}
-    .bank-browser-dot.d2 {{ background: {outcome_amber}; }}
-    .bank-browser-dot.d3 {{ background: {family_colors["crude_palm_oil"]}; }}
-    .bank-browser-omni {{
-        flex: 1;
+        background: #1f7d72;
+        color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.4rem;
-        max-width: 26rem;
+        box-shadow: 0 10px 24px -10px rgba(31,125,114,.6);
+    }}
+    .bip-tf-connector-node svg {{ width: 24px; height: 24px; }}
+    .bip-tf-connector-label {{ font-size: 13px; font-weight: 700; color: #22344a; margin-top: 12px; text-align: center; }}
+
+    /* The product — full-bleed navy band with a browser-framed table. ----- */
+    .bip-product {{
+        margin-top: 5rem;
+        padding: 58px {int(layout["desktop_padding_px"])}px 62px;
+        background: linear-gradient(180deg, #0f2942 0%, #0b2033 100%);
+    }}
+    .bip-product-glow {{
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(900px 380px at 82% -10%, rgba(41,179,170,.16), transparent 60%);
+    }}
+    .bip-product-head {{ position: relative; margin-bottom: 24px; }}
+    .bip-product-head .bip-rule {{ background: #5fd0c3; }}
+    .bip-product-eyebrow {{ font-size: 15px; font-weight: 700; letter-spacing: .14em; color: #7fd4c7; margin: 0 0 6px; }}
+    .bip-product-title {{ font-size: 30px; font-weight: 800; color: #F8FAFD; letter-spacing: -.01em; }}
+    .bip-frame {{
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 0 0 1px rgba(95,208,195,.18), 0 30px 80px -28px rgba(0,0,0,.6),
+                    0 10px 30px -12px rgba(41,179,170,.25);
+    }}
+    .bip-frame-chrome {{
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        background: linear-gradient(180deg, #3b4f6b, #33455f);
+        border-bottom: 1px solid rgba(248,250,253,.1);
+        box-shadow: inset 0 2px 0 rgba(95,208,195,.35);
+    }}
+    .bip-tl {{ width: 12px; height: 12px; border-radius: 50%; flex: none; }}
+    .bip-tl.r {{ background: #C65D63; }}
+    .bip-tl.y {{ background: #F2B544; }}
+    .bip-tl.g {{ background: #2F9B78; }}
+    .bip-omni {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        max-width: 100%;
         margin: 0 auto;
-        height: 1.65rem;
-        padding: 0 0.85rem;
-        background: {p["page_bg"]};
-        border: 1px solid {p["border"]};
+        height: 26px;
+        padding: 0 14px;
+        background: #22314A;
+        border: 1px solid rgba(248,250,253,.12);
         border-radius: 7px;
-        color: {p["muted"]};
-        font-size: 0.72rem;
+        color: #a7b6c9;
+        font-size: 12.5px;
         font-family: {theme["typography"]["mono_family"]};
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }}
-    .bank-browser-omni svg {{ width: 0.72rem; height: 0.72rem; flex: none; }}
-    .bank-browser-shot {{ position: relative; line-height: 0; }}
-    .bank-browser-shot img {{ display: block; width: 100%; }}
-    .bank-browser-fade {{
+    .bip-omni svg {{ width: 12px; height: 12px; flex: none; }}
+    .bip-frame-screen {{ position: relative; height: 560px; overflow: hidden; background: #fff; }}
+    .bip-frame-screen img {{ width: 100%; display: block; }}
+    .bip-scan {{
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 130px;
+        pointer-events: none;
+        background: linear-gradient(180deg, transparent, rgba(41,179,170,.14), transparent);
+        animation: bip-scan 8.5s cubic-bezier(.4, 0, .2, 1) .6s 1 forwards;
+    }}
+    .bip-frame-fade {{
         position: absolute;
         left: 0;
         right: 0;
         bottom: 0;
-        height: 7rem;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), {p["panel_bg"]});
+        height: 130px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), #ffffff);
     }}
-    .bank-browser-caption {{
+    .bip-frame-caption {{
         position: absolute;
         left: 0;
         right: 0;
-        bottom: 0.85rem;
+        bottom: 18px;
         text-align: center;
-        color: {p["muted"]};
-        font-size: 0.78rem;
+        font-size: 13px;
+        color: #6b7a89;
         font-family: {theme["typography"]["mono_family"]};
     }}
+    @keyframes bip-scan {{ 0% {{ transform: translateY(-130px); }} 100% {{ transform: translateY(600px); }} }}
 
-    /* ---- AI evidence-assistant concept mockup (design). ---- */
-    .bank-mock-head {{
+    /* What bank records add — varied 6-col grid. ------------------------- */
+    .bip-records {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }}
+    .bip-rec {{
+        background: #fff;
+        border: 1px solid #e2e7ee;
+        border-radius: 14px;
+        padding: 24px;
+    }}
+    .bip-rec-tile {{
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        border-radius: 12px;
+        background: var(--bip-tint);
+        color: var(--bip-accent);
         display: flex;
         align-items: center;
-        gap: 0.7rem;
-        margin: 0.4rem 0 0.9rem;
+        justify-content: center;
     }}
-    .bank-mock-head-title {{ color: {p["ink"]}; font-size: 1rem; font-weight: 750; }}
-    .bank-mock-badge {{
+    .bip-rec-tile svg {{ width: 23px; height: 23px; }}
+    .bip-rec-title {{ font-size: 18px; font-weight: 700; color: #22344a; }}
+    .bip-rec-body {{ color: #61707f; font-size: 15px; line-height: 1.55; margin-top: 6px; }}
+    /* Horizontal (left-accent) cards: beneficial ownership (full), KYC, trade docs. */
+    .bip-rec.wide {{ display: flex; gap: 18px; border-left: 4px solid var(--bip-accent); }}
+    .bip-rec.wide.center {{ align-items: center; }}
+    .bip-rec-lead {{ grid-column: span 6; --bip-accent: #6b5b95; --bip-tint: #efecf5; }}
+    .bip-rec-kyc {{ grid-column: span 3; --bip-accent: #3a6ea5; --bip-tint: #eaf1f8; }}
+    .bip-rec-trade {{ grid-column: span 3; --bip-accent: #c08a1f; --bip-tint: #fbf3e2; }}
+    /* Vertical (top-accent) cards: shipment, payments, sanctions. */
+    .bip-rec.tall {{ border-top: 4px solid var(--bip-accent); }}
+    .bip-rec.tall .bip-rec-tile {{ margin-bottom: 16px; }}
+    .bip-rec-ship {{ grid-column: span 2; --bip-accent: #1f7d72; --bip-tint: #e8f3f1; }}
+    .bip-rec-pay {{ grid-column: span 2; --bip-accent: #b5474d; --bip-tint: #f7ecec; }}
+    .bip-rec-sanc {{ grid-column: span 2; --bip-accent: #5a6b7b; --bip-tint: #eef1f4; }}
+    .bip-rec-lead .bip-rec-body {{ max-width: 760px; }}
+
+    /* Where AI could help — full-bleed cool-tint band. ------------------- */
+    .bip-ai {{
+        margin-top: 5rem;
+        padding: 56px {int(layout["desktop_padding_px"])}px 60px;
+        background: #eaeef4;
+        border-top: 1px solid #dde3ec;
+    }}
+    .bip-ai-lead {{ font-size: 17px; color: #516171; line-height: 1.55; margin: 0 0 26px; max-width: 900px; }}
+    .bip-ai-callout {{
+        background: #0f2942;
+        border-radius: 14px;
+        padding: 22px 26px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 26px;
+    }}
+    .bip-ai-callout .bip-ai-callout-icon {{ color: #7fd4c7; flex: 0 0 auto; margin-top: 2px; }}
+    .bip-ai-callout-icon svg {{ width: 22px; height: 22px; }}
+    .bip-ai-callout p {{ margin: 0; color: #dbe6ee; font-size: 16px; line-height: 1.6; }}
+    .bip-ai-story {{ margin-top: 0; }}
+
+    /* Concept mockup. ---------------------------------------------------- */
+    .bip-mock-head {{ display: flex; align-items: center; gap: 12px; margin: 44px 0 16px; }}
+    .bip-mock-head-title {{ font-size: 16px; font-weight: 700; color: #22344a; }}
+    .bip-mock-badge {{
         display: inline-flex;
         align-items: center;
-        gap: 0.3rem;
-        color: {context_violet};
-        background: color-mix(in srgb, {context_violet} 12%, white);
-        border: 1px solid color-mix(in srgb, {context_violet} 30%, white);
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        color: #6b5b95;
+        background: #efecf5;
+        border: 1px solid #e0daed;
         border-radius: 999px;
-        padding: 0.2rem 0.6rem;
-        font-size: 0.66rem;
-        font-weight: 800;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
+        padding: 4px 11px;
     }}
-    .bank-mock-badge svg {{ width: 0.8rem; height: 0.8rem; }}
-    .bank-mock {{
-        border: 1px solid {p["border"]};
-        border-radius: 14px;
+    .bip-mock-badge svg {{ width: 12px; height: 12px; }}
+    .bip-mock {{
+        border-radius: 16px;
         overflow: hidden;
-        background: {p["panel_bg"]};
-        box-shadow: 0 26px 60px -34px rgba(15, 41, 66, 0.42), 0 6px 20px -12px rgba(15, 41, 66, 0.2);
+        border: 1px solid #dbe2ea;
+        background: #fff;
+        box-shadow: 0 0 0 1px rgba(107,91,149,.28), 0 30px 70px -34px rgba(15,41,66,.42),
+                    0 6px 20px -10px rgba(15,41,66,.22);
     }}
-    .bank-mock-chrome {{
+    .bip-mock-chrome {{
+        height: 42px;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        height: 2.5rem;
-        padding: 0 0.9rem;
-        background: {source_roles["official"]["soft"]};
-        border-bottom: 1px solid {p["border"]};
+        gap: 8px;
+        padding: 0 16px;
+        background: #e7ecf2;
+        border-bottom: 1px solid #d9e0e8;
     }}
-    .bank-mock-chrome .bank-browser-dot {{ width: 0.66rem; height: 0.66rem; }}
-    .bank-mock-chrome-label {{
+    .bip-mock-tl {{ width: 11px; height: 11px; border-radius: 50%; flex: none; }}
+    .bip-mock-tl.r {{ background: #e06c6c; }}
+    .bip-mock-tl.y {{ background: #e3b24a; }}
+    .bip-mock-tl.g {{ background: #5bbf6a; }}
+    .bip-mock-chrome-label {{
         flex: 1;
         text-align: center;
-        color: {p["muted"]};
-        font-size: 0.72rem;
+        font-size: 12.5px;
+        color: #7a8896;
         font-family: {theme["typography"]["mono_family"]};
     }}
-    .bank-mock-body {{
-        display: grid;
-        grid-template-columns: 0.64fr 1.36fr;
+    .bip-mock-body {{ display: grid; grid-template-columns: 0.66fr 1.34fr; }}
+    .bip-mock-case {{ padding: 26px; border-right: 1px solid #edf1f5; background: #fbfcfd; }}
+    .bip-mock-kicker {{
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .13em;
+        color: #8592a0;
+        margin-bottom: 12px;
     }}
-    .bank-mock-case {{
-        padding: 1.05rem 1.1rem;
-        border-right: 1px solid {p["border"]};
-        background: color-mix(in srgb, {p["page_bg"]} 55%, white);
-    }}
-    .bank-mock-kicker {{
-        color: {p["muted"]};
-        font-size: 0.66rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin-bottom: 0.55rem;
-    }}
-    .bank-mock-route {{ display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }}
-    .bank-mock-route-name {{ color: {p["ink"]}; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }}
-    .bank-mock-tag {{
+    .bip-mock-route {{ display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }}
+    .bip-mock-route-name {{ font-size: 26px; font-weight: 800; color: #12253a; letter-spacing: -.01em; }}
+    .bip-mock-tag {{
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
-        color: {source_roles["typology"]["text"]};
-        background: {source_roles["typology"]["soft"]};
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #c08a1f;
+        background: #fbf3e2;
         border-radius: 999px;
-        padding: 0.2rem 0.6rem;
-        font-size: 0.72rem;
-        font-weight: 650;
+        padding: 4px 11px;
     }}
-    .bank-mock-tag::before {{
-        content: "";
-        width: 0.42rem;
-        height: 0.42rem;
-        border-radius: 50%;
-        background: {family_colors["gold_unwrought"]};
-    }}
-    .bank-mock-score {{ display: flex; align-items: baseline; gap: 0.5rem; margin: 0.9rem 0 1rem; }}
-    .bank-mock-score-value {{ color: {p["ink"]}; font-size: 2rem; font-weight: 850; line-height: 1; }}
-    .bank-mock-score-label {{ color: {p["muted"]}; font-size: 0.74rem; }}
-    .bank-mock-metrics {{ display: grid; }}
-    .bank-mock-metric {{
-        display: flex;
-        justify-content: space-between;
-        gap: 0.6rem;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid {p["border"]};
-        font-size: 0.82rem;
-    }}
-    .bank-mock-metric:last-child {{ border-bottom: none; }}
-    .bank-mock-metric-label {{ color: {p["muted"]}; }}
-    .bank-mock-metric-value {{ color: {p["ink"]}; font-weight: 650; font-variant-numeric: tabular-nums; }}
-    .bank-mock-metric.alert .bank-mock-metric-value {{ color: {case_maroon}; }}
-    .bank-mock-assist {{ padding: 0.95rem 1.05rem; min-width: 0; }}
-    .bank-mock-assist-head {{
+    .bip-mock-tag::before {{ content: ""; width: 7px; height: 7px; border-radius: 50%; background: #e0a83e; }}
+    .bip-mock-score {{ display: flex; align-items: baseline; gap: 8px; margin: 14px 0 20px; }}
+    .bip-mock-score-value {{ font-size: 34px; font-weight: 900; color: #12253a; line-height: 1; }}
+    .bip-mock-score-label {{ font-size: 13px; color: #6b7a89; }}
+    .bip-mock-metrics {{ display: flex; flex-direction: column; gap: 10px; }}
+    .bip-mock-metric {{ display: flex; justify-content: space-between; font-size: 14px; padding: 9px 0; border-bottom: 1px solid #eef1f5; }}
+    .bip-mock-metric:last-child {{ border-bottom: none; }}
+    .bip-mock-metric-label {{ color: #61707f; }}
+    .bip-mock-metric-value {{ font-weight: 600; color: #22344a; font-variant-numeric: tabular-nums; }}
+    .bip-mock-metric.alert .bip-mock-metric-value {{ color: #b5474d; }}
+    .bip-mock-assist {{ padding: 22px 24px; display: flex; flex-direction: column; background: #fff; min-width: 0; }}
+    .bip-mock-assist-head {{
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.6rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid {p["border"]};
+        gap: 10px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eef1f5;
     }}
-    .bank-mock-assist-id {{ display: flex; align-items: center; gap: 0.55rem; min-width: 0; }}
-    .bank-mock-assist-avatar {{
-        display: inline-grid;
-        place-items: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 8px;
-        background: {navy7};
-        color: {p["accent_soft"]};
+    .bip-mock-assist-id {{ display: flex; align-items: center; gap: 10px; min-width: 0; }}
+    .bip-mock-avatar {{
+        width: 32px;
+        height: 32px;
         flex: none;
+        border-radius: 9px;
+        background: #0f2942;
+        color: #7fd4c7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }}
-    .bank-mock-assist-avatar svg {{ width: 1.05rem; height: 1.05rem; }}
-    .bank-mock-assist-name {{ color: {p["ink"]}; font-size: 0.86rem; font-weight: 750; }}
-    .bank-mock-assist-sub {{ color: {p["muted"]}; font-size: 0.72rem; }}
-    .bank-mock-subhead {{
-        color: {p["muted"]};
-        font-size: 0.66rem;
-        font-weight: 800;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        margin: 0.9rem 0 0.55rem;
+    .bip-mock-avatar svg {{ width: 17px; height: 17px; }}
+    .bip-mock-assist-name {{ font-size: 15px; font-weight: 700; color: #22344a; }}
+    .bip-mock-assist-sub {{ font-size: 12px; color: #8592a0; }}
+    .bip-mock-ai-pill {{
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        color: #6b5b95;
+        background: #efecf5;
+        border: 1px solid #e0daed;
+        border-radius: 999px;
+        padding: 4px 10px;
+        white-space: nowrap;
     }}
-    .bank-mock-records {{ display: grid; gap: 0.5rem; }}
-    .bank-mock-record {{ display: flex; align-items: center; gap: 0.6rem; }}
-    .bank-mock-verdict {{
+    .bip-mock-ai-pill svg {{ width: 12px; height: 12px; }}
+    .bip-mock-subhead {{
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        color: #8592a0;
+        margin: 16px 0 12px;
+    }}
+    .bip-mock-records {{ display: flex; flex-direction: column; gap: 9px; }}
+    .bip-mock-record {{ display: flex; align-items: center; gap: 10px; }}
+    .bip-mock-verdict {{
+        flex: 0 0 66px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.28rem;
-        flex: none;
-        width: 4.7rem;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 700;
         border-radius: 6px;
-        padding: 0.24rem 0;
-        font-size: 0.68rem;
-        font-weight: 750;
+        padding: 4px 0;
     }}
-    .bank-mock-verdict svg {{ width: 0.78rem; height: 0.78rem; }}
-    .bank-mock-verdict.v-match {{ color: {p["accent"]}; background: {p["accent_soft"]}; }}
-    .bank-mock-verdict.v-conflict {{ color: {case_maroon}; background: color-mix(in srgb, {case_maroon} 12%, white); }}
-    .bank-mock-verdict.v-gap {{ color: {p["ledger_ink"]}; background: color-mix(in srgb, {p["ledger_ink"]} 12%, white); }}
-    .bank-mock-verdict.v-review {{ color: {source_roles["typology"]["text"]}; background: {source_roles["typology"]["soft"]}; }}
-    .bank-mock-record-text {{ flex: 1; min-width: 0; color: {p["ink"]}; font-size: 0.82rem; line-height: 1.4; }}
-    .bank-mock-record-src {{ color: {p["muted"]}; font-size: 0.68rem; font-family: {theme["typography"]["mono_family"]}; white-space: nowrap; }}
-    .bank-mock-chat {{ display: grid; gap: 0.55rem; }}
-    .bank-mock-q {{
-        justify-self: end;
+    .bip-mock-verdict svg {{ width: 12px; height: 12px; }}
+    .bip-mock-verdict.v-match {{ color: #1f7d72; background: #e8f3f1; }}
+    .bip-mock-verdict.v-conflict {{ color: #b5474d; background: #f7ecec; }}
+    .bip-mock-verdict.v-gap {{ color: #6b7a89; background: #eef1f4; }}
+    .bip-mock-verdict.v-review {{ color: #c08a1f; background: #fbf3e2; }}
+    .bip-mock-record-text {{ flex: 1; min-width: 0; font-size: 14px; color: #3c4c5c; }}
+    .bip-mock-record-src {{ font-size: 11px; color: #8592a0; font-family: {theme["typography"]["mono_family"]}; white-space: nowrap; }}
+    .bip-mock-chat {{ display: flex; flex-direction: column; gap: 10px; }}
+    .bip-mock-q {{
+        align-self: flex-end;
         max-width: 82%;
-        background: {navy7};
-        color: {p["sidebar_ink"]};
-        font-size: 0.8rem;
+        background: #0f2942;
+        color: #eef4f8;
+        font-size: 13.5px;
         line-height: 1.45;
         border-radius: 13px 13px 4px 13px;
-        padding: 0.5rem 0.75rem;
+        padding: 9px 13px;
     }}
-    .bank-mock-a {{ display: flex; gap: 0.5rem; align-items: flex-start; max-width: 94%; }}
-    .bank-mock-a-avatar {{
-        display: inline-grid;
-        place-items: center;
-        width: 1.6rem;
-        height: 1.6rem;
-        flex: none;
-        border-radius: 7px;
-        background: {navy7};
-        color: {p["accent_soft"]};
-    }}
-    .bank-mock-a-avatar svg {{ width: 0.85rem; height: 0.85rem; }}
-    .bank-mock-a-bubble {{
-        background: {p["page_bg"]};
-        border: 1px solid {p["border"]};
-        border-radius: 13px 13px 13px 4px;
-        padding: 0.6rem 0.75rem;
-    }}
-    .bank-mock-a-chips {{ display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }}
-    .bank-mock-chip {{ border-radius: 5px; padding: 0.12rem 0.42rem; font-size: 0.68rem; font-weight: 700; }}
-    .bank-mock-chip.ok {{ color: {p["accent"]}; background: {p["accent_soft"]}; }}
-    .bank-mock-chip.warn {{ color: {source_roles["typology"]["text"]}; background: {source_roles["typology"]["soft"]}; }}
-    .bank-mock-a-text {{ color: {p["ink"]}; font-size: 0.8rem; line-height: 1.5; }}
-    .bank-mock-a-src {{ color: {p["muted"]}; font-size: 0.68rem; font-family: {theme["typography"]["mono_family"]}; margin-top: 0.4rem; }}
-    .bank-mock-input {{
+    .bip-mock-a {{ display: flex; gap: 9px; align-items: flex-start; max-width: 92%; }}
+    .bip-mock-a-avatar {{
+        width: 26px;
+        height: 26px;
+        flex: 0 0 26px;
+        border-radius: 8px;
+        background: #0f2942;
+        color: #7fd4c7;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-top: 0.6rem;
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-radius: 10px;
-        padding: 0.3rem 0.3rem 0.3rem 0.8rem;
+        justify-content: center;
     }}
-    .bank-mock-input span {{ flex: 1; color: {p["muted"]}; font-size: 0.78rem; }}
-    .bank-mock-send {{
-        display: inline-grid;
-        place-items: center;
-        width: 2rem;
-        height: 2rem;
+    .bip-mock-a-avatar svg {{ width: 14px; height: 14px; }}
+    .bip-mock-a-bubble {{ background: #f4f6f9; border: 1px solid #e6ebf1; border-radius: 13px 13px 13px 4px; padding: 11px 13px; }}
+    .bip-mock-a-chips {{ display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }}
+    .bip-mock-chip {{ font-size: 11px; font-weight: 700; border-radius: 5px; padding: 2px 7px; }}
+    .bip-mock-chip.ok {{ color: #1f7d72; background: #e8f3f1; }}
+    .bip-mock-chip.warn {{ color: #c08a1f; background: #fbf3e2; }}
+    .bip-mock-a-text {{ font-size: 13.5px; color: #3c4c5c; line-height: 1.55; }}
+    .bip-mock-a-src {{ margin-top: 8px; font-size: 11px; color: #8592a0; font-family: {theme["typography"]["mono_family"]}; }}
+    .bip-mock-input {{
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #d9e0e8;
+        border-radius: 11px;
+        padding: 6px 6px 6px 14px;
+    }}
+    .bip-mock-input span {{ flex: 1; font-size: 13.5px; color: #9aa7b4; }}
+    .bip-mock-send {{
+        width: 34px;
+        height: 34px;
         flex: none;
         border-radius: 8px;
-        background: {navy7};
-        color: {p["sidebar_ink"]};
+        background: #0f2942;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }}
-    .bank-mock-send svg {{ width: 0.95rem; height: 0.95rem; }}
-    .bank-mock-note {{ color: {p["muted"]}; font-size: 0.7rem; margin-top: 0.5rem; }}
-    .bank-mock-linked {{
-        border-top: 1px solid {p["border"]};
-        background: color-mix(in srgb, {p["page_bg"]} 55%, white);
-        padding: 1rem 1.1rem;
-    }}
-    .bank-mock-linked-head {{ display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }}
-    .bank-mock-linked-title {{ color: {p["ink"]}; font-size: 0.9rem; font-weight: 750; }}
-    .bank-mock-linked-badge {{
+    .bip-mock-send svg {{ width: 16px; height: 16px; }}
+    .bip-mock-note {{ margin-top: 8px; font-size: 11px; color: #98a6b4; }}
+    .bip-mock-linked {{ border-top: 1px solid #edf1f5; background: #fbfcfd; padding: 22px 26px; }}
+    .bip-mock-linked-head {{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
+    .bip-mock-linked-title {{ font-size: 15px; font-weight: 700; color: #22344a; }}
+    .bip-mock-linked-badge {{
         display: inline-flex;
         align-items: center;
-        gap: 0.3rem;
-        color: {p["accent"]};
-        background: {p["accent_soft"]};
-        border: 1px solid color-mix(in srgb, {p["accent"]} 30%, white);
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        color: #1f7d72;
+        background: #e8f3f1;
+        border: 1px solid #cfe6df;
         border-radius: 999px;
-        padding: 0.15rem 0.55rem;
-        font-size: 0.64rem;
-        font-weight: 800;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
+        padding: 3px 10px;
     }}
-    .bank-mock-linked-badge::before {{
-        content: "";
-        width: 0.36rem;
-        height: 0.36rem;
-        border-radius: 50%;
-        background: {p["accent"]};
+    .bip-mock-linked-badge::before {{ content: ""; width: 6px; height: 6px; border-radius: 50%; background: #1f7d72; }}
+    .bip-mock-linked-caption {{ font-size: 13px; color: #8592a0; margin-top: 4px; }}
+    .bip-mock-files {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 16px; }}
+    .bip-mock-file {{
+        background: #fff;
+        border: 1px solid #e2e7ee;
+        border-radius: 11px;
+        padding: 14px 15px;
+        transition: box-shadow {hover_ms}ms ease, border-color {hover_ms}ms ease, transform {hover_ms}ms ease;
     }}
-    .bank-mock-linked-caption {{ color: {p["muted"]}; font-size: 0.76rem; margin-top: 0.25rem; }}
-    .bank-mock-files {{
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 0.6rem;
-        margin-top: 0.85rem;
-    }}
-    .bank-mock-file {{
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-radius: 10px;
-        padding: 0.65rem 0.7rem;
-        transition: box-shadow {hover_ms}ms ease-out, transform {hover_ms}ms ease-out, border-color {hover_ms}ms ease-out;
-    }}
-    .bank-mock-file:hover {{
-        transform: translateY(-2px);
-        border-color: color-mix(in srgb, {p["accent"]} 40%, {p["border"]});
-        box-shadow: {surfaces["shadow_hover"]};
-    }}
-    .bank-mock-file-top {{ display: flex; align-items: center; justify-content: space-between; }}
-    .bank-mock-file-icon {{
-        display: inline-grid;
-        place-items: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 8px;
-        background: var(--file-soft, {p["accent_soft"]});
-        color: var(--file-tone, {p["accent"]});
-    }}
-    .bank-mock-file-icon svg {{ width: 1rem; height: 1rem; }}
-    .bank-mock-file-top > svg {{ width: 0.9rem; height: 0.9rem; color: {p["muted"]}; }}
-    .bank-mock-file-1 {{ --file-tone: {outcome_blue}; --file-soft: {source_roles["official"]["soft"]}; }}
-    .bank-mock-file-2 {{ --file-tone: {source_roles["typology"]["text"]}; --file-soft: {source_roles["typology"]["soft"]}; }}
-    .bank-mock-file-3 {{ --file-tone: {p["accent"]}; --file-soft: {p["accent_soft"]}; }}
-    .bank-mock-file-4 {{ --file-tone: {case_maroon}; --file-soft: color-mix(in srgb, {case_maroon} 12%, white); }}
-    .bank-mock-file-5 {{ --file-tone: {p["ledger_ink"]}; --file-soft: color-mix(in srgb, {p["ledger_ink"]} 12%, white); }}
-    .bank-mock-file-6 {{ --file-tone: {navy7}; --file-soft: color-mix(in srgb, {navy7} 12%, white); }}
-    .bank-mock-file-title {{ color: {p["ink"]}; font-size: 0.78rem; font-weight: 700; line-height: 1.3; margin-top: 0.55rem; }}
-    .bank-mock-file-meta {{ color: {p["muted"]}; font-size: 0.68rem; margin-top: 0.15rem; }}
-    .bank-mock-foot {{
+    .bip-mock-file:hover {{ box-shadow: 0 10px 24px -14px rgba(15,41,66,.4); border-color: #c9d3de; transform: translateY(-2px); }}
+    .bip-mock-file-top {{ display: flex; align-items: center; justify-content: space-between; }}
+    .bip-mock-file-tile {{
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        background: var(--bip-tint, #eaf1f8);
+        color: var(--bip-accent, #3a6ea5);
         display: flex;
         align-items: center;
-        gap: 0.4rem;
-        color: {p["muted"]};
-        font-size: 0.72rem;
-        margin-top: 0.85rem;
+        justify-content: center;
     }}
-    .bank-mock-foot svg {{ width: 0.85rem; height: 0.85rem; color: {p["accent"]}; flex: none; }}
+    .bip-mock-file-tile svg {{ width: 18px; height: 18px; }}
+    .bip-mock-file-chev {{ color: #a9b6c3; }}
+    .bip-mock-file-chev svg {{ width: 16px; height: 16px; }}
+    .bip-mock-file-title {{ font-size: 14px; font-weight: 700; color: #22344a; margin-top: 12px; line-height: 1.3; }}
+    .bip-mock-file-meta {{ font-size: 12px; color: #8592a0; margin-top: 3px; }}
+    .bip-mock-file-1 {{ --bip-accent: #3a6ea5; --bip-tint: #eaf1f8; }}
+    .bip-mock-file-2 {{ --bip-accent: #c08a1f; --bip-tint: #fbf3e2; }}
+    .bip-mock-file-3 {{ --bip-accent: #1f7d72; --bip-tint: #e8f3f1; }}
+    .bip-mock-file-4 {{ --bip-accent: #b5474d; --bip-tint: #f7ecec; }}
+    .bip-mock-file-5 {{ --bip-accent: #5a6b7b; --bip-tint: #eef1f4; }}
+    .bip-mock-file-6 {{ --bip-accent: #0f2942; --bip-tint: #e7ecf2; }}
+    .bip-mock-foot {{ margin-top: 16px; font-size: 12px; color: #8592a0; display: flex; align-items: center; gap: 7px; }}
+    .bip-mock-foot svg {{ width: 13px; height: 13px; color: #1f7d72; flex: none; }}
 
-    /* ---- Numbered "how this could help" value band (design). ---- */
-    .bank-value-band {{
+    /* Analyst outputs 2x2 + rule chips. ---------------------------------- */
+    .bip-outputs-title, .bip-rules-title {{ font-size: 16px; font-weight: 700; color: #22344a; }}
+    .bip-outputs-title {{ margin: 40px 0 18px; }}
+    .bip-outputs {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }}
+    .bip-output {{
+        background: #fff;
+        border: 1px solid #e2e7ee;
+        border-left: 4px solid var(--bip-accent);
+        border-radius: 12px;
+        padding: 20px 22px;
+        display: flex;
+        gap: 14px;
+    }}
+    .bip-output-icon {{ color: var(--bip-accent); flex: 0 0 auto; }}
+    .bip-output-icon svg {{ width: 22px; height: 22px; }}
+    .bip-output-1 {{ --bip-accent: #3a6ea5; }}
+    .bip-output-2 {{ --bip-accent: #1f7d72; }}
+    .bip-output-3 {{ --bip-accent: #c08a1f; }}
+    .bip-output-4 {{ --bip-accent: #6b5b95; }}
+    .bip-output-title {{ font-weight: 700; color: #22344a; font-size: 16px; }}
+    .bip-output-detail {{ color: #61707f; font-size: 14px; line-height: 1.55; margin-top: 4px; }}
+    .bip-rules-title {{ margin: 32px 0 14px; }}
+    .bip-rules {{ display: flex; flex-wrap: wrap; gap: 12px; }}
+    .bip-chip {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #dbe2ea;
+        border-radius: 999px;
+        padding: 9px 16px;
+        font-size: 14px;
+        color: #3c4c5c;
+    }}
+    .bip-chip svg {{ width: 15px; height: 15px; color: #1f7d72; flex: none; }}
+
+    /* How this could help — numbered editorial value band. --------------- */
+    .bip-value-band {{
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        background: {p["panel_bg"]};
-        border: 1px solid {p["border"]};
-        border-radius: 14px;
+        grid-template-columns: repeat(4, 1fr);
+        background: #fff;
+        border: 1px solid #e2e7ee;
+        border-radius: 16px;
         overflow: hidden;
     }}
-    .bank-band-cell {{
-        --band-tone: {outcome_blue};
-        --band-soft: {source_roles["official"]["soft"]};
-        padding: 1.25rem 1.1rem;
-        border-right: 1px solid {p["border"]};
-    }}
-    .bank-band-cell:last-child {{ border-right: none; }}
-    .bank-band-cell-2 {{ --band-tone: {p["accent"]}; --band-soft: {p["accent_soft"]}; }}
-    .bank-band-cell-3 {{ --band-tone: {source_roles["typology"]["text"]}; --band-soft: {source_roles["typology"]["soft"]}; }}
-    .bank-band-cell-4 {{ --band-tone: {context_violet}; --band-soft: color-mix(in srgb, {context_violet} 12%, white); }}
-    .bank-band-num {{
-        color: color-mix(in srgb, {p["border"]} 72%, white);
-        font-size: 1.9rem;
-        font-weight: 900;
-        line-height: 1;
-    }}
-    .bank-band-icon {{
-        display: inline-grid;
-        place-items: center;
-        width: 2.4rem;
-        height: 2.4rem;
+    .bip-value-cell {{ padding: 30px 26px; border-right: 1px solid #edf1f5; }}
+    .bip-value-cell:last-child {{ border-right: none; }}
+    .bip-value-num {{ font-size: 34px; font-weight: 900; color: #e3e8ee; line-height: 1; margin-bottom: 16px; }}
+    .bip-value-tile {{
+        width: 40px;
+        height: 40px;
         border-radius: 11px;
-        background: var(--band-soft);
-        color: var(--band-tone);
-        margin: 0.85rem 0;
+        background: var(--bip-tint);
+        color: var(--bip-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
     }}
-    .bank-band-icon svg {{ width: 1.15rem; height: 1.15rem; }}
-    .bank-band-title {{ color: {p["ink"]}; font-size: 0.94rem; font-weight: 750; line-height: 1.3; }}
-    .bank-band-detail {{ color: {p["muted"]}; font-size: 0.8rem; line-height: 1.5; margin-top: 0.4rem; }}
+    .bip-value-tile svg {{ width: 20px; height: 20px; }}
+    .bip-value-cell-1 {{ --bip-accent: #3a6ea5; --bip-tint: #eaf1f8; }}
+    .bip-value-cell-2 {{ --bip-accent: #1f7d72; --bip-tint: #e8f3f1; }}
+    .bip-value-cell-3 {{ --bip-accent: #c08a1f; --bip-tint: #fbf3e2; }}
+    .bip-value-cell-4 {{ --bip-accent: #6b5b95; --bip-tint: #efecf5; }}
+    .bip-value-title {{ font-size: 17px; font-weight: 700; color: #22344a; line-height: 1.3; }}
+    .bip-value-detail {{ color: #61707f; font-size: 14.5px; line-height: 1.55; margin-top: 8px; }}
 
-    @media (max-width: 1050px) {{
-        .bank-domain-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
-        .bank-domain-grid .bank-card-1, .bank-domain-grid .bank-card-2,
-        .bank-domain-grid .bank-card-3, .bank-domain-grid .bank-card-4,
-        .bank-domain-grid .bank-card-5 {{ grid-column: span 1; }}
-        .bank-domain-grid .bank-card-6 {{ grid-column: span 2; }}
-        .bank-value-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
-        .bank-value-band {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
-        .bank-band-cell:nth-child(2) {{ border-right: none; }}
-        .bank-band-cell:nth-child(1), .bank-band-cell:nth-child(2) {{ border-bottom: 1px solid {p["border"]}; }}
-        .bank-ai-flow {{ grid-template-columns: 1fr; }}
-        .bank-ai-arrow {{ transform: rotate(90deg); min-height: 1.6rem; }}
-        .bank-mock-body {{ grid-template-columns: 1fr; }}
-        .bank-mock-case {{ border-right: none; border-bottom: 1px solid {p["border"]}; }}
-        .bank-mock-files {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
+    /* Closing panel. ----------------------------------------------------- */
+    .bip-closing {{ margin-top: 4.5rem; }}
+    .bip-closing-panel {{ background: #0f2942; border-radius: 18px; padding: 48px 52px; position: relative; overflow: hidden; }}
+    .bip-closing-text {{ margin: 0; max-width: 820px; font-size: 16px; line-height: 1.5; color: #eef4f8; font-weight: 600; letter-spacing: -.005em; }}
+    .bip-closing-chips {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }}
+    .bip-closing-chip {{ background: #173b57; color: #cfe0ea; border-radius: 999px; padding: 8px 18px; font-size: 14px; font-weight: 600; }}
+    .bip-closing-chip.final {{ background: #ffffff; color: #0f2942; font-weight: 700; }}
+
+    /* Design-basis footnote. --------------------------------------------- */
+    .bip-footnote {{
+        margin-top: 48px;
+        border-top: 1px solid #e2e7ee;
+        padding-top: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
     }}
-    @media (max-width: 780px) {{
-        .bank-section-info.tip::after {{
-            left: auto;
-            right: 0;
-        }}
-        .bank-section-info.tip::before {{
-            left: auto;
-            right: 0.3rem;
-        }}
-        .bank-architecture {{ grid-template-columns: 1fr; }}
-        .bank-bridge {{ flex-direction: row; justify-content: center; padding: 0.2rem 0; }}
-        .bank-bridge svg {{ transform: rotate(90deg); }}
-        .bank-fit-rail {{ grid-template-columns: 1fr; }}
-        .bank-fit-step {{ min-height: 0; }}
-        .bank-fit-step:not(:last-child)::after {{
-            right: auto;
-            left: calc(50% - 0.35rem);
-            top: auto;
-            bottom: -1.15rem;
-            transform: rotate(90deg);
-        }}
-        .bank-ai-output-grid {{ grid-template-columns: 1fr; }}
-        .bank-mock-files {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+    .bip-footnote svg {{ width: 15px; height: 15px; color: #aab6c2; flex: 0 0 auto; margin-top: 2px; }}
+    .bip-footnote span {{
+        font-family: {theme["typography"]["mono_family"]};
+        font-size: 12px;
+        color: #96a3b0;
+        line-height: 1.7;
+        word-break: break-word;
+    }}
+
+    /* Responsive. -------------------------------------------------------- */
+    /* When the block-container padding drops to the narrow value, the full-bleed
+       bands' negative margins and inner padding must follow it. */
+    @media (max-width: {int(theme["breakpoints"]["narrow_px"])}px) {{
+        .bip-band {{ margin-left: -{int(layout["narrow_padding_px"])}px; margin-right: -{int(layout["narrow_padding_px"])}px; }}
+        .bip-product, .bip-ai {{ padding-left: {int(layout["narrow_padding_px"])}px; padding-right: {int(layout["narrow_padding_px"])}px; }}
+    }}
+    @media (max-width: 900px) {{
+        .bip-flow {{ flex-direction: column; }}
+        .bip-arrow {{ transform: rotate(90deg); min-height: 34px; }}
+        .bip-tf {{ grid-template-columns: 1fr; }}
+        .bip-tf-connector {{ flex-direction: row; padding: 8px 0; }}
+        .bip-tf-connector-label {{ margin: 0 0 0 12px; }}
+        .bip-records {{ grid-template-columns: repeat(2, 1fr); }}
+        .bip-records > * {{ grid-column: span 2 !important; }}
+        .bip-mock-body {{ grid-template-columns: 1fr; }}
+        .bip-mock-case {{ border-right: none; border-bottom: 1px solid #edf1f5; }}
+        .bip-mock-files {{ grid-template-columns: repeat(3, 1fr); }}
+        .bip-outputs {{ grid-template-columns: 1fr; }}
+        .bip-value-band {{ grid-template-columns: repeat(2, 1fr); }}
+        .bip-value-cell:nth-child(2) {{ border-right: none; }}
+        .bip-value-cell:nth-child(-n+2) {{ border-bottom: 1px solid #edf1f5; }}
     }}
     @media (max-width: 560px) {{
-        .bank-domain-grid, .bank-value-grid {{ grid-template-columns: 1fr; }}
-        .bank-domain-grid .bank-card-6 {{ grid-column: span 1; }}
-        .bank-value-band {{ grid-template-columns: 1fr; }}
-        .bank-band-cell {{ border-right: none; border-bottom: 1px solid {p["border"]}; }}
-        .bank-band-cell:last-child {{ border-bottom: none; }}
-        .bank-icon-card {{ padding: 0.75rem; }}
-        .bank-ai-shell {{ padding: 0.75rem; }}
-        .bank-ai-step {{ grid-template-columns: 2.35rem minmax(0, 1fr); padding: 0.75rem; }}
-        .bank-ai-value {{ grid-template-columns: 1.2rem minmax(0, 1fr); }}
-        .bank-ai-guardrail {{ width: 100%; }}
-        .bank-mock-record {{ flex-wrap: wrap; }}
-        .bank-mock-record-src {{ margin-left: 5.3rem; }}
+        .bip-band, .bip-product, .bip-ai {{ margin-left: -{int(layout["narrow_padding_px"])}px; margin-right: -{int(layout["narrow_padding_px"])}px; }}
+        .bip-product, .bip-ai {{ padding-left: {int(layout["narrow_padding_px"])}px; padding-right: {int(layout["narrow_padding_px"])}px; }}
+        .bip-records, .bip-records > * {{ grid-template-columns: 1fr; grid-column: span 1 !important; }}
+        .bip-mock-files {{ grid-template-columns: repeat(2, 1fr); }}
+        .bip-value-band {{ grid-template-columns: 1fr; }}
+        .bip-value-cell {{ border-right: none; border-bottom: 1px solid #edf1f5; }}
+        .bip-value-cell:last-child {{ border-bottom: none; }}
+        .bip-closing-panel {{ padding: 32px 26px; }}
+    }}
+    @media (prefers-reduced-motion: reduce) {{
+        .bip-scan {{ display: none !important; }}
     }}
 
     /* ================================================================

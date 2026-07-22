@@ -356,13 +356,16 @@ def test_bank_implementation_pathway_bounds_the_ai_extension():
     styles = (
         REPO_ROOT / "dashboard" / "components" / "styles.py"
     ).read_text(encoding="utf-8")
-    assert "animation-timeline: view()" in styles
-    assert ".anim, .bank-reveal" in styles
-    assert "align-items: stretch" in styles
-    assert ".bank-icon-card.domain.bank-card-4" in styles
-    assert ".bank-ai-output-grid" in styles
-    closing_text = styles.split(".bank-closing .bottom-line-text", 1)[1].split("}}", 1)[0]
-    assert "font-size: 0.88rem" in closing_text
+    # Showcase structure: full-bleed bands, ringed-node journey/AI flow, the
+    # reordered records grid, the analyst-output grid, and the one-time product
+    # scan (a keyframe, disabled under prefers-reduced-motion).
+    assert ".bip-band" in styles
+    assert ".bip-stage" in styles
+    assert ".bip-rec-lead" in styles
+    assert ".bip-outputs" in styles
+    assert "@keyframes bip-scan" in styles
+    closing_text = styles.split(".bip-closing-text", 1)[1].split("}}", 1)[0]
+    assert "font-size: 16px" in closing_text
 
     business_closing_text = (
         styles.split(".st-key-business_value_page .bottom-line-text", 1)[1]
