@@ -84,8 +84,7 @@ with dictionary_tab:
                 },
                 height=min(96 + 72 * len(block), 640),
             )
-    ledger("feature_explanations", "data_dictionary_md",
-           note="plus schemas of the five loaded artefacts")
+    ledger("feature_explanations", "data_dictionary_md")
 
 # ---- Tab 2: Official Data Sources ----
 with sources_tab:
@@ -97,5 +96,4 @@ with sources_tab:
     else:
         for card in build_source_cards(notes, manifest):
             source_card(card)
-    ledger("data_source_notes", "source_manifest",
-           note="World Bank + FATF URLs from the dashboard registry (services/source_registry.py)")
+    ledger("data_source_notes", "source_manifest")

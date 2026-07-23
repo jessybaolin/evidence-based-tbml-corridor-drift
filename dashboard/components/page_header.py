@@ -18,8 +18,15 @@ def section_title(title: str, caption: str | None = None,
 
 
 def ledger(*file_keys: str, note: str = "") -> None:
-    # The provenance ledger line: which repository files back this panel.
-    parts = [paths.relpath(key) for key in file_keys]
+    """Render a panel's optional analytic note.
+
+    The repository file paths that used to head this strip are deliberately NOT
+    shown: they are build-time provenance that a dashboard viewer does not need.
+    The artefact keys are still passed and validated here, so each panel keeps
+    documenting in code which pipeline outputs back it — the audit trail lives in
+    the source, not on screen. With no note, nothing is rendered.
+    """
+    for key in file_keys:
+        paths.relpath(key)  # raises on an unknown artefact key
     if note:
-        parts.append(note)
-    render_dataset_strip(" · ".join(parts))
+        render_dataset_strip(note)

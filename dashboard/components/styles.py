@@ -3588,27 +3588,61 @@ def apply_global_styles() -> None:
     .scenario-item:first-of-type {{ border-top: none; }}
     .scenario-item-title {{ color: {p["ink"]}; font-size: 0.9rem; font-weight: 700; }}
     .scenario-item-detail {{ color: {p["muted"]}; font-size: 0.82rem; line-height: 1.4; margin-top: 0.05rem; }}
-    .scenario-test-notes {{
-        margin-top: 0.85rem;
-        padding: 0.7rem 0.85rem 0.75rem 0.85rem;
+    .mc-test-design {{
+        display: grid;
+        grid-template-columns: 10.5rem minmax(0, 1fr);
+        gap: 0.55rem 0.9rem;
+        align-items: center;
+        margin: 0.15rem 0 1rem;
+        padding: 0.72rem 0.85rem;
+        background: color-mix(in srgb, {p["page_bg"]} 72%, white);
         border: 1px solid {p["border"]};
         border-radius: 8px;
-        background: {p["page_bg"]};
-        color: {p["ink"]};
-        font-size: 0.84rem;
-        line-height: 1.45;
     }}
-    .scenario-test-notes-heading {{
-        color: {p["accent"]};
+    .mc-test-design-label {{
+        color: {p["ink"]};
         font-size: 0.76rem;
         font-weight: 800;
         letter-spacing: 0.02em;
         text-transform: uppercase;
-        margin-bottom: 0.35rem;
     }}
-    .scenario-test-notes ul {{ margin: 0; padding-left: 1.15rem; }}
-    .scenario-test-notes li {{ margin: 0.25rem 0; padding-left: 0.15rem; }}
-    .scenario-test-notes li::marker {{ color: {p["accent"]}; }}
+    .mc-test-design-flow {{
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 0.45rem;
+        align-items: center;
+    }}
+    .mc-test-design-stage {{
+        display: grid;
+        gap: 0.1rem;
+        min-width: 0;
+        padding: 0.48rem 0.62rem;
+        background: #FFFFFF;
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {p["accent"]};
+        border-radius: 6px;
+    }}
+    .mc-test-design-stage.select {{ border-top-color: {family_colors["gold_unwrought"]}; }}
+    .mc-test-design-stage.test {{ border-top-color: {case_maroon}; }}
+    .mc-test-design-stage span {{
+        color: {p["muted"]};
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }}
+    .mc-test-design-stage strong {{
+        color: {p["ink"]};
+        font-size: 0.84rem;
+        font-weight: 800;
+    }}
+    .mc-test-design-arrow {{ color: {p["muted"]}; font-size: 0.9rem; }}
+    .mc-test-design p {{
+        grid-column: 2;
+        color: {p["muted"]};
+        font-size: 0.78rem;
+        line-height: 1.4;
+        margin: 0;
+    }}
 
     /* This narrative page needs clearer pauses between major sections. The
        marker scopes the spacing to Model Evaluation & Controls only. */
@@ -4287,6 +4321,8 @@ def apply_global_styles() -> None:
         .mc-flow {{ flex-direction: column; }}
         .mc-flow-arrow {{ transform: rotate(90deg); align-self: center; }}
         .scenario-groups {{ grid-template-columns: 1fr; }}
+        .mc-test-design {{ grid-template-columns: 1fr; }}
+        .mc-test-design p {{ grid-column: 1; }}
         .mc-eval-facts {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
         .method-path {{ grid-template-columns: 1fr; }}
         .method-step {{ min-height: 0; }}
@@ -4303,6 +4339,8 @@ def apply_global_styles() -> None:
     }}
     @media (max-width: 560px) {{
         .mc-eval-facts {{ grid-template-columns: 1fr; }}
+        .mc-test-design-flow {{ grid-template-columns: 1fr; }}
+        .mc-test-design-arrow {{ transform: rotate(90deg); justify-self: center; }}
         .mental-model.coverage-boundary {{
             display: block;
             padding: 0.9rem 1rem;

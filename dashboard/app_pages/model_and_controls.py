@@ -99,11 +99,6 @@ st.markdown(tested["body"])
 # "Tested on a copy" visual: the planted patterns the method must catch vs the
 # benign look-alikes it must leave alone (replaces the old two-lane wall).
 sc = copy["scenarios"]
-split_line = tested["split_line"].format(
-    train=fm.year_span(project["train_years"]),
-    validation=fm.year_span(project["validation_years"]),
-    test=fm.year_span(project["test_years"]),
-)
 test_caveat = tested["caveat"].format(
     test=fm.year_span(project["test_years"]),
 )
@@ -134,11 +129,7 @@ st.markdown(
     f'<div class="scenario-group ignore">'
     f'<div class="scenario-group-head">{render_icon("line-chart", class_name="scenario-ic")}'
     f'<span>{_e(sc["ignore_heading"])}</span></div>'
-    f'{_scenario_items(sc["ignore_items"])}</div></div>'
-    f'<div class="scenario-test-notes">'
-    f'<div class="scenario-test-notes-heading">{_e(tested["split_heading"])}</div>'
-    f'<ul><li>{_e(split_line)}</li>'
-    f'<li>{_e(sc["separation_note"])}</li></ul></div></div>',
+    f'{_scenario_items(sc["ignore_items"])}</div></div></div>',
     unsafe_allow_html=True,
 )
 
@@ -147,6 +138,28 @@ st.markdown(
 # figures below" points at this section's chart rather than the next section.
 works = copy["works"]
 section_title(works["heading"], test_caveat, icon="chart-pie")
+test_design = works["test_design"]
+test_years = {
+    "train": fm.year_span(project["train_years"]),
+    "validation": fm.year_span(project["validation_years"]),
+    "test": fm.year_span(project["test_years"]),
+}
+test_stages = []
+for index, stage in enumerate(test_design["stages"]):
+    if index:
+        test_stages.append('<span class="mc-test-design-arrow" aria-hidden="true">→</span>')
+    test_stages.append(
+        f'<div class="mc-test-design-stage {_e(stage["class_name"])}">'
+        f'<span>{_e(stage["title"])}</span>'
+        f'<strong>{_e(stage["years"].format(**test_years))}</strong></div>'
+    )
+st.markdown(
+    f'<div class="mc-test-design">'
+    f'<div class="mc-test-design-label">{_e(test_design["label"])}</div>'
+    f'<div class="mc-test-design-flow">{"".join(test_stages)}</div>'
+    f'<p>{_e(test_design["note"])}</p></div>',
+    unsafe_allow_html=True,
+)
 headline = metrics.headline_eval(comparison, selection)
 if headline is None:
     st.info("Evaluation results are unavailable for this run.")

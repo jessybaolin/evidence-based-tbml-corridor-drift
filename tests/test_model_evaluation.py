@@ -206,15 +206,19 @@ def test_page_renders_the_plain_narrative(artefacts):
     assert "22.2%" in text
     assert "26.8x" in text
     assert "None of the 72 planted benign look-alikes" not in text
-    # The "tested on a copy" visual (replaces the old two-lane wall): patterns to
-    # catch, look-alikes to ignore, and the leakage-guard separation line.
+    # The evaluation-copy visual explains planted patterns without carrying the
+    # year-split controls, which belong beside the held-out performance results.
     assert "Planted unusual patterns" in text
     assert "Benign look-alikes" in text
-    assert "Test rows never mix into the queue" in text
-    assert "The machine-learning model is fitted on 2017–2020 data" in text
-    assert "This keeps the test years out of model fitting and method selection" in text
+    assert "planted rows never enter the official review queue" in text
+    assert "How to read this test" not in text
+    assert "Only the chosen method returns to score the real records" not in text
+    assert "Time-based test design" in text
+    assert "Fit the model" in text
+    assert "Select the method" in text
+    assert "Final test" in text
+    assert "The final test years are used only for evaluation" in text
     assert "It learns on 2017–2020" not in text
-    assert "Only the chosen method returns to score the real records" in text
     assert "The performance figures below show how well the selected method ranks" in text
     assert "held-out 2023–2024 public-data test copy" in text
     assert "Public trade data has no confirmed cases to learn from, so the method is measured" not in text

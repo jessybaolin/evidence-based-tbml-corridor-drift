@@ -752,8 +752,6 @@ pages:
         tested on patterns we plant ourselves. On a copy of the real data we add
         clear unusual patterns it should catch, plus ordinary-but-large movements
         it should leave alone — then check how well it tells them apart.
-      split_heading: "How to read this test"
-      split_line: "The machine-learning model is fitted on {train} data, the scoring approach is selected using {validation}, and its final test is run once on {test}. This keeps the test years out of model fitting and method selection."
       caveat: "The performance figures below show how well the selected method ranks planted patterns in the held-out {test} public-data test copy. They are not real-world detection rates."
     # "Tested on a copy" visual: the planted patterns it must catch vs the benign
     # look-alikes it must leave alone (replaces the old two-lane wall diagram).
@@ -761,7 +759,7 @@ pages:
       subhead: "Tested on a copy of the data"
       copy_from: "Real official records"
       copy_to: "Test copy"
-      copy_note: "A copy is used — the real records that build the queue are never changed."
+      copy_note: "A separate copy is used for evaluation; planted rows never enter the official review queue."
       catch_heading: "Planted unusual patterns — the method must catch these"
       catch_items:
         - title: "Over-valuation"
@@ -776,9 +774,21 @@ pages:
           detail: "A large move that stays in line with the same year's market benchmark."
         - title: "Value and quantity grow together"
           detail: "Both scale up in proportion, so the unit value barely changes."
-      separation_note: "Only the chosen method returns to score the real records. Test rows never mix into the queue."
     works:
       heading: "How well does it rank the test patterns?"
+      test_design:
+        label: "Time-based test design"
+        stages:
+          - title: "Fit the model"
+            years: "{train}"
+            class_name: "fit"
+          - title: "Select the method"
+            years: "{validation}"
+            class_name: "select"
+          - title: "Final test"
+            years: "{test}"
+            class_name: "test"
+        note: "The final test years are used only for evaluation, not to fit the model or choose the scoring method."
       takeaway: "On the unseen 2023-2024 test years, {found} of the {k} highest-ranked rows were planted test patterns. A random {k}-row review would be expected to contain about {random_expected}. The selected queue is therefore {lift}x more concentrated than random selection."
       bar_x: "Share of each 50-row review queue that is a planted test pattern"
       bar_selected: "The chosen method"
