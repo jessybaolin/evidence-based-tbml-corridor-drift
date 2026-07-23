@@ -21,6 +21,7 @@ palette:
   table_stripe: "#EFF3F8"
   amber: "#F2B544"
   amber_soft: "#FFF3D8"
+  amber_ink: "#6E4E12"
   selected_bg: "#FFF3D8"
   selected_accent: "#F2B544"
   card_shadow: "rgba(29,45,70,0.08)"
@@ -114,6 +115,10 @@ selection:
   background: "#FFF3D8"
   border: "#F2B544"
   text: "#22314A"
+  # The one thing the selection wash is ABOUT — the identity of the record the
+  # reader is carrying. Deep amber ink so it reads as the focus of the strip
+  # rather than as ordinary body copy in a tinted box.
+  focus_text: "#6E4E12"
 
 boundary:
   bg: "#1D2D46"

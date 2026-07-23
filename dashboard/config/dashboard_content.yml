@@ -534,7 +534,7 @@ pages:
   from_data_to_review_queue:
     eyebrow: "Data coverage & trust"
     title: "From Trusted Public Data to Review-Ready Evidence"
-    subtitle: "Three institutional sources and one clearly defined unit of analysis, cleaned and put on a common footing before anything is scored."
+    subtitle: ""
     mental_model_stamp: "Mental model"
     mental_model: >-
       Official trade records are checked, cleaned and put on a common footing,
@@ -620,7 +620,6 @@ pages:
         is_not_label: "It is not"
         is_not_text: "An invoice, shipment, customer, payment, bank transaction or confirmed TBML case."
         closing: "A row can reveal an unusual pattern. It cannot identify a suspicious party or transaction."
-        record_caption: "One real row from the official data. Read it as an annual total for the whole route, not a single deal."
         record_fields:
           year: "Year"
           exporter: "Exporter"
@@ -718,8 +717,7 @@ pages:
       # Rendered as separate paragraphs (list) so the wrap-up reads in plain,
       # digestible steps rather than one dense block.
       statement:
-        - "The row is now clean, comparable, and time-safe. Every figure on this page traces back to public trade and world-market benchmark records at one grain — one exporter, one importer, one product, one year — and no signal uses information that would not have been available at the time."
-        - "From here, each prepared row is measured against this same picture: its own history, its same-year peers, and the wider market. Weighing several signals together is what separates a genuinely unusual pattern from one that is merely large — no single number decides. Every row the queue raises carries its recomputable evidence and caveats, and every conclusion is left to accountable human review."
+        - "The row is now clean, comparable and time-safe — every figure traceable to an official record. From here it is measured against its own history, its same-year peers and the wider market. How that ranking is built and tested is the next story."
     companion:
       cta: "Open technical companion"
       intro: "Detailed pipeline diagrams, raw source field names and cryptographic provenance — everything needed to verify the story above."

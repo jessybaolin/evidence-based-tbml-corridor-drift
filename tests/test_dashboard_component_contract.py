@@ -57,4 +57,7 @@ def test_selection_tokens_are_semantic_and_shared():
     assert theme["selection"]["background"] == theme["palette"]["amber_soft"]
     assert theme["selection"]["border"] == theme["palette"]["amber"]
     assert theme["selection"]["text"] == theme["palette"]["ink"]
+    # The focus ink used for the selected record's identity is the shared deep
+    # amber, not a one-off hex invented for the case strip.
+    assert theme["selection"]["focus_text"] == theme["palette"]["amber_ink"]
 

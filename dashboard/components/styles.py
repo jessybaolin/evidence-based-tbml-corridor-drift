@@ -41,6 +41,7 @@ def apply_global_styles() -> None:
     teal500 = p.get("teal_500", b.get("accent", p["accent"]))
     sel_bg = selection["background"]
     sel_acc = selection["border"]
+    sel_focus = selection.get("focus_text", selection["text"])
     sel = p.get("sidebar_sel_bg", p["sidebar_bg"])
     hover_bg = p.get("sidebar_hover_bg", p["sidebar_bg"])
     shadow = p.get("card_shadow", "rgba(29,45,70,0.08)")
@@ -1001,21 +1002,37 @@ def apply_global_styles() -> None:
 
     /* ---- Selected Case Review: compact selected-case strip. Same muted-amber
        selection role as the Review Queue banner — "the case you are carrying",
-       never an alarm. Facts + score + the change-case control sit on one wash;
-       ink text carries the identity, amber only marks selection. ---- */
+       never an alarm. Facts + score + the change-case control sit on one wash.
+       The case identity is the page's subject, so it carries the deep-amber
+       focus ink of the selection role; amber still means "selected", it is now
+       said in the text as well as the wash. ---- */
     .st-key-case_strip {{
         background: {sel_bg};
         border: 1px solid {sel_acc};
         border-left: 4px solid {sel_acc};
         border-radius: 10px;
-        padding: 0.55rem 0.95rem 0.65rem 0.95rem;
+        padding: 0.6rem 0.95rem;
         box-shadow: 0 2px 8px {shadow};
     }}
+    /* Streamlit hangs a -16px bottom margin on every markdown container, so the
+       facts column measures 16px shorter than the line it holds and
+       vertical_alignment="center" ends up centring the wrong box — the case
+       identity settles ~8px low. Neutralise it and centre the column on its own
+       content, the same treatment the Review Queue case banner uses. */
+    .st-key-case_strip [data-testid="stColumn"]:first-of-type {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
+    .st-key-case_strip [data-testid="stColumn"]:first-of-type
+    [data-testid="stMarkdownContainer"] {{
+        margin-bottom: 0 !important;
+    }}
     .case-strip-facts {{
-        color: {p["ink"]};
-        font-size: 1.3rem;
-        font-weight: 600;
-        line-height: 1.4;
+        color: {sel_focus};
+        font-size: 1.55rem;
+        font-weight: 700;
+        line-height: 1.3;
         overflow-wrap: anywhere;
     }}
     .case-strip-facts strong {{ font-weight: 800; }}
@@ -3429,7 +3446,10 @@ def apply_global_styles() -> None:
        reads as its own step rather than crowding the year strip. The element also
        carries .prep-body (whose `margin: 0 …` shorthand zeroes margin-top), so we
        raise specificity here to make this top margin win. */
-    [data-scene] p.sig-table-intro {{ margin-top: 3.6rem; margin-bottom: 0.9rem; }}
+    /* The signals table leads the block; its provenance note now follows it, so
+       the block's top separation rides on the table rather than the note. */
+    [data-scene] .prep-signals-table {{ margin-top: 3.6rem; }}
+    [data-scene] p.sig-table-intro {{ margin-top: 0.9rem; margin-bottom: 0.5rem; }}
     /* Header info icon: a small cue that the column carries a native-title
        definition (data dictionary). Native title avoids the CSS-tooltip
        clipping that the table's horizontal-scroll wrapper would cause. */
@@ -3611,6 +3631,9 @@ def apply_global_styles() -> None:
     .scenario-group.catch .scenario-group-head {{ color: {ev["label_ink"]}; }}
     .scenario-group.ignore .scenario-group-head {{ color: {p["muted"]}; }}
     .scenario-ic {{ width: 1.05rem; height: 1.05rem; flex: none; }}
+    /* The mark matches the group's own border; the heading keeps the darker
+       ink it needs to stay readable at 0.78rem. */
+    .scenario-group.catch .scenario-ic {{ color: {ev["border"]}; }}
     .scenario-item {{ border-top: 1px solid {p["table_stripe"]}; padding: 0.42rem 0; }}
     .scenario-item:first-of-type {{ border-top: none; }}
     .scenario-item-title {{ color: {p["ink"]}; font-size: 0.9rem; font-weight: 700; }}
@@ -3756,9 +3779,19 @@ def apply_global_styles() -> None:
         width: 2rem;
         height: 2rem;
         border-radius: 50%;
-        color: {at};
+        color: {p["accent"]};
         background: {p["accent_soft"]};
         margin-bottom: 0.5rem;
+    }}
+    /* Each badge takes the accent of its own card's top rule, so the icon and
+       the rule read as one mark (same rule as .rule-adjustment-icon below). */
+    .method-step:nth-child(2) .method-step-icon {{
+        color: {case_maroon};
+        background: color-mix(in srgb, {case_maroon} 12%, white);
+    }}
+    .method-step:nth-child(3) .method-step-icon {{
+        color: {outcome_amber};
+        background: color-mix(in srgb, {outcome_amber} 12%, white);
     }}
     .method-step-icon svg {{ width: 1.05rem; height: 1.05rem; }}
     .method-step-title {{

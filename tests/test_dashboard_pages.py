@@ -264,8 +264,10 @@ def test_data_trust_scene_navigation_and_simplified_preparation():
     assert str(sample["obs_id"]) in text, "real prepared observation missing"
 
     # Scene 2 is now the final scene: the closing statement renders here, and Next
-    # is disabled because the evaluation wall (old Scene 3) is gone.
-    assert "accountable human review" in text
+    # is disabled because the evaluation wall (old Scene 3) is gone. (The closing
+    # no longer repeats the human-review line — the fixed boundary ribbon carries
+    # it verbatim on every page, asserted in test_boundary_ribbon_visible_verbatim.)
+    assert "clean, comparable and time-safe" in text
     assert at.button(key="dtrq_next").disabled
     assert "Controlled evaluation copy—not official findings" not in text
     assert "Only the selected method returns. Synthetic rows never cross." not in text

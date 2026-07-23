@@ -207,11 +207,12 @@ def _signals_table_html(timesafe: dict, focus_year: int) -> str:
     total_signals = len(_feat_expl) if _feat_expl is not None else 0
     if total_signals:
         intro_text += " " + table_copy["scope_note"].format(total_signals=total_signals)
+    # The provenance note reads as an explanation OF the table, so it follows it.
     return (
-        f'<p class="prep-body sig-table-intro">{_e(intro_text)}</p>'
         f'<div class="data-table-wrap prep-record-table prep-signals-table">'
         f'<table class="data-table"><thead><tr>{head_html}</tr></thead>'
         f'<tbody><tr>{val_html}</tr></tbody></table></div>'
+        f'<p class="prep-body sig-table-intro">{_e(intro_text)}</p>'
         f'<div class="mini-note">{_e(table_copy["caption"])}</div>'
     )
 
@@ -431,7 +432,6 @@ def _scene_sources() -> None:
     corridor = (
         f'<div class="data-table-wrap"><table class="data-table grid-lines"><tbody>'
         f"{record_body}</tbody></table></div>"
-        f'<div class="mini-note">{_e(unit["record_caption"])}</div>'
     )
     twin = (
         f'<div class="twin-grid">'
