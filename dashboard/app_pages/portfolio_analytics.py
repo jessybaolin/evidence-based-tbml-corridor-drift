@@ -91,7 +91,9 @@ scale_frame = metrics.trade_scale_by_family_year(panel, short_labels)
 # ---- 4.1 Scale (with a value / quantity toggle) ------------------------------
 with st.container(key="pa_card_scale"):
     sc = copy["scale"]
-    head_col, toggle_col = st.columns([3, 1.1], vertical_alignment="bottom")
+    # Centre-aligned so the heading sits level with the toggle beside it rather
+    # than hanging below it.
+    head_col, toggle_col = st.columns([3, 1.1], vertical_alignment="center")
     with head_col:
         section_title(sc["heading"], icon="chart-pie")
     with toggle_col:

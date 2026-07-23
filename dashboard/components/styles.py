@@ -1158,6 +1158,22 @@ def apply_global_styles() -> None:
     }}
     .st-key-pa_card_market {{ animation-delay: {step_ms}ms; }}
     .st-key-pa_card_patterns {{ animation-delay: {step_ms * 2}ms; }}
+    /* The card edge already separates these sections, so the heading does not
+       also need the 2.15rem inter-section margin — it only pushed the title
+       below the toggle sitting in the column beside it. Heading starts at the
+       card's top padding, level with that control. */
+    .st-key-pa_card_scale .section-heading,
+    .st-key-pa_card_market .section-heading,
+    .st-key-pa_card_patterns .section-heading {{
+        margin-top: 0;
+    }}
+    /* Streamlit hangs a -16px bottom margin on every markdown container, so the
+       heading column measures 16px shorter than the heading and centring lands
+       8px below the toggle. Same correction as the case strip. */
+    .st-key-pa_card_scale [data-testid="stColumn"]:first-of-type
+    [data-testid="stMarkdownContainer"] {{
+        margin-bottom: 0 !important;
+    }}
     /* Breathing room between each section title and the subtitle line under it,
        across the three landscape cards (scale / market / queue profile). */
     .st-key-pa_card_scale .case-takeaway,
