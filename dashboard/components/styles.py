@@ -1060,11 +1060,8 @@ def apply_global_styles() -> None:
         overflow-wrap: anywhere;
     }}
     .case-strip-facts strong {{ font-weight: 800; }}
-    .case-strip-metric {{
-        display: flex;
-        flex-direction: column;
-        gap: 0.12rem;
-    }}
+    /* .case-strip-metric / .case-strip-value lived here for the score cell the
+       strip used to carry; the score now sits in the Case facts list. */
     .case-strip-label {{
         color: {navy7};
         font-size: 0.68rem;
@@ -1074,12 +1071,6 @@ def apply_global_styles() -> None:
         line-height: 1.35;
     }}
     .case-strip-label svg {{ vertical-align: -3px; }}
-    .case-strip-value {{
-        color: {p["ink"]};
-        font-size: 1.12rem;
-        font-weight: 750;
-        font-variant-numeric: tabular-nums;
-    }}
 
     /* Case facts panel: quiet label/value rows on the white card surface. */
     .fact-list {{
@@ -1130,7 +1121,11 @@ def apply_global_styles() -> None:
         font-weight: 600;
         line-height: 1.45;
         max-width: 78ch;
-        margin: 0.1rem 0 0.3rem 0;
+        /* The 0.3rem bottom margin left only 5px between the end of the
+           explanation and the top of the chart it introduces, so heading, text
+           and plot read as one block. The heading group owns the text; the
+           chart needs air above it. */
+        margin: 0.1rem 0 1.5rem 0;
     }}
     /* Trade Landscape: push the value/quantity toggle to the right corner. */
     .st-key-pa_scale_mode {{ width: fit-content; margin-left: auto; }}

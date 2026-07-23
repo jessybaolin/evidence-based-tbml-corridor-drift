@@ -91,11 +91,14 @@ carried = state.selected_obs_id()
 initial_index = ids.index(carried) if carried in ids else 0
 
 with st.container(key="case_strip"):
-    facts_col, score_col, change_col = st.columns(
-        [3.6, 1.35, 1.85], vertical_alignment="center", gap="medium"
+    # Two cells: the case identity and the control that changes it. The
+    # review-priority score moved into the Case facts list, directly under the
+    # review rank it follows from.
+    facts_col, change_col = st.columns(
+        [4.95, 1.85], vertical_alignment="center", gap="medium"
     )
     # The selector renders in the rightmost column but must EXECUTE first so the
-    # facts/score cells on its left describe the case picked on this rerun.
+    # facts cell on its left describes the case picked on this rerun.
     with change_col:
         st.markdown(
             f'<div class="case-strip-label">{_e(copy["selector_label"])}</div>',
@@ -134,16 +137,6 @@ with st.container(key="case_strip"):
             f" · {case_year} · {_e(record['exporter_iso3'])} → {_e(record['importer_iso3'])}"
             f" · {_e(short_labels.get(family_id, record['product_name']))}"
             f" · HS6 {_e(record['hs6'])}</div>",
-            unsafe_allow_html=True,
-        )
-    with score_col:
-        score_label = _tip(
-            f'{_e(copy["strip"]["score_label"])} {render_icon("info")}',
-            copy["strip"]["score_tip"],
-        )
-        st.markdown(
-            f'<div class="case-strip-metric"><span class="case-strip-label">{score_label}</span>'
-            f'<span class="case-strip-value">{_e(fm.score(record["selected_review_priority_score"]))}</span></div>',
             unsafe_allow_html=True,
         )
 
@@ -245,9 +238,14 @@ with summary_tab:
             f'{quality_pill(record["quality_status"])} '
             f'{_tip(render_icon("info"), quality_caveat)}'
         )
+        # The score follows the review rank because it is what produced it.
+        score_label = _tip(
+            f'{_e(facts["score"])} {render_icon("info")}', facts["score_tip"]
+        )
         multiple_1dp = f"{case_multiple:.1f}"
         render_fact_list([
             (_e(facts["rank"]), f"#{int(record['rank'])}"),
+            (score_label, _e(fm.score(record["selected_review_priority_score"]))),
             (_e(facts["year"]), str(case_year)),
             (_e(facts["corridor"]),
              f"{_e(exporter)} ({_e(record['exporter_iso3'])}) → "

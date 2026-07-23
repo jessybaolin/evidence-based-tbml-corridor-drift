@@ -231,13 +231,13 @@ pages:
       failed: {reason}. No values are shown rather than risking an incorrect
       number. Re-run the analytical pipeline and reload the dashboard.
     strip:
-      score_label: "Review-priority score"
-      score_tip: "This score determines review order. A higher score means higher review priority; it is not a probability or finding of financial crime."
       quality_label: "Data quality"
       quality_tip: "Data quality rates how usable the underlying official record is. It is separate from how unusual the observation is."
     facts:
       heading: "Case facts"
       rank: "Review rank"
+      score: "Review-priority score"
+      score_tip: "This score determines review order. A higher score means higher review priority; it is not a probability or finding of financial crime."
       year: "Year"
       corridor: "Corridor"
       product: "Product"
