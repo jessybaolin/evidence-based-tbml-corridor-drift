@@ -82,6 +82,14 @@ with dictionary_tab:
                     "time_safety_rule": "Time-safety rule",
                     "quality_caveat": "Why it matters / caveat",
                 },
+                # Field names are long single tokens, so auto-layout gave them
+                # the widest column and squeezed the four prose columns into
+                # four- and five-line cells. These shares put the width where
+                # the reading is.
+                column_widths={
+                    "field": "17%", "definition": "19%", "derivation": "20%",
+                    "unit": "8%", "time_safety_rule": "17%", "quality_caveat": "19%",
+                },
                 height=min(96 + 72 * len(block), 640),
             )
     ledger("feature_explanations", "data_dictionary_md")

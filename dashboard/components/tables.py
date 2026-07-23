@@ -170,10 +170,14 @@ def _cell(value, kind: str) -> str:
 
 def plain_table(frame: pd.DataFrame, column_labels: dict[str, str] | None = None,
                 height: int | None = None, zebra: bool = True,
-                formatters: dict[str, Callable[[object], str]] | None = None) -> None:
+                formatters: dict[str, Callable[[object], str]] | None = None,
+                column_widths: dict[str, str] | None = None) -> None:
     # Render a static reference table as themed HTML (see styles .data-table).
     # `height` caps the scroll height in px (sticky header stays visible);
     # `zebra` toggles alternating-row tint.
+    # `column_widths` maps column -> CSS width and switches the table to a fixed
+    # layout, for tables where auto-sizing gives the widest token the widest
+    # column regardless of how much prose the other columns carry.
     columns = list(frame.columns)
     labels = column_labels or {}
     display_formatters = formatters or {}
@@ -198,12 +202,20 @@ def plain_table(frame: pd.DataFrame, column_labels: dict[str, str] | None = None
         body_rows.append(f'<tr>{"".join(cells)}</tr>')
 
     table_class = "data-table zebra" if zebra else "data-table"
+    colgroup = ""
+    if column_widths:
+        table_class += " fixed-cols"
+        colgroup = "<colgroup>" + "".join(
+            f'<col style="width:{html.escape(column_widths[col], quote=True)}">'
+            if col in column_widths else "<col>"
+            for col in columns
+        ) + "</colgroup>"
     wrap_style = (
         f' style="max-height:{int(height)}px; overflow-y:auto;"' if height else ""
     )
     markup = (
         f'<div class="data-table-wrap"{wrap_style}>'
-        f'<table class="{table_class}">'
+        f'<table class="{table_class}">{colgroup}'
         f"<thead><tr>{head_cells}</tr></thead>"
         f'<tbody>{"".join(body_rows)}</tbody>'
         f"</table></div>"

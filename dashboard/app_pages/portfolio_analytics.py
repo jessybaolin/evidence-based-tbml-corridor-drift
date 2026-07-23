@@ -26,7 +26,8 @@ from dashboard.services import formatting as fm
 content = load.load_content()
 copy = content["pages"]["portfolio_analytics"]
 short_labels = content["family_short_labels"]
-page_header(copy["title"], copy["subtitle"], copy["eyebrow"], icon="landmark")
+# No title icon: this was the only page in the set whose title carried one.
+page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 
 panel = load.load_panel(columns=(
     "obs_id", "year", "family_id", "exporter_iso3", "importer_iso3", "hs6",

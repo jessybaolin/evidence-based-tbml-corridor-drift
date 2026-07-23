@@ -346,6 +346,11 @@ def apply_global_styles() -> None:
         font-size: 0.9rem;
         color: {p["ink"]};
     }}
+    /* With declared column widths the browser must honour them rather than
+       sizing to the widest cell — otherwise a long snake_case identifier claims
+       a column far wider than the prose columns beside it. */
+    table.data-table.fixed-cols {{ table-layout: fixed; }}
+    table.data-table.fixed-cols tbody td {{ overflow-wrap: anywhere; }}
     table.data-table thead th {{
         position: sticky;
         top: 0;
@@ -385,6 +390,21 @@ def apply_global_styles() -> None:
         text-transform: uppercase;
         margin-bottom: 0.3rem;
     }}
+    /* ---- Type tiers ---------------------------------------------------------
+       Every text role in the dashboard sits on one of these steps. Adding a new
+       size is what produced 13.12/13.44/13.76/14.08/14.4/14.72/15.2/15.5px all
+       carrying running prose at once, so prefer an existing step.
+
+         page title      2.75rem   (Streamlit's h1; every page)
+         page subtitle   1.08rem   (the deck under the title)
+         section heading 1.12rem/700  (.section-label, .story-section-title,
+                                       .landing-heading — one size, three
+                                       decorations)
+         page prose      1rem/1.6  (paragraphs in the main column)
+         component prose 0.88rem   (card and panel bodies)
+         caption / UI    0.875rem  (st.caption, widget labels — Streamlit's own)
+         smallest label  0.7rem    (uppercase stamps and kickers)
+       ------------------------------------------------------------------------ */
     .page-title {{
         color: {p["ink"]};
         font-size: 2.05rem;
@@ -402,18 +422,22 @@ def apply_global_styles() -> None:
     }}
     .page-subtitle {{
         color: {p["muted"]};
-        font-size: 1rem;
+        font-size: 1.08rem;
         margin-top: 0.4rem;
         margin-bottom: 1.1rem;
     }}
 
     .page-header {{ margin-bottom: 0.2rem; }}
 
+    /* One inter-section rhythm for the whole dashboard. This used to be 0.7rem
+       here, 2.15rem on Model Evaluation and 3.4rem on Unscored Gold Records, so
+       how much air a section got depended on which page you were reading.
+       Containers that place a heading inside their own padding still reset it. */
     .section-heading {{
         display: flex;
         align-items: flex-start;
         gap: 0.65rem;
-        margin-top: 0.7rem;
+        margin-top: 2.15rem;
     }}
     .section-heading .section-icon {{
         color: {p["accent"]};
@@ -510,7 +534,7 @@ def apply_global_styles() -> None:
     }}
     .source-card h4 {{ margin: 0 0 0.25rem 0; }}
     .source-card .source-row {{
-        font-size: 0.86rem;
+        font-size: 0.88rem;
         margin: 0.15rem 0;
         color: {p["ink"]};
     }}
@@ -538,7 +562,7 @@ def apply_global_styles() -> None:
         box-shadow: 0 4px 14px {shadow};
     }}
     .info-card h4 {{ margin: 0.25rem 0 0.3rem 0; }}
-    .info-card p {{ margin: 0; color: {p["muted"]}; font-size: 0.9rem; }}
+    .info-card p {{ margin: 0; color: {p["muted"]}; font-size: 0.88rem; }}
     .step-pill {{
         display: inline-block;
         border-radius: 999px;
@@ -759,7 +783,6 @@ def apply_global_styles() -> None:
     .st-key-queue_header .page-subtitle {{
         max-width: 1000px;
         color: {p["muted"]};
-        font-size: 1.08rem;
         font-weight: 450;
         line-height: 1.5;
         margin-bottom: 0.75rem;
@@ -977,7 +1000,7 @@ def apply_global_styles() -> None:
         text-transform: uppercase;
         margin-bottom: 0.15rem;
     }}
-    .queue-guidance-text {{ color: {p["ink"]}; font-size: 0.9rem; line-height: 1.45; }}
+    .queue-guidance-text {{ color: {p["ink"]}; font-size: 1rem; line-height: 1.45; }}
     .st-key-queue_table_notes {{ margin: 0 0 0.55rem; }}
     .queue-technical-notes {{
         color: {p["muted"]};
@@ -1098,11 +1121,15 @@ def apply_global_styles() -> None:
     }}
 
     /* One-line dynamic takeaway above each comparison view. */
+    /* Skim line above a chart. Kept heavier than body copy so it still reads as
+       the summary, but at 650 across the full column width it became two lines
+       of bold running text; 600 plus a measure cap keeps it a lead line. */
     .case-takeaway {{
         color: {p["ink"]};
         font-size: 1.0rem;
-        font-weight: 650;
+        font-weight: 600;
         line-height: 1.45;
+        max-width: 78ch;
         margin: 0.1rem 0 0.3rem 0;
     }}
     /* Trade Landscape: push the value/quantity toggle to the right corner. */
@@ -1151,7 +1178,7 @@ def apply_global_styles() -> None:
         border-radius: 10px;
         padding: 0.8rem 1.1rem;
         color: {p["ink"]};
-        font-size: 1.1rem;
+        font-size: 1rem;
         line-height: 1.5;
         margin: 0.1rem 0 0.35rem 0;
     }}
@@ -1280,7 +1307,6 @@ def apply_global_styles() -> None:
         max-width: 30ch;
     }}
     .hero-block .page-subtitle {{
-        font-size: 1.12rem;
         max-width: 62ch;
         margin-top: 0.55rem;
         margin-bottom: 0.4rem;
@@ -1293,10 +1319,12 @@ def apply_global_styles() -> None:
     [data-testid="stMain"]:has(.bank-page-marker) .landing-section {{
         margin-bottom: 3.75rem;
     }}
+    /* Third section-heading size in the app until now (1.26rem); brought onto
+       the shared .section-label step so a section heading is one size app-wide. */
     .landing-heading {{
         color: {p["ink"]};
-        font-size: 1.26rem;
-        font-weight: 750;
+        font-size: 1.12rem;
+        font-weight: 700;
         margin-bottom: 0.5rem;
     }}
     .landing-heading::before {{
@@ -1425,7 +1453,7 @@ def apply_global_styles() -> None:
     }}
     .stat-detail {{
         color: {p["muted"]};
-        font-size: 0.86rem;
+        font-size: 0.88rem;
         line-height: 1.45;
         margin-top: 0.35rem;
     }}
@@ -1515,7 +1543,7 @@ def apply_global_styles() -> None:
     }}
     .bottom-line-text {{
         color: {p["sidebar_ink"]};
-        font-size: 1.06rem;
+        font-size: 1rem;
         line-height: 1.58;
         font-weight: 500;
         max-width: 92ch;
@@ -1623,10 +1651,12 @@ def apply_global_styles() -> None:
     .st-key-business_value_page .story-section-header {{
         margin-bottom: 1.45rem;
     }}
+    /* Same size and weight as .section-label, the heading the other pages use;
+       only the decoration differs (a full-width rule instead of a leading icon). */
     .st-key-business_value_page .story-section-title {{
         color: {p["ink"]};
-        font-size: 1.32rem;
-        font-weight: 760;
+        font-size: 1.12rem;
+        font-weight: 700;
         line-height: 1.3;
     }}
     .st-key-business_value_page .story-section-rule {{
@@ -2131,7 +2161,6 @@ def apply_global_styles() -> None:
        the showcase's teal. */
     .bank-pathway-hero .page-eyebrow {{ color: #1f7d72; letter-spacing: .16em; }}
     .bank-pathway-hero .page-subtitle {{
-        font-size: clamp(16px, 2vw, 20px);
         line-height: 1.5;
         color: #516171;
         max-width: 760px;
@@ -2174,13 +2203,13 @@ def apply_global_styles() -> None:
     .bip-section {{ margin-top: 5rem; }}
     .bip-rule {{ width: 34px; height: 3px; background: #1f7d72; border-radius: 2px; margin-bottom: 16px; }}
     .bip-h2 {{
-        font-size: clamp(24px, 3vw, 30px);
+        font-size: clamp(1.5rem, 3vw, 1.9rem);
         font-weight: 800;
         letter-spacing: -.01em;
         color: #12253a;
         margin: 0 0 8px;
     }}
-    .bip-lead {{ font-size: 17px; color: #516171; line-height: 1.55; margin: 0 0 34px; max-width: 820px; }}
+    .bip-lead {{ font-size: 1rem; color: #516171; line-height: 1.55; margin: 0 0 34px; max-width: 820px; }}
 
     /* Connected 3-stage flow with ringed circular nodes + arrow connectors. */
     .bip-flow {{ display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }}
@@ -2215,9 +2244,9 @@ def apply_global_styles() -> None:
         color: var(--bip-accent);
         margin-bottom: 8px;
     }}
-    .bip-stage-q {{ font-size: 17px; font-weight: 600; color: #22344a; line-height: 1.4; }}
-    .bip-stage-h {{ font-size: 18px; font-weight: 700; color: #22344a; line-height: 1.35; margin-bottom: 12px; }}
-    .bip-stage-d {{ color: #61707f; font-size: 14.5px; line-height: 1.55; }}
+    .bip-stage-q {{ font-size: 1rem; font-weight: 600; color: #22344a; line-height: 1.4; }}
+    .bip-stage-h {{ font-size: 1.12rem; font-weight: 700; color: #22344a; line-height: 1.35; margin-bottom: 12px; }}
+    .bip-stage-d {{ color: #61707f; font-size: 0.88rem; line-height: 1.55; }}
     .bip-arrow {{ flex: 0 0 44px; display: flex; align-items: center; justify-content: center; color: #a9b6c3; }}
     .bip-arrow svg {{ width: 22px; height: 22px; }}
     /* Journey accents: public signal (blue) -> bank context (amber) -> decision (teal). */
@@ -2245,7 +2274,7 @@ def apply_global_styles() -> None:
         color: var(--bip-accent);
         margin-bottom: 4px;
     }}
-    .bip-tf-title {{ font-size: 22px; font-weight: 800; color: #12253a; margin-bottom: 22px; }}
+    .bip-tf-title {{ font-size: 1.35rem; font-weight: 800; color: #12253a; margin-bottom: 22px; }}
     .bip-tf-steps {{ display: flex; flex-direction: column; gap: 14px; }}
     .bip-tf-step {{ display: flex; gap: 14px; }}
     .bip-tf-num {{
@@ -2395,7 +2424,7 @@ def apply_global_styles() -> None:
         justify-content: center;
     }}
     .bip-rec-tile svg {{ width: 23px; height: 23px; }}
-    .bip-rec-title {{ font-size: 18px; font-weight: 700; color: #22344a; }}
+    .bip-rec-title {{ font-size: 1.12rem; font-weight: 700; color: #22344a; }}
     .bip-rec-body {{ color: #61707f; font-size: 15px; line-height: 1.55; margin-top: 6px; }}
     /* Horizontal (left-accent) cards: beneficial ownership (full), KYC, trade docs. */
     .bip-rec.wide {{ display: flex; gap: 18px; border-left: 4px solid var(--bip-accent); }}
@@ -2454,7 +2483,7 @@ def apply_global_styles() -> None:
         max-width: 1080px;
         margin: 0;
         color: #33485c;
-        font-size: 15.5px;
+        font-size: 1rem;
         line-height: 1.58;
     }}
     .bip-ai-story {{ margin-top: 0; }}
@@ -2731,7 +2760,7 @@ def apply_global_styles() -> None:
     .bip-output-3 {{ --bip-accent: #c08a1f; }}
     .bip-output-4 {{ --bip-accent: #6b5b95; }}
     .bip-output-title {{ font-weight: 700; color: #22344a; font-size: 16px; }}
-    .bip-output-detail {{ color: #61707f; font-size: 14px; line-height: 1.55; margin-top: 4px; }}
+    .bip-output-detail {{ color: #61707f; font-size: 0.88rem; line-height: 1.55; margin-top: 4px; }}
     .bip-rules-title {{ margin: 32px 0 14px; }}
     .bip-rules {{ display: flex; flex-wrap: wrap; gap: 12px; }}
     .bip-chip {{
@@ -2775,7 +2804,7 @@ def apply_global_styles() -> None:
     .bip-value-cell-2 {{ --bip-accent: #1f7d72; --bip-tint: #e8f3f1; }}
     .bip-value-cell-3 {{ --bip-accent: #c08a1f; --bip-tint: #fbf3e2; }}
     .bip-value-cell-4 {{ --bip-accent: #6b5b95; --bip-tint: #efecf5; }}
-    .bip-value-title {{ font-size: 17px; font-weight: 700; color: #22344a; line-height: 1.3; }}
+    .bip-value-title {{ font-size: 1.12rem; font-weight: 700; color: #22344a; line-height: 1.3; }}
     .bip-value-detail {{ color: #61707f; font-size: 14.5px; line-height: 1.55; margin-top: 8px; }}
 
     /* Closing panel. ----------------------------------------------------- */
@@ -2872,7 +2901,7 @@ def apply_global_styles() -> None:
         border-left: 3px solid {mm["accent"]};
         box-shadow: 0 4px 14px rgba(2, 18, 47, 0.24);
         padding: {int(theme["components"]["banner"]["padding_y_px"])}px {int(theme["components"]["banner"]["padding_x_px"])}px;
-        font-size: 0.92rem;
+        font-size: 1rem;
         line-height: 1.45;
     }}
     .mental-model .mm-stamp {{
@@ -2910,11 +2939,6 @@ def apply_global_styles() -> None:
         top: auto;
         z-index: auto;
         margin-bottom: 1.1rem;  /* breathing room before the KPI band */
-    }}
-    /* Generous inter-section spacing on the coverage page (matches the Business
-       Problem & Value rhythm) so each question reads as its own block. */
-    [data-testid="stMain"]:has(.gc-page-marker) .section-heading {{
-        margin-top: 3.4rem;
     }}
     [data-testid="stMain"]:has(.gc-page-marker) .stat-band.three {{
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3073,7 +3097,7 @@ def apply_global_styles() -> None:
     .appendix-source-card {{ margin-bottom: 0.85rem; }}
     .appendix-source-card .source-row {{
         color: {p["ink"]};
-        font-size: 0.86rem;
+        font-size: 0.88rem;
         line-height: 1.45;
         padding: 0.3rem 0;
         border-top: 1px dashed {p["border"]};
@@ -3709,7 +3733,6 @@ def apply_global_styles() -> None:
     }}
     [data-testid="stMain"]:has(.mc-page-marker) .section-heading {{
         position: relative;
-        margin-top: 2.15rem;
         margin-bottom: 0.9rem;
         padding-bottom: 0.75rem;
         border-bottom: 1px solid {p["border"]};
@@ -3809,7 +3832,7 @@ def apply_global_styles() -> None:
     }}
     .method-step-detail {{
         color: {p["muted"]};
-        font-size: 0.82rem;
+        font-size: 0.88rem;
         line-height: 1.45;
         margin-top: 0.25rem;
     }}
@@ -3892,14 +3915,14 @@ def apply_global_styles() -> None:
     }}
     .rule-adjustment-card p {{
         margin: 0 0 0.6rem 0;
-        font-size: 0.84rem;
+        font-size: 0.88rem;
         line-height: 1.5;
     }}
     .rule-adjustment-effect {{
         border-left: 3px solid {navy7};
         background: color-mix(in srgb, {navy7} 6%, white);
         padding: 0.55rem 0.65rem;
-        font-size: 0.82rem;
+        font-size: 0.88rem;
         line-height: 1.45;
     }}
     .rule-adjustment-quality .rule-adjustment-effect {{
@@ -4088,7 +4111,7 @@ def apply_global_styles() -> None:
     .gc-network-story-point p,
     .gc-network-story-use p {{
         color: {p["ink"]};
-        font-size: 0.86rem;
+        font-size: 0.88rem;
         line-height: 1.48;
         margin: 0;
     }}
@@ -4127,7 +4150,7 @@ def apply_global_styles() -> None:
     }}
     .gc-network-story-scale span {{
         color: {p["ink"]};
-        font-size: 0.82rem;
+        font-size: 0.88rem;
         line-height: 1.45;
     }}
     .gc-size-guide {{
@@ -4240,7 +4263,7 @@ def apply_global_styles() -> None:
         margin: 0.15rem 0 0.35rem 0;
     }}
     .gc-followups .twin-card p {{
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         line-height: 1.5;
         margin: 0;
         color: {p["ink"]};
