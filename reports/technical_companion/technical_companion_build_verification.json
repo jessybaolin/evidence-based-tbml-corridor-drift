@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "generated_at": "23 July 2026",
+  "source_commit": "774aac6",
+  "page_count": 38,
+  "expected_page_count": 38,
+  "bookmarks_present": true,
+  "link_annotations": 153,
+  "searchable_pages": 38,
+  "headline_claims_validated": {
+    "commit": "774aac6",
+    "panel_rows": 25844,
+    "eligible_rows": 23656,
+    "eligible_value_share": 0.9992343682392455,
+    "feature_rows": 25844,
+    "queue_rows": 50,
+    "queue_family_counts": {
+      "gold_unwrought": 18,
+      "crude_palm_oil": 18,
+      "refined_copper_cathodes": 14
+    },
+    "missing_quantity_rows": 2188,
+    "gold_missing_rows": 1877,
+    "gold_missing_value_share": 0.0004148757843927828,
+    "persistent_gold_routes": 14,
+    "persistent_gold_value": 1000119.0,
+    "hybrid_precision_50": 0.48,
+    "hybrid_recall_50": 0.2222222222222222,
+    "hybrid_lift_50": 26.813333333333333,
+    "hybrid_ap": 0.2978486730162115,
+    "hybrid_hard_negative_fpr": 0.0,
+    "xgb_precision_50": 0.5
+  },
+  "output": "reports\\technical_companion\\technical_companion.pdf"
+}

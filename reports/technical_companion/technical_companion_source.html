@@ -1,0 +1,2364 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='author' content='Jesslyn Guo Baolin'><title>Evidence-First TBML Triage System | Technical Implementation Companion</title><style>
+@page {
+  size: A4;
+  margin: 13mm 14mm 16mm;
+  @bottom-left {
+    content: "Evidence-First TBML Triage System | Technical Implementation Companion";
+    font-family: "Aptos", "Segoe UI", Arial, sans-serif;
+    font-size: 7pt;
+    color: #718096;
+  }
+  @bottom-center {
+    content: "Commit 774aac6";
+    font-family: "Aptos", "Segoe UI", Arial, sans-serif;
+    font-size: 7pt;
+    color: #718096;
+  }
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: "Aptos", "Segoe UI", Arial, sans-serif;
+    font-size: 7pt;
+    color: #718096;
+  }
+}
+@page cover {
+  margin: 13mm 14mm 13mm;
+  @bottom-left { content: none; }
+  @bottom-center { content: none; }
+  @bottom-right { content: none; }
+}
+
+:root {
+  --navy: #20324f;
+  --navy2: #304868;
+  --ink: #1f2f49;
+  --muted: #66758d;
+  --line: #d5deea;
+  --canvas: #f4f7fb;
+  --teal: #0b9797;
+  --teal-soft: #e5f5f3;
+  --blue: #4779c7;
+  --blue-soft: #edf3fc;
+  --amber: #d99b16;
+  --amber-soft: #fff4dc;
+  --red: #a62e4e;
+  --red-soft: #f9edf1;
+  --palm: #4c9b70;
+  --copper: #b75b28;
+  --gold: #d5a21b;
+}
+
+* { box-sizing: border-box; }
+html { font-family: "Aptos", "Segoe UI", Arial, sans-serif; color: var(--ink); }
+body {
+  margin: 0;
+  background: white;
+  font-size: 8.75pt;
+  line-height: 1.42;
+  font-weight: 400;
+}
+.page {
+  break-after: page;
+  min-height: 257mm;
+  position: relative;
+}
+.page:last-child { break-after: auto; }
+.page.cover { page: cover; min-height: 271mm; }
+
+h1 {
+  margin: 0 0 3mm;
+  color: var(--navy);
+  font-size: 19pt;
+  font-weight: 600;
+  line-height: 1.13;
+  letter-spacing: 0;
+  bookmark-level: 1;
+}
+h2 {
+  margin: 5.2mm 0 2.2mm;
+  color: var(--navy);
+  font-size: 12pt;
+  font-weight: 600;
+  line-height: 1.2;
+  break-after: avoid;
+  bookmark-level: 2;
+}
+h3 {
+  margin: 3.8mm 0 1.5mm;
+  color: var(--navy);
+  font-size: 9.7pt;
+  font-weight: 600;
+  line-height: 1.25;
+  break-after: avoid;
+  bookmark-level: 3;
+}
+p { margin: 0 0 2.5mm; }
+ul, ol { margin: 1.2mm 0 2.8mm; padding-left: 5mm; }
+li { margin: 0 0 1mm; }
+strong { color: var(--navy); font-weight: 600; }
+a { color: var(--teal); text-decoration: none; }
+code {
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 7.6pt;
+  background: #f0f3f7;
+  padding: 0.3mm 0.8mm;
+  border-radius: 0.7mm;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+pre {
+  margin: 2.5mm 0;
+  padding: 3mm;
+  background: #f4f7fb;
+  border: 0.6pt solid var(--line);
+  border-radius: 1.5mm;
+  font-size: 7.3pt;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  page-break-inside: avoid;
+}
+blockquote {
+  margin: 4mm 0;
+  padding: 3.5mm 4mm;
+  border: 0.6pt solid #e4c3cd;
+  border-left: 2.2mm solid var(--red);
+  background: var(--red-soft);
+  border-radius: 1.5mm;
+  page-break-inside: avoid;
+}
+blockquote p { margin: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2.5mm 0 3mm;
+  font-size: 7.4pt;
+  line-height: 1.3;
+  break-inside: avoid;
+}
+th {
+  padding: 2mm 2.2mm;
+  background: var(--navy);
+  color: white;
+  font-weight: 600;
+  text-align: left;
+  border-right: 0.4pt solid #7d8ca3;
+}
+td {
+  padding: 1.8mm 2.2mm;
+  vertical-align: top;
+  border: 0.45pt solid #d9e1eb;
+}
+tr:nth-child(even) td { background: #f0f4f8; }
+.compact-table table { font-size: 6.75pt; }
+.compact-table th, .compact-table td { padding: 1.35mm 1.6mm; }
+.tiny-table table { font-size: 6.1pt; line-height: 1.22; }
+.tiny-table th, .tiny-table td { padding: 1.05mm 1.3mm; }
+
+.eyebrow {
+  color: var(--teal);
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 2.8mm;
+}
+.lede {
+  color: var(--navy2);
+  font-size: 10.1pt;
+  line-height: 1.45;
+  max-width: 175mm;
+  margin-bottom: 4mm;
+}
+.small { color: var(--muted); font-size: 7.7pt; }
+.note { color: var(--muted); font-size: 7.8pt; line-height: 1.35; }
+.section-rule {
+  width: 12mm;
+  height: 1mm;
+  background: var(--teal);
+  border-radius: 1mm;
+  margin: 0 0 4mm;
+}
+.page-label {
+  color: var(--teal);
+  font-size: 7.4pt;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 2.5mm;
+}
+
+.cover {
+  background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+  padding-top: 6mm;
+}
+.cover h1 { font-size: 30pt; max-width: 175mm; margin-top: 6mm; }
+.cover .subtitle {
+  color: var(--navy2);
+  font-size: 15pt;
+  font-weight: 500;
+  margin: 1mm 0 7mm;
+}
+.cover .summary {
+  max-width: 162mm;
+  color: var(--muted);
+  font-size: 11pt;
+  line-height: 1.45;
+}
+.cover-identity {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3mm;
+  margin: 10mm 0 6mm;
+}
+.cover-id {
+  min-height: 29mm;
+  padding: 3.5mm;
+  border: 0.65pt solid var(--line);
+  border-top: 1.6mm solid var(--teal);
+  border-radius: 1.8mm;
+  background: white;
+}
+.cover-id.blue { border-top-color: var(--blue); }
+.cover-id.amber { border-top-color: var(--amber); }
+.cover-id.navy { border-top-color: var(--navy); }
+.cover-id strong { display: block; font-size: 14pt; margin-bottom: 1.4mm; }
+.cover-id span { color: var(--muted); font-size: 7.5pt; text-transform: uppercase; }
+.cover-links {
+  margin-top: 6mm;
+  padding: 4mm;
+  border: 0.6pt solid #bcdedb;
+  border-radius: 1.8mm;
+  background: var(--teal-soft);
+  font-size: 8.5pt;
+}
+
+.toc-list { margin-top: 5mm; }
+.toc-item {
+  display: grid;
+  grid-template-columns: 10mm 1fr 10mm;
+  gap: 3mm;
+  align-items: center;
+  min-height: 17mm;
+  padding: 2.5mm 3mm;
+  border-bottom: 0.5pt solid var(--line);
+  color: var(--ink);
+}
+.toc-item:first-child { border-top: 0.5pt solid var(--line); }
+.toc-item > span { color: var(--teal); font-weight: 700; }
+.toc-item strong { display: block; font-size: 9.2pt; }
+.toc-item small { display: block; color: var(--muted); font-size: 7.4pt; }
+.toc-item b { color: var(--muted); text-align: right; font-weight: 500; }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3mm;
+  margin: 4mm 0;
+}
+.kpi {
+  min-height: 31mm;
+  padding: 3.2mm;
+  border: 0.6pt solid var(--line);
+  border-top: 1.5mm solid var(--teal);
+  border-radius: 1.7mm;
+  background: white;
+}
+.kpi.blue { border-top-color: var(--blue); }
+.kpi.amber { border-top-color: var(--amber); }
+.kpi.red { border-top-color: var(--red); }
+.kpi strong { display: block; font-size: 17pt; line-height: 1.05; margin-bottom: 1.7mm; }
+.kpi span { color: var(--muted); font-size: 7.2pt; text-transform: uppercase; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; margin: 3mm 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 3mm 0; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.8mm; margin: 3mm 0; }
+.card {
+  padding: 3.5mm;
+  border: 0.6pt solid var(--line);
+  border-top: 1.3mm solid var(--teal);
+  border-radius: 1.7mm;
+  background: white;
+  break-inside: avoid;
+}
+.card.blue { border-top-color: var(--blue); }
+.card.amber { border-top-color: var(--amber); }
+.card.red { border-top-color: var(--red); }
+.card.navy { border-top-color: var(--navy); }
+.card.palm { border-top-color: var(--palm); }
+.card.copper { border-top-color: var(--copper); }
+.card.gold { border-top-color: var(--gold); }
+.card h3 { margin-top: 0; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+.decision {
+  margin: 3mm 0;
+  padding: 3.2mm;
+  background: var(--blue-soft);
+  border: 0.6pt solid #c9d8ee;
+  border-radius: 1.5mm;
+  break-inside: avoid;
+}
+.decision strong { color: var(--blue); }
+.status {
+  display: inline-block;
+  padding: 0.6mm 1.8mm;
+  border-radius: 4mm;
+  background: var(--teal-soft);
+  color: #247d7d;
+  font-size: 6.8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.status.future { background: var(--amber-soft); color: #9b6d08; }
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5mm;
+  margin: 5mm 0;
+}
+.flow.six { grid-template-columns: repeat(3, 1fr); row-gap: 6mm; }
+.flow-node {
+  position: relative;
+  min-height: 34mm;
+  padding: 3.4mm;
+  border: 0.65pt solid #c8d6e9;
+  border-top: 1.5mm solid var(--blue);
+  border-radius: 1.7mm;
+  background: #f8fafd;
+  break-inside: avoid;
+}
+.flow-node.teal { border-top-color: var(--teal); background: #f4fbfa; }
+.flow-node.amber { border-top-color: var(--amber); background: #fffbf2; }
+.flow-node.red { border-top-color: var(--red); background: #fff7f9; }
+.flow-node:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -4.4mm;
+  top: 13mm;
+  color: var(--teal);
+  font-size: 13pt;
+  font-weight: 600;
+}
+.flow.six .flow-node:nth-child(3)::after { content: ""; }
+.flow.six .flow-node:nth-child(4)::before {
+  content: "↓";
+  position: absolute;
+  top: -5.5mm;
+  left: 50%;
+  color: var(--teal);
+  font-size: 13pt;
+}
+.flow-node b {
+  display: block;
+  color: var(--muted);
+  font-size: 6.7pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1.2mm;
+}
+.flow-node strong { display: block; font-size: 8.7pt; margin-bottom: 1.2mm; }
+.flow-node small { color: var(--muted); font-size: 7.2pt; line-height: 1.3; }
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
+  margin: 3mm 0;
+}
+.stack-row {
+  display: grid;
+  grid-template-columns: 34mm 1fr;
+  gap: 3mm;
+  padding: 2.5mm 3mm;
+  border: 0.55pt solid var(--line);
+  border-left: 1.7mm solid var(--teal);
+  border-radius: 1.2mm;
+  background: white;
+  break-inside: avoid;
+}
+.stack-row strong { font-size: 8pt; }
+.stack-row span { color: var(--muted); font-size: 7.7pt; }
+.stack-row > * { min-width: 0; }
+
+.figure {
+  margin: 3mm 0;
+  break-inside: avoid;
+}
+.figure img {
+  display: block;
+  width: 100%;
+  max-height: 132mm;
+  object-fit: contain;
+  border: 0.7pt solid #bdc9d8;
+  border-radius: 1.6mm;
+  background: white;
+}
+.figure.compact img { max-height: 88mm; }
+.figure.queue img { height: auto; max-height: 102mm; object-fit: contain; }
+.figure.case img { height: 112mm; object-fit: cover; object-position: top; }
+.caption {
+  margin-top: 1.2mm;
+  color: var(--muted);
+  font-size: 7.2pt;
+  line-height: 1.3;
+}
+
+.equation-box {
+  padding: 3mm 4mm;
+  background: #f5f7fa;
+  border: 0.6pt solid var(--line);
+  border-radius: 1.5mm;
+  break-inside: avoid;
+}
+.math-display { text-align: center; margin: 2mm 0; break-inside: avoid; }
+.math-display img { max-width: 92%; max-height: 13mm; }
+.math-inline { vertical-align: -23%; max-height: 4mm; }
+
+.matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+  margin: 3mm 0;
+}
+.matrix > div {
+  padding: 3.2mm;
+  border-radius: 1.5mm;
+  border: 0.6pt solid var(--line);
+}
+.matrix .do { background: var(--teal-soft); border-color: #b5ddda; }
+.matrix .dont { background: var(--red-soft); border-color: #e6c6cf; }
+
+.banner {
+  display: flex;
+  align-items: center;
+  min-height: 24mm;
+  padding: 4mm;
+  border-radius: 1.8mm;
+  background: var(--navy);
+  color: white;
+  break-inside: avoid;
+}
+.banner strong { color: white; }
+.banner.red { background: var(--red); }
+.banner.teal { background: #247d7d; }
+
+.two-track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12mm minmax(0, 1fr);
+  gap: 3mm;
+  align-items: stretch;
+  margin: 4mm 0;
+}
+.track {
+  min-width: 0;
+  padding: 3.5mm;
+  border: 0.7pt solid var(--line);
+  border-top: 1.7mm solid var(--blue);
+  border-radius: 1.7mm;
+  background: white;
+}
+.track.future { border-top-color: var(--amber); background: #fffbf2; }
+.track-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+  font-size: 16pt;
+  font-weight: 600;
+}
+
+.page-break-note {
+  position: absolute;
+  bottom: 2mm;
+  left: 0;
+  right: 0;
+  color: var(--muted);
+  font-size: 6.8pt;
+}
+</style></head><body><section class="page page-1 cover"><div class="eyebrow">Technical implementation companion</div>
+
+<h1 id="evidence-first-tbml-triage-system">Evidence-First TBML Triage System</h1>
+<div class="subtitle">Data engineering, time-safe analytics, controlled model evaluation, evidence construction, and deployment</div>
+
+<p class="summary">A technical account of how official public trade data is transformed into a ranked queue of unusual corridor-product-year patterns for accountable human review.</p>
+
+<div class="cover-identity">
+  <div class="cover-id"><strong>25,844</strong><span>official annual observations</span></div>
+  <div class="cover-id blue"><strong>2017-2024</strong><span>analytical period</span></div>
+  <div class="cover-id amber"><strong>Top 50</strong><span>ranked official queue</span></div>
+  <div class="cover-id navy"><strong>27×</strong><span>test lift at 50</span></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>Document identity</h3>
+    <p><strong>Version:</strong> 1.0</p>
+    <p><strong>Generated:</strong> 23 July 2026</p>
+    <p><strong>Source commit:</strong> <code>774aac6</code> on <code>develop</code></p>
+    <p><strong>Analytical release:</strong> <code>official-data-simplified-v1</code></p>
+  </div>
+  <div class="card blue">
+    <h3>Implementation status</h3>
+    <p><span class="status">Implemented</span> offline analytical pipeline</p>
+    <p><span class="status">Deployed</span> read-only Streamlit dashboard</p>
+    <p><span class="status future">Future state</span> bank-data integration</p>
+  </div>
+</div>
+
+<div class="cover-links">
+  <strong>Live project:</strong> <a href="https://tbml-review-triage.streamlit.app/">tbml-review-triage.streamlit.app</a><br>
+  <strong>Repository:</strong> <a href="https://github.com/jessybaolin/evidence-based-tbml-corridor-drift">github.com/jessybaolin/evidence-based-tbml-corridor-drift</a>
+</div>
+
+<blockquote>
+<p><strong>Human-review boundary.</strong> This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent.</p>
+</blockquote></section>
+<section class="page page-2 control"><div class="page-label">Front matter</div>
+
+<h1 id="document-control">Document control</h1>
+<div class="section-rule"></div>
+
+<p>This companion is the technical layer beneath the stakeholder project brief and live dashboard. It documents the current repository implementation rather than a proposed target architecture.</p>
+<table>
+<thead>
+<tr>
+<th>Control item</th>
+<th>Current record</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Purpose</td>
+<td>Explain the implemented data, analytical, modelling, evidence, dashboard, deployment, and control design</td>
+</tr>
+<tr>
+<td>Intended audience</td>
+<td>Data and analytics practitioners; AFC/AML stakeholders; model-risk reviewers; wholesale-banking technology stakeholders</td>
+</tr>
+<tr>
+<td>Implementation version</td>
+<td><code>official-data-simplified-v1</code></td>
+</tr>
+<tr>
+<td>Source commit</td>
+<td><code>774aac6</code> (<code>develop</code>)</td>
+</tr>
+<tr>
+<td>Analytical period</td>
+<td>2017-2024</td>
+</tr>
+<tr>
+<td>Trade dataset</td>
+<td>CEPII BACI HS17 release <code>202601</code>, filtered to three HS6 products</td>
+</tr>
+<tr>
+<td>Benchmark dataset</td>
+<td>World Bank Commodity Markets annual workbook, 24 family-year rows</td>
+</tr>
+<tr>
+<td>Deployment status</td>
+<td>Public-data, read-only dashboard hosted on Streamlit Community Cloud</td>
+</tr>
+<tr>
+<td>Owner</td>
+<td>Jesslyn Guo Baolin</td>
+</tr>
+<tr>
+<td>Related document</td>
+<td><code>stakeholder_project_brief_v2.pdf</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-to-read-implementation-status">How to read implementation status</h2>
+<div class="grid-4">
+  <div class="card"><span class="status">Implemented</span><p>Code or configuration exists in the repository.</p></div>
+  <div class="card blue"><span class="status">Generated</span><p>An artefact is produced by a pipeline stage.</p></div>
+  <div class="card amber"><span class="status">Validated</span><p>A check or test has executed against the current build.</p></div>
+  <div class="card navy"><span class="status future">Future state</span><p>Design intent only; not part of the current application.</p></div>
+</div>
+
+<h2 id="evidence-policy">Evidence policy</h2>
+<p>Every retained metric in this document was checked against current generated outputs or recomputed from current processed data. The working claim-source map is included with the document build at <code>reports/technical_companion/technical_companion_claim_source_map.csv</code>.</p>
+<div class="decision"><strong>Original preserved.</strong> The seven-page legacy companion remains at <code>docs/afc_aml_technical_companion.pdf</code>. This revision is a separate generated artefact.</div></section>
+<section class="page page-3 toc"><div class="page-label">Contents</div>
+
+<h1 id="contents-core">Contents: core implementation</h1>
+<p class="lede">Select a section to jump to its technical narrative.</p>
+
+<div class="toc-list">
+  <a class="toc-item" href="#technical-executive-overview"><span>01</span><div><strong>Technical executive overview</strong><small>Problem, output, components, and implementation status.</small></div><b>5</b></a>
+  <a class="toc-item" href="#scope-and-boundaries"><span>02</span><div><strong>Scope, intended use, and boundaries</strong><small>Permitted use and prohibited interpretations.</small></div><b>6</b></a>
+  <a class="toc-item" href="#technical-lifecycle"><span>03</span><div><strong>End-to-end technical lifecycle</strong><small>From verified source files to the live dashboard.</small></div><b>7</b></a>
+  <a class="toc-item" href="#data-architecture"><span>04</span><div><strong>Data architecture and lineage</strong><small>Tables, grain, keys, transformations, and consumers.</small></div><b>8</b></a>
+  <a class="toc-item" href="#sources-and-products"><span>05</span><div><strong>Sources and product-family design</strong><small>Distinct source roles and the three HS6 families.</small></div><b>11</b></a>
+  <a class="toc-item" href="#statistical-profile"><span>06</span><div><strong>Statistical profile</strong><small>Coverage, scale, queue composition, and missing quantity.</small></div><b>12</b></a>
+  <a class="toc-item" href="#feature-engineering"><span>07</span><div><strong>Time-safe feature engineering</strong><small>Exact formulas, grouping rules, missing handling, and leakage controls.</small></div><b>15</b></a>
+  <a class="toc-item" href="#controlled-evaluation"><span>08</span><div><strong>Controlled evaluation scenarios</strong><small>Why scenarios exist and how they remain separate from official cases.</small></div><b>19</b></a>
+  <a class="toc-item" href="#scoring-models"><span>09</span><div><strong>Scoring and model implementation</strong><small>Weighted sum, logistic, XGBoost, Isolation Forest, and hybrid.</small></div><b>20</b></a>
+</div></section>
+<section class="page page-4 toc"><div class="page-label">Contents</div>
+
+<h1 id="contents-outputs">Contents: outputs, controls, and appendices</h1>
+<div class="toc-list">
+  <a class="toc-item" href="#model-evaluation"><span>10</span><div><strong>Model evaluation and selection</strong><small>Metrics, held-out results, family variation, and SHAP boundary.</small></div><b>23</b></a>
+  <a class="toc-item" href="#official-queue"><span>11</span><div><strong>Official scoring and review queue</strong><small>Eligibility, ranking, persistence, filters, and export.</small></div><b>25</b></a>
+  <a class="toc-item" href="#evidence-construction"><span>12</span><div><strong>Evidence and selected-case analytics</strong><small>Recomputable evidence, case views, and traceability.</small></div><b>26</b></a>
+  <a class="toc-item" href="#streamlit-implementation"><span>13</span><div><strong>Streamlit implementation</strong><small>Pages, components, services, contracts, caching, and state.</small></div><b>27</b></a>
+  <a class="toc-item" href="#deployment"><span>14</span><div><strong>GitHub and Streamlit deployment</strong><small>Actual hosted path and runtime separation.</small></div><b>28</b></a>
+  <a class="toc-item" href="#validation"><span>15</span><div><strong>Validation and reproducibility</strong><small>Controls, tests, current status, and core commands.</small></div><b>29</b></a>
+  <a class="toc-item" href="#limitations-future"><span>16</span><div><strong>Limitations and future bank pathway</strong><small>Responsible interpretation and clearly separated future state.</small></div><b>30</b></a>
+  <a class="toc-item" href="#appendix-features"><span>A</span><div><strong>Feature reference</strong><small>Complete implemented feature dictionary.</small></div><b>31</b></a>
+  <a class="toc-item" href="#appendix-data"><span>B-H</span><div><strong>Technical appendices</strong><small>Data fields, model configuration, scenarios, sources, commands, glossary, and traceability.</small></div><b>33</b></a>
+</div>
+
+<div class="banner">
+  <div><strong>Traceability principle</strong><br>Dashboard statement → source artefact → transformation → code module → interpretation boundary.</div>
+</div></section>
+<section class="page page-5 overview"><div class="page-label">1 · System purpose</div>
+
+<h1 id="technical-executive-overview">Technical executive overview</h1>
+<div class="section-rule"></div>
+
+<p>The project addresses a prioritisation problem. Public trade data contains thousands of annual country-to-country product observations, but no confirmed TBML labels and no customer, invoice, shipment, payment, or ownership records. The implemented system therefore ranks unusual analytical patterns for review; it does not classify financial crime.</p>
+<div class="kpi-grid">
+  <div class="kpi"><strong>25,844</strong><span>official observations</span></div>
+  <div class="kpi blue"><strong>23,656</strong><span>eligible for scoring</span></div>
+  <div class="kpi amber"><strong>50</strong><span>ranked review cases</span></div>
+  <div class="kpi red"><strong>200</strong><span>evidence rows</span></div>
+</div>
+
+<h2 id="unit-of-analysis-and-output">Unit of analysis and output</h2>
+<p>One row is one exporter-importer-HS6-year aggregate. The selected method scores the 23,656 rows with positive trade value and usable quantity, sorts them deterministically, persists the Top 50, and attaches four evidence checks to each queued observation.</p>
+<div class="flow">
+  <div class="flow-node"><b>Input</b><strong>Official annual trade</strong><small>Value, quantity, corridor, product, year</small></div>
+  <div class="flow-node teal"><b>Analytics</b><strong>Time-safe signals</strong><small>History, peers, benchmark, movement, quality</small></div>
+  <div class="flow-node red"><b>Evaluation</b><strong>Controlled scenarios</strong><small>Used to compare methods, never displayed as cases</small></div>
+  <div class="flow-node amber"><b>Output</b><strong>Queue plus evidence</strong><small>Read-only stakeholder dashboard</small></div>
+</div>
+
+<h2 id="offline-pipeline-online-presentation">Offline pipeline, online presentation</h2>
+<p>The analytical pipeline runs as separate Python stages and writes Parquet, CSV, JSON, joblib, report, and figure artefacts. The Streamlit application loads those generated files, caches them, applies interactive filters, persists the selected case in session state, and renders charts and tables. It does not rebuild the panel, inject scenarios, retrain models, or write data.</p>
+<div class="decision"><strong>Design decision: precompute, then present.</strong> This keeps stakeholder interaction fast and makes every displayed number traceable to a versioned artefact. The trade-off is that the dashboard is not a live scoring service.</div></section>
+<section class="page page-6 boundaries"><div class="page-label">2 · Intended use</div>
+
+<h1 id="scope-and-boundaries">Scope, intended use, and analytical boundaries</h1>
+<div class="section-rule"></div>
+
+<div class="matrix">
+  <div class="do"><h3>What the system does</h3><ul><li>Ranks unusual annual corridor-product-year patterns.</li><li>Compares a row with its prior history, same-year peers, and a broad commodity benchmark.</li><li>Shows data-quality caveats and recomputable evidence.</li><li>Supports an accountable human decision about what to review next.</li></ul></div>
+  <div class="dont"><h3>What it does not do</h3><ul><li>Detect, prove, or label money laundering.</li><li>Estimate a probability of criminal activity.</li><li>Determine invoice-level fair value.</li><li>Assign country, customer, or counterparty risk.</li><li>Replace transaction monitoring or investigation.</li></ul></div>
+</div>
+
+<h2 id="boundaries-carried-through-the-design">Boundaries carried through the design</h2>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Technical consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Annual public aggregates</td>
+<td>A unit value is an implied annual average, not an invoice price</td>
+</tr>
+<tr>
+<td>World Bank benchmark</td>
+<td>Used as market context, not corridor-specific fair value</td>
+</tr>
+<tr>
+<td>FATF-Egmont publications</td>
+<td>Used for typology language and questions, never as features or labels</td>
+</tr>
+<tr>
+<td>No confirmed cases</td>
+<td>Controlled scenarios evaluate ranking behaviour; they are not ground truth</td>
+</tr>
+<tr>
+<td>Missing quantity</td>
+<td>Row cannot form unit value and remains outside model scoring</td>
+</tr>
+<tr>
+<td>Score semantics</td>
+<td>Hybrid score determines ordering only; it is not calibrated</td>
+</tr>
+<tr>
+<td>Global SHAP only</td>
+<td>Explains aggregate XGBoost contribution, not an individual case</td>
+</tr>
+</tbody>
+</table>
+<div class="decision"><strong>Design decision: retain incomplete rows.</strong> Rows that cannot be scored remain in the panel and exclusion audit. Silent deletion would improve headline completeness while hiding a data-quality blind spot.</div>
+
+<blockquote>
+<p>This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent.</p>
+</blockquote></section>
+<section class="page page-7 architecture"><div class="page-label">3 · Architecture</div>
+
+<h1 id="technical-lifecycle">End-to-end technical lifecycle</h1>
+<div class="section-rule"></div>
+
+<div class="flow six">
+  <div class="flow-node"><b>01 · Official data</b><strong>BACI, World Bank, reference files</strong><small>Source files are hashed, counted, and schema-checked.</small></div>
+  <div class="flow-node"><b>02 · Preparation</b><strong>Clean annual panel</strong><small>Mappings, units, benchmark joins, quality status, canonical IDs.</small></div>
+  <div class="flow-node teal"><b>03 · Analytics</b><strong>Time-safe feature table</strong><small>Current row, same-year peers, and prior-only corridor history.</small></div>
+  <div class="flow-node red"><b>04 · Evaluation</b><strong>Controlled scenario layer</strong><small>Rules and models compared using separated scenario labels.</small></div>
+  <div class="flow-node amber"><b>05 · Official output</b><strong>Top 50 and evidence</strong><small>Selected scorer returns to official observations only.</small></div>
+  <div class="flow-node teal"><b>06 · Presentation</b><strong>Streamlit dashboard</strong><small>Cached, read-only access to generated analytical artefacts.</small></div>
+</div>
+
+<h2 id="implemented-lifecycle">Implemented lifecycle</h2>
+<div class="stack">
+  <div class="stack-row"><strong>Verify and ingest</strong><span><code>00_check_environment.py</code> → <code>01_verify_sources.py</code> → <code>02_ingest_official_sources.py</code></span></div>
+  <div class="stack-row"><strong>Prepare and model</strong><span><code>03_build_panel.py</code> → <code>04_build_features.py</code> → <code>05_build_scenarios.py</code> → <code>06_train_evaluate_models.py</code></span></div>
+  <div class="stack-row"><strong>Explain and report</strong><span><code>07_build_evidence.py</code> → <code>08_build_briefs.py</code> → <code>09_generate_reports.py</code></span></div>
+  <div class="stack-row"><strong>Present and deploy</strong><span><code>dashboard/streamlit_app.py</code> reads committed outputs; GitHub-connected Streamlit Cloud starts the app.</span></div>
+</div>
+
+<div class="banner teal"><div><strong>Lifecycle boundary</strong><br>The controlled scenario branch is used to choose and test a ranking method. The official-data branch produces the cases shown to stakeholders.</div></div>
+
+<p class="caption"><em>Figure 1. Technical lifecycle from verified public sources to a deployed, read-only review dashboard.</em></p></section>
+<section class="page page-8 data"><div class="page-label">4 · Data architecture</div>
+
+<h1 id="data-architecture">Data architecture and lineage</h1>
+<div class="section-rule"></div>
+
+<div class="two-track">
+  <div class="track">
+    <h3>Official-data track</h3>
+    <div class="stack">
+      <div class="stack-row"><strong>Raw</strong><span>BACI extract; country and HS17 mappings; World Bank workbook</span></div>
+      <div class="stack-row"><strong>Interim</strong><span><code>raw_baci_selected.parquet</code>; <code>worldbank_commodity_benchmarks.parquet</code></span></div>
+      <div class="stack-row"><strong>Processed</strong><span><code>corridor_product_year_panel.parquet</code>; <code>corridor_features.parquet</code></span></div>
+      <div class="stack-row"><strong>Outputs</strong><span><code>top_ranked_corridors.csv</code>; <code>evidence_table.csv</code>; deterministic briefs</span></div>
+    </div>
+  </div>
+  <div class="track-link">↔</div>
+  <div class="track future">
+    <h3>Evaluation-only track</h3>
+    <div class="stack">
+      <div class="stack-row"><strong>Test copy</strong><span><code>scenario_panel.parquet</code> preserves the panel schema</span></div>
+      <div class="stack-row"><strong>Labels</strong><span><code>scenario_labels.parquet</code> remains physically separate</span></div>
+      <div class="stack-row"><strong>Features</strong><span><code>scenario_features.parquet</code> uses the same feature builder</span></div>
+      <div class="stack-row"><strong>Evaluation</strong><span>model scores, comparison, selected parameters, hybrid candidates</span></div>
+    </div>
+  </div>
+</div>
+
+<h2 id="canonical-identity">Canonical identity</h2>
+<p>The canonical analytical key is <code>year + exporter_iso3 + importer_iso3 + hs6</code>. <code>obs_id</code> is a stable hash-derived observation identifier, while <code>source_row_id</code> links the prepared row back to the filtered BACI source. Evidence rows add their own <code>evidence_id</code>.</p>
+<div class="decision"><strong>Design decision: one feature builder.</strong> Official and scenario panels pass through the same <code>build_features()</code> function. This reduces train-versus-runtime drift; labels are joined only inside model fitting.</div>
+
+<p class="caption"><em>Figure 2. Separate official and evaluation-only data tracks share transformations without sharing scenario labels.</em></p></section>
+<section class="page page-9 artifacts"><div class="page-label">4 · Data architecture</div>
+
+<h1 id="artefact-map-grain-ownership-and-consumers">Artefact map: grain, ownership, and consumers</h1>
+<div class="section-rule"></div>
+
+<div class="compact-table">
+<table>
+<thead>
+<tr>
+<th>Artefact</th>
+<th>Grain / rows</th>
+<th>Created by</th>
+<th>Main consumer</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>raw_baci_selected.parquet</code></td>
+<td>source row / 25,844</td>
+<td>stage 02</td>
+<td>stage 03</td>
+<td>Normalised raw fields and source IDs</td>
+</tr>
+<tr>
+<td><code>worldbank_commodity_benchmarks.parquet</code></td>
+<td>family-year / 24</td>
+<td>stage 02</td>
+<td>stage 03</td>
+<td>Annual benchmark context</td>
+</tr>
+<tr>
+<td><code>corridor_product_year_panel.parquet</code></td>
+<td>corridor-product-year / 25,844</td>
+<td>stage 03</td>
+<td>stages 04-05; dashboard</td>
+<td>Canonical prepared panel</td>
+</tr>
+<tr>
+<td><code>exclusion_audit.csv</code></td>
+<td>caveated or excluded row / 13,950</td>
+<td>stage 03</td>
+<td>controls; dashboard</td>
+<td>Explicit quality and exclusion record</td>
+</tr>
+<tr>
+<td><code>corridor_features.parquet</code></td>
+<td>official observation / 25,844</td>
+<td>stage 04</td>
+<td>stages 06-07; dashboard</td>
+<td>Time-safe analytical signals</td>
+</tr>
+<tr>
+<td><code>scenario_panel.parquet</code></td>
+<td>copied panel / 25,844</td>
+<td>stage 05</td>
+<td>stage 06</td>
+<td>Controlled transformations only</td>
+</tr>
+<tr>
+<td><code>scenario_labels.parquet</code></td>
+<td>observation / 25,844</td>
+<td>stage 05</td>
+<td>stage 06</td>
+<td>Split, scenario ID, positive and hard-negative labels</td>
+</tr>
+<tr>
+<td><code>model_scores.csv</code></td>
+<td>eligible scenario row / 23,656</td>
+<td>stage 06</td>
+<td>evaluation page</td>
+<td>Candidate and hybrid scores</td>
+</tr>
+<tr>
+<td><code>model_comparison.csv</code></td>
+<td>split-family-model / 40</td>
+<td>stage 06</td>
+<td>model review; dashboard</td>
+<td>Ranking metrics</td>
+</tr>
+<tr>
+<td><code>top_ranked_corridors.csv</code></td>
+<td>official queue / 50</td>
+<td>stage 06-07</td>
+<td>dashboard</td>
+<td>Persisted review order</td>
+</tr>
+<tr>
+<td><code>evidence_table.csv</code></td>
+<td>evidence check / 200</td>
+<td>stage 07</td>
+<td>case page; briefs</td>
+<td>Recomputable case facts</td>
+</tr>
+<tr>
+<td><code>analyst_briefs.json</code></td>
+<td>brief / 5</td>
+<td>stage 08</td>
+<td>reporting reference</td>
+<td>Deterministic, caveated top-case briefs</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Required dashboard files fail visibly if absent. Optional files return a labelled empty state; the application never substitutes demo data.</p>
+<h2 id="unit-and-key-controls">Unit and key controls</h2>
+<ul>
+<li>HS6 remains a six-character string.</li>
+<li>BACI <code>v</code> is multiplied by 1,000 to obtain current USD.</li>
+<li>BACI <code>q</code> is retained in metric tons.</li>
+<li>Gold benchmark USD/troy ounce is converted to USD/metric ton.</li>
+<li>Canonical keys are checked for duplicates.</li>
+<li>Every panel row is retained unless explicitly classified; exclusions remain auditable.</li>
+</ul></section>
+<section class="page page-10 transformations"><div class="page-label">4 · Data architecture</div>
+
+<h1 id="preparation-rules-and-quality-classification">Preparation rules and quality classification</h1>
+<div class="section-rule"></div>
+
+<h2 id="core-transformations">Core transformations</h2>
+<div class="grid-2">
+  <div class="card blue"><h3>Trade value</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="V_{\mathrm{USD}} = 1000 \times v_{\mathrm{BACI}}"></div></div><p>BACI reports value in thousands of current USD.</p></div>
+  <div class="card"><h3>Quantity</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d1.svg" alt="Q_{\mathrm{mt}} = q_{\mathrm{BACI}}"></div></div><p>The selected BACI quantity is already reported in metric tons.</p></div>
+  <div class="card amber"><h3>Implied unit value</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d2.svg" alt="UV_{c,p,t} = \frac{V_{c,p,t}}{Q_{c,p,t}}"></div></div><p>Calculated only when value and quantity are positive.</p></div>
+  <div class="card red"><h3>Gold benchmark</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d3.svg" alt="B_{\mathrm{mt}} = B_{\mathrm{oz}} \times \frac{1{,}000{,}000}{31.1034768}"></div></div><p>Converts USD/troy ounce to USD/metric ton.</p></div>
+</div>
+
+<h2 id="quality-status">Quality status</h2>
+<p><code>data_quality_score</code> ranges from 0 to 6: one point for valid quantity, two for a matched benchmark, up to two for history depth, and one for core-field completeness. The status is assigned separately:</p>
+<ul>
+<li><strong>Fully usable:</strong> valid value and quantity, matched benchmark, enough history, no retained extreme caveat.</li>
+<li><strong>Usable with caveat:</strong> eligible for modelling but history is short or the row is a valid extreme.</li>
+<li><strong>Excluded from modelling, retained for audit:</strong> unit value cannot be computed, mainly because quantity is unavailable.</li>
+</ul>
+<div class="decision"><strong>Important distinction.</strong> Missing quantity excludes the row. For otherwise eligible rows, lower data quality can reduce the transparent weighted sum by at most 0.08. Data weakness does not increase unusualness.</div></section>
+<section class="page page-11 sources"><div class="page-label">5 · Sources and scope</div>
+
+<h1 id="sources-and-products">Official data sources and product-family design</h1>
+<div class="section-rule"></div>
+
+<div class="grid-3">
+  <div class="card blue"><h3>CEPII BACI</h3><p><strong>Role:</strong> annual bilateral trade facts.</p><p>Value and quantity by exporter, importer, year, and HS6 product.</p><p class="note">Official-derived filtered extract; annual aggregates, not transactions.</p></div>
+  <div class="card"><h3>World Bank</h3><p><strong>Role:</strong> broad market-price context.</p><p>Annual palm-oil, copper, and gold benchmark series.</p><p class="note">Not corridor-specific landed price or invoice fair value.</p></div>
+  <div class="card amber"><h3>FATF-Egmont</h3><p><strong>Role:</strong> typology language, caveats, and review questions.</p><p>Published 2020 trends and 2021 risk-indicator references.</p><p class="note">Never a feature, label, or row-level fact.</p></div>
+</div>
+
+<h2 id="why-these-three-hs6-products">Why these three HS6 products</h2>
+<div class="grid-3">
+  <div class="card palm"><h3>Crude palm oil · 151110</h3><p>High-volume bulk commodity with a usable annual benchmark. It tests behaviour around established physical flows.</p></div>
+  <div class="card copper"><h3>Refined copper cathodes · 740311</h3><p>Industrial metal with a widely followed market reference. It tests benchmark-relative movement.</p></div>
+  <div class="card gold"><h3>Non-monetary unwrought gold · 710812</h3><p>Compact, high-value product relevant to TBML typologies. The code excludes powder and does not reveal purity, form, or contract terms.</p></div>
+</div>
+
+<p>The families deliberately vary in volume, value concentration, market structure, and benchmark scale. That variation makes family-level evaluation necessary: a method that works well for gold may not behave the same way for palm oil.</p>
+<div class="decision"><strong>Design decision: one exact HS6 code per family.</strong> This sacrifices wider commodity coverage in return for clearer comparisons, stable benchmark mapping, and easier interpretation.</div></section>
+<section class="page page-12 profile"><div class="page-label">6 · Statistical profile</div>
+
+<h1 id="statistical-profile">Coverage and economic scale</h1>
+<div class="section-rule"></div>
+
+<div class="figure compact">
+  <img src="assets/coverage_by_year.png" alt="Annual observation coverage by product family">
+  <p class="caption"><strong>Figure 3.</strong> Official row coverage by year and family. Source: current corridor-product-year panel.</p>
+</div>
+
+<p>The panel contains 25,844 annual observations: 12,205 gold, 6,922 copper, and 6,717 palm-oil rows. Annual coverage ranges from 2,783 rows in 2017 to 3,510 in 2022. The chart describes record availability, not suspiciousness.</p>
+<h2 id="value-and-quantity-tell-different-stories">Value and quantity tell different stories</h2>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th style="text-align: right;">Official rows</th>
+<th style="text-align: right;">Trade value</th>
+<th style="text-align: right;">Share of scoped value</th>
+<th>Main interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gold</td>
+<td style="text-align: right;">12,205</td>
+<td style="text-align: right;">USD 2.851tn</td>
+<td style="text-align: right;">81.01%</td>
+<td>Value-weighted totals are dominated by gold</td>
+</tr>
+<tr>
+<td>Copper</td>
+<td style="text-align: right;">6,922</td>
+<td style="text-align: right;">USD 573.3bn</td>
+<td style="text-align: right;">16.29%</td>
+<td>Industrial benchmark context is material</td>
+</tr>
+<tr>
+<td>Palm oil</td>
+<td style="text-align: right;">6,717</td>
+<td style="text-align: right;">USD 95.1bn</td>
+<td style="text-align: right;">2.70%</td>
+<td>High physical quantity, lower value share</td>
+</tr>
+</tbody>
+</table>
+<div class="decision"><strong>Statistical consequence.</strong> A portfolio-level value-weighted statistic is mostly a statement about gold. The dashboard therefore shows each product family separately where scales differ materially.</div>
+
+<p>The profiling notebook also showed large within-family dispersion in implied unit value. That observation motivates log transformations, robust prior-history comparisons, same-year peer positioning, and explicit caveats for small quantities.</p></section>
+<section class="page page-13 profile"><div class="page-label">6 · Statistical profile</div>
+
+<h1 id="from-the-population-to-the-top-50">From the population to the Top 50</h1>
+<div class="section-rule"></div>
+
+<div class="figure compact">
+  <img src="assets/population_vs_queue.png" alt="Full population and Top 50 composition by product family">
+  <p class="caption"><strong>Figure 4.</strong> Product-family composition in the full panel and the selected official queue.</p>
+</div>
+
+<p>The Top 50 contains 18 gold, 18 palm-oil, and 14 copper observations. Palm oil is therefore more prominent in the queue than in the full row population, while gold is less dominant by count than it is by value.</p>
+<h2 id="what-the-queue-profile-means">What the queue profile means</h2>
+<ul>
+<li>Sixteen of the 50 rows are from 2022, making it the largest queue year.</li>
+<li>Forty-five rows are <code>usable_with_caveat</code>; the common reason is a retained valid extreme or limited history, not missing quantity.</li>
+<li>The queued rows together represent only 0.0061% of total scoped trade value. Rank is driven by unusual-pattern signals, not economic size.</li>
+<li>Every queued row has usable value and quantity. Missing quantity cannot create a high unit-value score.</li>
+</ul>
+<div class="decision"><strong>Design decision: separate unusualness from materiality.</strong> The current ranker answers “which patterns are analytically unusual?” It does not impose a minimum transaction value. A bank implementation would add customer, transaction, and materiality context before deciding review priority.</div>
+
+<p>The queue is a triage surface, not a prevalence estimate. Its composition must not be interpreted as a claim that one product, year, or country is riskier.</p></section>
+<section class="page page-14 gold-gap"><div class="page-label">6 · Statistical profile</div>
+
+<h1 id="gold-rows-without-usable-quantity">Gold rows without usable quantity</h1>
+<div class="section-rule"></div>
+
+<div class="figure compact">
+  <img src="assets/gold_quantity_coverage.png" alt="Missing quantity row share and value share by family">
+  <p class="caption"><strong>Figure 5.</strong> Missing quantity is large by record count in gold but small by reported trade value.</p>
+</div>
+
+<p>Gold has 1,877 rows without usable quantity, 15.38% of gold records. Those rows represent USD 1.183bn, only 0.04149% of gold value. This is why the analysis is a coverage control rather than an anomaly story: a meaningful share of records cannot be assessed, but almost all reported value remains covered.</p>
+<h2 id="what-the-deeper-audit-found">What the deeper audit found</h2>
+<p>One 2024 United Arab Emirates-to-Thailand row accounts for 70.9% of excluded gold value, but quantity is usable in the other seven years of that route. Separately, 14 routes are present in every year from 2017 to 2024 and lack usable quantity in every year. Twelve touch the Netherlands, yet all 14 together carry only USD 1.0m, or 0.08455% of excluded gold value.</p>
+<div class="grid-2">
+  <div class="card amber"><h3>Large one-year gap</h3><p>Financially prominent within the excluded subset; best treated as a source-record check, not a route-wide conclusion.</p></div>
+  <div class="card"><h3>Small recurring gaps</h3><p>Operationally traceable because the same routes repeat; not financially material and not a country-risk signal.</p></div>
+</div>
+
+<p>Missing quantity is retained for audit, monitored separately, and never converted into review priority.</p></section>
+<section class="page page-15 features"><div class="page-label">7 · Feature engineering</div>
+
+<h1 id="feature-engineering">Feature foundations</h1>
+<div class="section-rule"></div>
+
+<p>The current model input list contains 22 fields. Some are direct or transformed values; others encode history, peers, benchmark movement, corridor status, missingness, and data quality. All are calculated at the corridor-product-year grain.</p>
+<h2 id="level-and-benchmark-features">Level and benchmark features</h2>
+<div class="grid-2">
+  <div class="card">
+    <h3>Log unit value</h3>
+    <div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="L_{c,p,t} = \log(UV_{c,p,t})"></div></div>
+    <p>Compresses the highly skewed unit-value scale. Undefined when value or quantity is non-positive.</p>
+  </div>
+  <div class="card blue">
+    <h3>Benchmark residual</h3>
+    <div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d1.svg" alt="r_{c,p,t} = \log(UV_{c,p,t}) - \log(B_{p,t})"></div></div>
+    <p>Positive values sit above the annual family benchmark; negative values sit below it.</p>
+  </div>
+</div>
+
+<p>The residual is a log ratio. A residual of zero means parity with the benchmark; it does not mean “no risk”. The benchmark is a broad market reference and does not observe freight, purity, grade, contract terms, timing, or re-export effects.</p>
+<h2 id="explicit-missingness-fields">Explicit missingness fields</h2>
+<p><code>missing_quantity_flag</code>, <code>missing_benchmark_flag</code>, <code>missing_history_flag</code>, and <code>missing_country_mapping_flag</code> preserve data limitations for modelling and audit. Model eligibility still requires a valid unit value, so missing quantity rows do not enter fitted or official scores.</p>
+<div class="decision"><strong>Design decision: logs before differences.</strong> Log ratios turn multiplicative changes into additive differences and make a doubling comparable in magnitude to a halving. Zero and missing denominators remain excluded rather than silently replaced.</div></section>
+<section class="page page-16 features"><div class="page-label">7 · Feature engineering</div>
+
+<h1 id="prior-history-and-same-year-peers">Prior history and same-year peers</h1>
+<div class="section-rule"></div>
+
+<h2 id="shifted-corridor-history">Shifted corridor history</h2>
+<p>For each <code>corridor_id + hs6</code>, prior log unit values are accumulated in year order. The current row is excluded before the median and median absolute deviation (MAD) are calculated.</p>
+<div class="equation-box">
+<div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="m_{c,p,t} = \mathrm{median}\{L_{c,p,s}: s<t\}"></div>
+<div class="math-display"><img src="assets/math/technical_companion_d1.svg" alt="MAD_{c,p,t} = \mathrm{median}\{|L_{c,p,s}-m_{c,p,t}|: s<t\}"></div>
+<div class="math-display"><img src="assets/math/technical_companion_d2.svg" alt="z^{robust}_{c,p,t} = \frac{L_{c,p,t}-m_{c,p,t}}{\max(MAD_{c,p,t},0.05)}"></div>
+</div>
+
+<p>The implementation uses the unscaled MAD, not the normal-consistency factor <code>1.4826</code>. If prior MAD is zero or smaller than <code>1e-9</code>, the denominator becomes <code>0.05</code>. If no prior median exists, the robust z-score remains missing. This can produce large values for short, low-dispersion histories, so history depth is always shown as a caveat.</p>
+<h2 id="same-family-same-year-peer-percentile">Same-family, same-year peer percentile</h2>
+<div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d3.svg" alt="P_{p,t}(r_{c,p,t}) = \mathrm{rank}_{pct}\{r_{\cdot,p,t}\}"></div></div>
+
+<p>The percentile ranks the row&rsquo;s benchmark residual among all corridors in the same family and year. Same-year peers are available at assessment time, so this comparison is time-safe even though it is not prior-only.</p>
+<div class="decision"><strong>Trade-off: contemporaneous context.</strong> Peer position removes a market-year scale effect, but the peer group can still mix legitimate differences in grade, trade terms, and route structure.</div></section>
+<section class="page page-17 features"><div class="page-label">7 · Feature engineering</div>
+
+<h1 id="movement-benchmark-drift-and-corridor-status">Movement, benchmark drift, and corridor status</h1>
+<div class="section-rule"></div>
+
+<p>For the previous observed row in the same corridor and HS6 group:</p>
+<div class="equation-box">
+<div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="\Delta \log X_{c,p,t} = \log\left(\frac{X_{c,p,t}}{X_{c,p,t^-}}\right)"></div>
+</div>
+
+<p>This convention produces <code>trade_value_yoy_change</code>, <code>quantity_yoy_change</code>, and <code>unit_value_yoy_change</code>. The “previous” observation is the prior available row, not necessarily the immediately preceding calendar year.</p>
+<div class="grid-2">
+  <div class="card blue"><h3>Value-quantity divergence</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d1.svg" alt="D_{c,p,t} = \Delta\log V_{c,p,t} - \Delta\log Q_{c,p,t}"></div></div><p>Shows whether value changed faster than reported physical quantity.</p></div>
+  <div class="card"><h3>Benchmark-adjusted drift</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d2.svg" alt="\Delta r_{c,p,t} = r_{c,p,t} - r_{c,p,t^-}"></div></div><p>Shows whether the corridor's gap to the market benchmark changed.</p></div>
+  <div class="card amber"><h3>Benchmark-consistency gap</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d3.svg" alt="C_{c,p,t}=|\Delta\log UV_{c,p,t}-\Delta\log B_{p,t}|"></div></div><p>Near zero means corridor unit value moved similarly to the market.</p></div>
+  <div class="card red"><h3>Corridor status</h3><p>`corridor_activity_history` counts earlier appearances. `novelty` marks the first. `reactivation` marks a return after a gap of more than one year.</p></div>
+</div>
+
+<p><code>valid_extreme_flag</code> records unit value above five times or below 0.2 times the benchmark after basic validity checks. It is a caveat-bearing analytical flag, not proof of mispricing.</p></section>
+<section class="page page-18 timeline"><div class="page-label">7 · Feature engineering</div>
+
+<h1 id="time-safety-and-feature-use">Time-safety and feature use</h1>
+<div class="section-rule"></div>
+
+<div class="banner teal"><div><strong>Time-safe means no future information.</strong><br>When a 2022 row is assessed, its history features may use 2017-2021. Same-year 2022 peers and the 2022 benchmark are allowed. Data from 2023-2024 is unavailable to that row.</div></div>
+
+<div class="flow">
+  <div class="flow-node"><b>2017-2020</b><strong>Prior observations</strong><small>May contribute to shifted history for a later row.</small></div>
+  <div class="flow-node"><b>2021</b><strong>Most recent prior row</strong><small>Used for lagged changes when available.</small></div>
+  <div class="flow-node teal"><b>2022</b><strong>Row being assessed</strong><small>Current facts, 2022 benchmark, and 2022 peers are available.</small></div>
+  <div class="flow-node red"><b>2023-2024</b><strong>Hidden future</strong><small>Never enters the 2022 feature vector.</small></div>
+</div>
+
+<h2 id="feature-roles">Feature roles</h2>
+<table>
+<thead>
+<tr>
+<th>Feature family</th>
+<th>Time-safe reference</th>
+<th style="text-align: center;">Weighted sum</th>
+<th style="text-align: center;">ML</th>
+<th style="text-align: center;">Evidence/dashboard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unit value and logs</td>
+<td>current row</td>
+<td style="text-align: center;">indirect</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td>Prior median, MAD, robust z</td>
+<td>prior observations only</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td>Same-year peer percentile</td>
+<td>same family and year</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td>YoY log changes and divergence</td>
+<td>previous observed row</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td>Benchmark residual and drift</td>
+<td>current benchmark; prior residual</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td>Novelty and reactivation</td>
+<td>prior activity count/year</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td>Missingness and quality</td>
+<td>current data state</td>
+<td style="text-align: center;">reduction / eligibility</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+</tbody>
+</table>
+<p class="caption"><em>Figure 6. Feature construction timeline. The current row can use prior history and contemporaneous market context, never future years.</em></p></section>
+<section class="page page-19 scenarios"><div class="page-label">8 · Evaluation design</div>
+
+<h1 id="controlled-evaluation">Controlled evaluation scenarios</h1>
+<div class="section-rule"></div>
+
+<p>Public BACI rows have no confirmed TBML outcome. The project therefore evaluates ranking behaviour on a frozen copy of the clean panel with controlled transformations.</p>
+<div class="two-track">
+  <div class="track">
+    <h3>Official observations</h3>
+    <p>Unchanged public rows are feature-engineered and scored after model selection.</p>
+    <div class="banner teal"><strong>Output: official Top 50 and evidence</strong></div>
+  </div>
+  <div class="track-link">≠</div>
+  <div class="track future">
+    <h3>Controlled scenarios</h3>
+    <p>540 selected rows are modified on a test copy: 108 positives and 72 hard negatives in each split.</p>
+    <div class="banner red"><strong>Output: model-comparison metrics only</strong></div>
+  </div>
+</div>
+
+<h2 id="scenario-catalogue">Scenario catalogue</h2>
+<table>
+<thead>
+<tr>
+<th>Evaluation role</th>
+<th>Scenario</th>
+<th>Controlled change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Positive</td>
+<td>Over-valuation</td>
+<td>Value multiplied 2.2-3.5×; quantity held</td>
+</tr>
+<tr>
+<td>Positive</td>
+<td>Under-valuation</td>
+<td>Value multiplied 0.25-0.45×; quantity held</td>
+</tr>
+<tr>
+<td>Positive</td>
+<td>Low volume, high value</td>
+<td>Value rises 1.8-2.8×; quantity falls to 0.35-0.65×</td>
+</tr>
+<tr>
+<td>Hard negative</td>
+<td>Benchmark-consistent movement</td>
+<td>Unit value aligned with the family-year median benchmark residual</td>
+</tr>
+<tr>
+<td>Hard negative</td>
+<td>Proportional growth</td>
+<td>Value and quantity multiplied by the same factor</td>
+</tr>
+</tbody>
+</table>
+<p>Scenario IDs and labels live in <code>scenario_labels.parquet</code>, not in the scenario panel or feature table. Forbidden label-like fields are explicitly rejected by <code>build_features()</code>.</p>
+<div class="decision"><strong>Limitation.</strong> Success on planted patterns shows whether the method recovers the behaviours it was designed to recognise. It is not a real-world crime-detection rate.</div></section>
+<section class="page page-20 rules"><div class="page-label">9 · Scoring implementation</div>
+
+<h1 id="scoring-models">Transparent weighted-sum score</h1>
+<div class="section-rule"></div>
+
+<p>Nine signals are first normalised to the range 0-1 using fixed reference values. Their documented points are added, then two reductions are subtracted.</p>
+<div class="equation-box">
+<div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="S_{rule}=\mathrm{clip}_{[0,1]}\left(\sum_j w_j c_j - R_{market} - R_{quality}\right)"></div>
+</div>
+
+<div class="compact-table">
+<table>
+<thead>
+<tr>
+<th>Positive component</th>
+<th style="text-align: right;">Weight</th>
+<th>Reference / construction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prior-history deviation</td>
+<td style="text-align: right;">0.20</td>
+<td><code>abs(robust_z) / 4</code>, clipped</td>
+</tr>
+<tr>
+<td>Benchmark residual</td>
+<td style="text-align: right;">0.18</td>
+<td><code>abs(residual) / 1</code>, clipped</td>
+</tr>
+<tr>
+<td>Benchmark-adjusted drift</td>
+<td style="text-align: right;">0.18</td>
+<td><code>abs(drift) / 0.70</code>, clipped</td>
+</tr>
+<tr>
+<td>Unit-value movement</td>
+<td style="text-align: right;">0.12</td>
+<td><code>abs(unit-value change) / 0.80</code>, clipped</td>
+</tr>
+<tr>
+<td>Value-quantity divergence</td>
+<td style="text-align: right;">0.12</td>
+<td><code>abs(divergence) / 0.80</code>, clipped</td>
+</tr>
+<tr>
+<td>Peer-tail position</td>
+<td style="text-align: right;">0.10</td>
+<td>distance from percentile 0.5, doubled</td>
+</tr>
+<tr>
+<td>New corridor</td>
+<td style="text-align: right;">0.06</td>
+<td>binary</td>
+</tr>
+<tr>
+<td>Reactivated corridor</td>
+<td style="text-align: right;">0.08</td>
+<td>binary</td>
+</tr>
+<tr>
+<td>Valid extreme</td>
+<td style="text-align: right;">0.14</td>
+<td>binary</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="what-lowers-the-score">What lowers the score</h2>
+<div class="grid-2">
+  <div class="card blue"><h3>Market-consistency reduction · up to 0.15</h3><p><code>0.15 × (1 - clip(gap / 0.35))</code>. A small gap means unit value moved similarly to the market, so more is subtracted. Once the gap reaches 0.35, the reduction falls to zero.</p></div>
+  <div class="card amber"><h3>Data-reliability reduction · up to 0.08</h3><p><code>0.08 × (6 - quality score) / 6</code>. A quality score of 6 subtracts zero. Lower usable scores subtract progressively more. Ineligible rows are never scored.</p></div>
+</div>
+
+<p>The weighted sum is auditable but not statistically fitted. Its weights express documented review priorities; they do not estimate causal importance or probability.</p></section>
+<section class="page page-21 models"><div class="page-label">9 · Scoring implementation</div>
+
+<h1 id="candidate-model-implementations">Candidate model implementations</h1>
+<div class="section-rule"></div>
+
+<div class="grid-2">
+  <div class="card blue"><h3>Logistic regression baseline</h3><ul><li>Median imputation with missing indicators.</li><li>Standard scaling.</li><li>Balanced class weights.</li><li>Liblinear solver; maximum 2,000 iterations.</li></ul><p class="note">A linear benchmark for whether a simple learned combination is sufficient.</p></div>
+  <div class="card red"><h3>XGBoost supervised challenger</h3><ul><li>160 trees; histogram tree method.</li><li>Depth, learning rate, child weight, and L2 penalty compared on validation AP.</li><li>Subsample and column sample 0.9; L1 penalty 0.15.</li><li>Class imbalance handled with `scale_pos_weight`.</li></ul><p class="note">Captures nonlinear interactions between the 22 input fields.</p></div>
+  <div class="card"><h3>Isolation Forest side signal</h3><ul><li>Median imputation.</li><li>160 trees; fixed seed.</li><li>Negative decision function min-max scaled to 0-1.</li></ul><p class="note">Unsupervised outlier reference, not selected for the official queue.</p></div>
+  <div class="card amber"><h3>Weighted-sum baseline</h3><ul><li>No fitting.</li><li>Fixed weights and references in YAML.</li><li>Component-level decomposition.</li><li>Market and quality reductions.</li></ul><p class="note">Provides an inspectable review logic and the transparent component of the hybrid.</p></div>
+</div>
+
+<h2 id="selected-xgboost-configuration">Selected XGBoost configuration</h2>
+<p><code>max_depth=2</code>, <code>learning_rate=0.06</code>, <code>min_child_weight=2</code>, and <code>reg_lambda=4</code> produced validation average precision <code>0.3860</code>, the best of three deliberately bounded configurations. The seed is <code>20260117</code>; training uses 2017-2020 only.</p>
+<div class="decision"><strong>Design trade-off.</strong> The search is intentionally narrow. It reduces tuning flexibility and overfitting opportunities, but it does not prove the chosen hyperparameters are globally optimal.</div></section>
+<section class="page page-22 hybrid"><div class="page-label">9 · Scoring implementation</div>
+
+<h1 id="hybrid-selection-and-test-discipline">Hybrid selection and test discipline</h1>
+<div class="section-rule"></div>
+
+<p>The supervised challenger is chosen on 2021-2022 validation average precision. XGBoost wins. Three predefined blends then compete on validation precision@50.</p>
+<div class="equation-box">
+<div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="S_{hybrid}=(1-\alpha)S_{rule}+\alpha S_{xgb}"></div>
+<div class="math-display"><img src="assets/math/technical_companion_d1.svg" alt="\alpha \in \{0.25,0.50,0.75\}"></div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">XGBoost weight <img class="math-inline" src="assets/math/technical_companion_i2.svg" alt="\alpha"></th>
+<th style="text-align: right;">Weighted-sum weight</th>
+<th style="text-align: right;">Validation precision@50</th>
+<th style="text-align: right;">Recall@50</th>
+<th style="text-align: right;">AP</th>
+<th style="text-align: right;">Hard-negative FPR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;"><strong>0.75</strong></td>
+<td style="text-align: right;"><strong>0.25</strong></td>
+<td style="text-align: right;"><strong>0.46</strong></td>
+<td style="text-align: right;"><strong>0.213</strong></td>
+<td style="text-align: right;"><strong>0.309</strong></td>
+<td style="text-align: right;">0.0139</td>
+</tr>
+<tr>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">0.148</td>
+<td style="text-align: right;">0.264</td>
+<td style="text-align: right;">0.0139</td>
+</tr>
+<tr>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">0.26</td>
+<td style="text-align: right;">0.120</td>
+<td style="text-align: right;">0.199</td>
+<td style="text-align: right;">0.0139</td>
+</tr>
+</tbody>
+</table>
+<div class="flow">
+  <div class="flow-node"><b>Fit</b><strong>2017-2020</strong><small>Logistic, XGBoost, and Isolation Forest learn from the scenario test copy.</small></div>
+  <div class="flow-node teal"><b>Select</b><strong>2021-2022</strong><small>Choose challenger, then predefined blend weight.</small></div>
+  <div class="flow-node red"><b>Test once</b><strong>2023-2024</strong><small>Measure the frozen design on unseen years.</small></div>
+  <div class="flow-node amber"><b>Apply</b><strong>Official rows</strong><small>Selected method scores real eligible observations only.</small></div>
+</div>
+
+<p>Standalone XGBoost later scores slightly higher than the hybrid on held-out test precision@50, <code>0.50</code> versus <code>0.48</code>. The hybrid remains selected because changing the method after seeing test results would turn the test into another selection set.</p></section>
+<section class="page page-23 evaluation"><div class="page-label">10 · Model evaluation</div>
+
+<h1 id="model-evaluation">Metrics and held-out results</h1>
+<div class="section-rule"></div>
+
+<div class="grid-3">
+  <div class="card"><h3>Precision@k</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d0.svg" alt="P@k=\frac{TP_k}{k}"></div></div><p>Share of the top queue that contains planted positive patterns.</p></div>
+  <div class="card blue"><h3>Recall@k</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d1.svg" alt="R@k=\frac{TP_k}{N_+}"></div></div><p>Share of all planted positives recovered in the top queue.</p></div>
+  <div class="card amber"><h3>Lift@k</h3><div class="equation-box"><div class="math-display"><img src="assets/math/technical_companion_d2.svg" alt="L@k=\frac{P@k}{N_+/N}"></div></div><p>Concentration relative to random selection from the evaluated split.</p></div>
+</div>
+
+<p>Average precision summarises ranking quality across thresholds. Hard-negative false-positive rate is the share of planted benign look-alikes that enter the Top 50. Ordinary false-positive rate uses all remaining negative rows and is reported as a diagnostic, not as a real-world false-alert rate.</p>
+<div class="figure compact">
+  <img src="assets/model_test_comparison.png" alt="Held-out model precision and lift comparison">
+  <p class="caption"><strong>Figure 7.</strong> Held-out 2023-2024 controlled-scenario results. These are scenario-test metrics, not crime-detection rates.</p>
+</div>
+
+<p>The selected hybrid places 24 planted positives in its Top 50: precision <code>0.48</code>, recall <code>0.2222</code>, lift <code>26.81</code>, average precision <code>0.29785</code>, and hard-negative false-positive rate <code>0.0</code>.</p></section>
+<section class="page page-24 evaluation"><div class="page-label">10 · Model evaluation</div>
+
+<h1 id="family-variation-and-model-interpretation">Family variation and model interpretation</h1>
+<div class="section-rule"></div>
+
+<div class="figure compact">
+  <img src="assets/family_hybrid_performance.png" alt="Hybrid precision and recall by family">
+  <p class="caption"><strong>Figure 8.</strong> Family-level Top-50 metrics use a separate Top 50 within each product family; they are diagnostic and do not describe the mixed official queue.</p>
+</div>
+
+<p>The hybrid&rsquo;s held-out family results differ: gold precision@50 is <code>0.48</code> with recall <code>0.667</code>; copper is <code>0.34</code> / <code>0.472</code>; palm oil is <code>0.16</code> / <code>0.222</code>. The comparison shows heterogeneity, but each family has only 36 planted positives per split. It is evidence for monitoring family behaviour, not for declaring one commodity intrinsically easier or riskier.</p>
+<div class="figure compact">
+  <img src="assets/global_shap.png" alt="Global XGBoost SHAP contribution summary">
+  <p class="caption"><strong>Figure 9.</strong> Mean absolute SHAP values for the XGBoost challenger. Magnitude shows average model contribution, not direction, causality, or case evidence.</p>
+</div>
+
+<p>Benchmark residual and benchmark-consistency gap dominate the global XGBoost summary, followed by same-family-year peer percentile and log unit value. This explains what the learned challenger uses most across scenario rows.</p>
+<div class="decision"><strong>SHAP boundary.</strong> The project produces global SHAP only. Selected-case evidence comes from deterministic feature calculations and thresholds, not row-level SHAP.</div></section>
+<section class="page page-25 queue"><div class="page-label">11 · Official output</div>
+
+<h1 id="official-queue">Scoring official observations and constructing the queue</h1>
+<div class="section-rule"></div>
+
+<p>After selection, the fitted models and fixed weighted sum return to <code>corridor_features.parquet</code>. Only rows with valid unit value and an eligible quality status are scored.</p>
+<div class="flow">
+  <div class="flow-node"><b>Eligibility</b><strong>23,656 official rows</strong><small>Positive value and quantity; usable status.</small></div>
+  <div class="flow-node red"><b>Scoring</b><strong>Frozen 75/25 hybrid</strong><small>No scenario IDs or labels are present.</small></div>
+  <div class="flow-node teal"><b>Ordering</b><strong>Score descending</strong><small><code>obs_id</code> is a deterministic tie-breaker.</small></div>
+  <div class="flow-node amber"><b>Persistence</b><strong>Top 50 CSV</strong><small>Stage 07 adds evidence counts.</small></div>
+</div>
+
+<div class="figure queue">
+  <img src="assets/dashboard_07_ranking_table.png" alt="Current Top 50 Review Queue dashboard table">
+  <p class="caption"><strong>Figure 10.</strong> Current live queue capture. Filters re-slice loaded rows; the CSV export retains full precision and rank order.</p>
+</div>
+
+<p>The dashboard exposes rank, year, corridor, product, trade value, quantity, implied unit value, annual benchmark price, and review-priority score. Exporter and importer filters display country names while preserving ISO3 values.</p>
+<p>Rank reflects analytical ordering within this product and period scope. It is not a country-risk judgement, customer rating, or probability.</p></section>
+<section class="page page-26 evidence"><div class="page-label">12 · Case construction</div>
+
+<h1 id="evidence-construction">Evidence construction and selected-case analytics</h1>
+<div class="section-rule"></div>
+
+<p>Stage 07 converts the Top 50 into 200 evidence rows, exactly four per case. Candidate evidence types include history deviation, annual unit-value change, benchmark-adjusted drift, benchmark gap, and value-quantity divergence. The four strongest qualifying checks are retained.</p>
+<p>Each evidence row carries:</p>
+<ul>
+<li><code>evidence_id</code>, <code>obs_id</code>, source table, and source row ID;</li>
+<li>metric name, observed value, comparison value, group, and threshold;</li>
+<li>direction and severity;</li>
+<li>source fields and source version;</li>
+<li>plain-English summary and caveat.</li>
+</ul>
+<div class="figure case">
+  <img src="assets/dashboard_04_selected_case.png" alt="Selected Case Review dashboard">
+  <p class="caption"><strong>Figure 11.</strong> Current selected-case capture for rank 1: Spain to Netherlands, non-monetary unwrought gold, 2022.</p>
+</div>
+
+<p>The case page combines facts, market and corridor history, same-year peers, actual feature values, evidence cards, and limitations. Runtime checks reconcile chart and table values before display. Five deterministic analyst briefs are built from evidence IDs and pass citation, caveat, source, prohibited-language, and conclusion-boundary gates.</p>
+<div class="decision"><strong>Design decision: deterministic evidence.</strong> Model attribution can help reviewers understand a model globally. Case justification instead uses recomputable fields and explicit comparison rules.</div></section>
+<section class="page page-27 dashboard"><div class="page-label">13 · Application layer</div>
+
+<h1 id="streamlit-implementation">Streamlit dashboard implementation</h1>
+<div class="section-rule"></div>
+
+<div class="flow">
+  <div class="flow-node"><b>Entry</b><strong><code>streamlit_app.py</code></strong><small>Page config, hidden router, custom navigation, boundary footer.</small></div>
+  <div class="flow-node teal"><b>Pages</b><strong><code>app_pages/</code></strong><small>Nine stakeholder pages plus the welcome route.</small></div>
+  <div class="flow-node blue"><b>Components</b><strong><code>components/</code></strong><small>Cards, charts, tables, filters, icons, styles, banners.</small></div>
+  <div class="flow-node amber"><b>Services</b><strong><code>services/</code></strong><small>Loaders, metrics, contracts, state, paths, formatting.</small></div>
+</div>
+
+<h2 id="runtime-design">Runtime design</h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Paths</td>
+<td>Repository root discovered using <code>configs/project.yml</code> and <code>src/tbml_common.py</code> markers</td>
+</tr>
+<tr>
+<td>Data loading</td>
+<td>Central <code>DATA_FILES</code> registry with required/optional status</td>
+</tr>
+<tr>
+<td>Caching</td>
+<td><code>st.cache_data</code> on file and configuration loaders</td>
+</tr>
+<tr>
+<td>Contracts</td>
+<td>Required columns and integrity rules in <code>data_contracts.py</code></td>
+</tr>
+<tr>
+<td>Selection</td>
+<td><code>tbml_selected_obs_id</code> stored through typed session-state helpers</td>
+</tr>
+<tr>
+<td>Filters</td>
+<td>Re-slice cached dataframes; do not rerun the pipeline</td>
+</tr>
+<tr>
+<td>Exports</td>
+<td>Current queue view exported to CSV without modifying source files</td>
+</tr>
+<tr>
+<td>Missing outputs</td>
+<td>Required files raise a named regeneration error; optional panels show transparent empty states</td>
+</tr>
+<tr>
+<td>Content</td>
+<td>Stakeholder wording centralised in <code>dashboard_content.yml</code></td>
+</tr>
+<tr>
+<td>Theme</td>
+<td>Project tokens in <code>dashboard_theme.yml</code>; Streamlit base theme in <code>.streamlit/config.toml</code></td>
+</tr>
+</tbody>
+</table>
+<p>The application is Python/Streamlit throughout. There is no React, Flask, database, API service, authentication layer, or LLM call in the current dashboard.</p></section>
+<section class="page page-28 deployment"><div class="page-label">14 · Deployment</div>
+
+<h1 id="deployment">GitHub and Streamlit Community Cloud</h1>
+<div class="section-rule"></div>
+
+<div class="flow six">
+  <div class="flow-node"><b>01</b><strong>Local development</strong><small>Pipeline, tests, dashboard, and document builds run in the repository environment.</small></div>
+  <div class="flow-node teal"><b>02</b><strong>Validated source and outputs</strong><small>Generated public-data artefacts required by the dashboard are committed.</small></div>
+  <div class="flow-node"><b>03</b><strong>Git commit and push</strong><small>Versioned code, configuration, and dashboard data move to GitHub.</small></div>
+  <div class="flow-node teal"><b>04</b><strong>GitHub repository</strong><small>Streamlit Community Cloud reads the configured branch and entry point.</small></div>
+  <div class="flow-node amber"><b>05</b><strong>Cloud rebuild</strong><small><code>requirements.txt</code> installs the slim runtime; the app starts.</small></div>
+  <div class="flow-node red"><b>06</b><strong>Live read-only dashboard</strong><small><a href="https://tbml-review-triage.streamlit.app/">tbml-review-triage.streamlit.app</a></small></div>
+</div>
+
+<h2 id="verified-deployment-elements">Verified deployment elements</h2>
+<ul>
+<li>Entry point: <code>dashboard/streamlit_app.py</code>.</li>
+<li>Runtime dependencies: pinned Streamlit, Plotly, pandas, NumPy, PyArrow, and PyYAML in <code>requirements.txt</code>.</li>
+<li>Full pipeline dependencies: separate <code>requirements-pipeline.txt</code>.</li>
+<li>Streamlit theme/server settings: <code>.streamlit/config.toml</code>.</li>
+<li>Repository default working branch for this build: <code>develop</code>.</li>
+<li>No active GitHub Actions workflow is present for deployment.</li>
+</ul>
+<p>The repository does not implement scheduled source refresh, automated retraining, production storage, API scoring, secrets, authentication, or operational monitoring. Streamlit Community Cloud serves committed public-data outputs.</p>
+<div class="decision"><strong>Design trade-off: reproducible showcase versus live service.</strong> Committed artefacts make the public project easy to inspect and deploy. They do not provide automated data freshness or production controls.</div></section>
+<section class="page page-29 validation"><div class="page-label">15 · Controls</div>
+
+<h1 id="validation">Validation, testing, and reproducibility</h1>
+<div class="section-rule"></div>
+
+<div class="compact-table">
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Control</th>
+<th>Implementation</th>
+<th>Current evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wrong source or scope</td>
+<td>Hash, schema, year, HS6, and count checks</td>
+<td>stage 01</td>
+<td>source manifest passes</td>
+</tr>
+<tr>
+<td>Row loss / duplicate grain</td>
+<td>Count reconciliation and canonical-key uniqueness</td>
+<td>panel builder</td>
+<td>25,844 retained</td>
+</tr>
+<tr>
+<td>Unit error</td>
+<td>Explicit value and gold benchmark conversions</td>
+<td>common module/tests</td>
+<td>current outputs reconcile</td>
+</tr>
+<tr>
+<td>Time leakage</td>
+<td>Shifted history; temporal splits</td>
+<td>feature/scenario code</td>
+<td>tests and manifest</td>
+</tr>
+<tr>
+<td>Label leakage</td>
+<td>Separate label table; forbidden fields rejected</td>
+<td>stages 04-06</td>
+<td>manifest and tests</td>
+</tr>
+<tr>
+<td>Scenario contamination</td>
+<td>Official queue rescored from official features only</td>
+<td>stage 06</td>
+<td>official-only queue test</td>
+</tr>
+<tr>
+<td>Unsupported case claims</td>
+<td>Evidence IDs, sources, caveats, language gates</td>
+<td>stages 07-08</td>
+<td>5/5 briefs pass</td>
+</tr>
+<tr>
+<td>Dashboard schema drift</td>
+<td>Data contracts and missing-output behaviour</td>
+<td>dashboard services</td>
+<td>page/data tests</td>
+</tr>
+<tr>
+<td>Display inconsistency</td>
+<td>Chart/table runtime gates</td>
+<td>case services/tests</td>
+<td>test suite passes</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="current-validation-status">Current validation status</h2>
+<p><code>157</code> tests pass across dashboard pages, services, metrics, source cards, theme contracts, model evaluation, trade landscape, selected-case calculations, and gold coverage. Pytest emitted one non-analytical warning because its cache directory was not writable in the document-build sandbox.</p>
+<h2 id="core-reproduction-commands">Core reproduction commands</h2>
+<pre><code class="language-powershell">python -m pip install -r requirements-pipeline.txt
+python src/00_check_environment.py
+python src/01_verify_sources.py
+python src/02_ingest_official_sources.py
+python src/03_build_panel.py
+python src/04_build_features.py
+python src/05_build_scenarios.py
+python src/06_train_evaluate_models.py
+python src/07_build_evidence.py
+python src/08_build_briefs.py
+python src/09_generate_reports.py
+python -m pytest tests -q
+python -m streamlit run dashboard/streamlit_app.py
+</code></pre></section>
+<section class="page page-30 limitations"><div class="page-label">16-17 · Interpretation and future state</div>
+
+<h1 id="limitations-future">Limitations and future bank pathway</h1>
+<div class="section-rule"></div>
+
+<h2 id="current-limitations">Current limitations</h2>
+<p>The analysis is annual and aggregate. It does not observe invoices, shipments, customers, payment chains, counterparties, ownership, grade, purity, Incoterms, freight, or contract timing. World Bank series introduce basis risk; short histories can destabilise robust comparisons; missing quantity removes rows from unit-value scoring; scenarios test designed behaviours rather than confirmed outcomes; scores are uncalibrated; global SHAP is not case evidence; and committed outputs do not refresh automatically.</p>
+<h2 id="future-bank-integration">Future bank integration</h2>
+<div class="two-track">
+  <div class="track"><h3>Current implementation</h3><p>External public-data signal → ranked official queue → recomputable evidence → human review starting point.</p></div>
+  <div class="track-link">+</div>
+  <div class="track future"><h3>Future-state design only</h3><p>Add governed KYC/CDD, trade documents, shipment/customs, payments, screening, ownership, case management, and disposition feedback.</p></div>
+</div>
+
+<p>An optional AI assistant could help locate related records, compare fields, organise a timeline, and cite agreements, conflicts, or gaps. It must not decide suspicion, disposition, or action. Every result would require source links, entitlements, audit logs, validation, privacy controls, and accountable human review.</p>
+<div class="decision"><strong>Adoption path.</strong> Start with offline enrichment and no automated decisions; then controlled case-management integration and disposition capture; only then consider validated deployment, monitoring, and periodic recalibration.</div>
+
+<blockquote>
+<p>This output prioritises an unusual corridor-product pattern for human review. It does not establish money laundering, misinvoicing, or criminal intent.</p>
+</blockquote></section>
+<section class="page page-31 appendix"><div class="page-label">Appendix A · Feature reference</div>
+
+<h1 id="appendix-features">Feature reference: levels, history, and peers</h1>
+<div class="section-rule"></div>
+
+<div class="tiny-table">
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Definition / formula</th>
+<th>Grain and time rule</th>
+<th>Missing / edge handling</th>
+<th>Primary use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>log_unit_value</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i0.svg" alt="\log(V/Q)"></td>
+<td>current corridor-product-year</td>
+<td>missing if unit value invalid</td>
+<td>ML; basis for history</td>
+</tr>
+<tr>
+<td><code>shifted_corridor_history_median</code></td>
+<td>median prior log unit value</td>
+<td>same corridor+HS6, years before current</td>
+<td>missing at first usable history</td>
+<td>ML; history evidence</td>
+</tr>
+<tr>
+<td><code>shifted_corridor_history_mad</code></td>
+<td>median absolute deviation around shifted median</td>
+<td>prior-only</td>
+<td>missing without prior history</td>
+<td>ML; robust z denominator</td>
+</tr>
+<tr>
+<td><code>robust_historical_z</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i1.svg" alt="(L-m)/\max(MAD,0.05)"></td>
+<td>prior-only</td>
+<td>missing if median missing; unscaled MAD</td>
+<td>rules; ML; evidence</td>
+</tr>
+<tr>
+<td><code>same_family_year_peer_percentile</code></td>
+<td>percentile rank of benchmark residual</td>
+<td>same family and current year</td>
+<td>average rank for ties</td>
+<td>rules; ML; peer view</td>
+</tr>
+<tr>
+<td><code>benchmark_residual</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i2.svg" alt="\log(UV)-\log(B)"></td>
+<td>current row and current-year benchmark</td>
+<td>missing if unit value/benchmark absent</td>
+<td>rules; ML; evidence</td>
+</tr>
+<tr>
+<td><code>benchmark_price_usd_per_metric_ton</code></td>
+<td>annual World Bank benchmark, normalised to USD/mt</td>
+<td>family-year</td>
+<td>matched for all scoped rows</td>
+<td>context/dashboard</td>
+</tr>
+<tr>
+<td><code>benchmark_yoy_change</code></td>
+<td>log benchmark change from prior year</td>
+<td>family-year</td>
+<td>missing in first year</td>
+<td>ML; consistency gap</td>
+</tr>
+<tr>
+<td><code>data_quality_score</code></td>
+<td>quantity 1 + benchmark 2 + history 0-2 + completeness 1</td>
+<td>current row plus prior-count depth</td>
+<td>0-6</td>
+<td>ML; weighted-sum reduction</td>
+</tr>
+<tr>
+<td><code>valid_extreme_flag</code></td>
+<td>unit value &gt;5× or &lt;0.2× benchmark after validity checks</td>
+<td>current row</td>
+<td>false if ratio unavailable</td>
+<td>rules; caveat</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The model input list is defined once in <code>feature_columns()</code>. Identity fields such as <code>obs_id</code>, year, country codes, corridor ID, HS6, family, and product name travel alongside the features but are not model inputs.</p></section>
+<section class="page page-32 appendix"><div class="page-label">Appendix A · Feature reference</div>
+
+<h1 id="feature-reference-changes-status-and-missingness">Feature reference: changes, status, and missingness</h1>
+<div class="section-rule"></div>
+
+<div class="tiny-table">
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Definition / formula</th>
+<th>Grain and time rule</th>
+<th>Missing / edge handling</th>
+<th>Primary use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trade_value_yoy_change</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i0.svg" alt="\log(V_t/V_{t^-})"></td>
+<td>previous observed same corridor+HS6 row</td>
+<td>missing without valid prior/current values</td>
+<td>ML</td>
+</tr>
+<tr>
+<td><code>quantity_yoy_change</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i1.svg" alt="\log(Q_t/Q_{t^-})"></td>
+<td>previous observed row</td>
+<td>missing without valid quantity pair</td>
+<td>ML</td>
+</tr>
+<tr>
+<td><code>unit_value_yoy_change</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i2.svg" alt="\log(UV_t/UV_{t^-})"></td>
+<td>previous observed row</td>
+<td>missing without valid unit values</td>
+<td>rules; ML; evidence</td>
+</tr>
+<tr>
+<td><code>benchmark_adjusted_drift</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i3.svg" alt="r_t-r_{t^-}"></td>
+<td>current and prior residual</td>
+<td>missing without prior residual</td>
+<td>rules; ML; evidence</td>
+</tr>
+<tr>
+<td><code>value_quantity_divergence</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i4.svg" alt="\Delta\log V-\Delta\log Q"></td>
+<td>prior observed row</td>
+<td>missing if either change missing</td>
+<td>rules; ML; evidence</td>
+</tr>
+<tr>
+<td><code>benchmark_consistency_gap</code></td>
+<td><img class="math-inline" src="assets/math/technical_companion_i5.svg" alt="|\Delta\log UV-\Delta\log B|"></td>
+<td>row movement vs current family benchmark movement</td>
+<td>missing when change unavailable</td>
+<td>weighted-sum reduction; ML</td>
+</tr>
+<tr>
+<td><code>corridor_activity_history</code></td>
+<td>number of earlier same corridor+HS6 rows</td>
+<td>prior-only cumulative count</td>
+<td>zero at first appearance</td>
+<td>ML</td>
+</tr>
+<tr>
+<td><code>corridor_novelty_flag</code></td>
+<td>1 when prior activity count is zero</td>
+<td>prior-only</td>
+<td>binary</td>
+<td>rules; ML</td>
+</tr>
+<tr>
+<td><code>corridor_reactivation_flag</code></td>
+<td>1 when route returns after &gt;1 calendar-year gap</td>
+<td>prior observed year</td>
+<td>binary</td>
+<td>rules; ML</td>
+</tr>
+<tr>
+<td><code>missing_quantity_flag</code></td>
+<td>quantity is null</td>
+<td>current row</td>
+<td>binary</td>
+<td>eligibility; ML</td>
+</tr>
+<tr>
+<td><code>missing_benchmark_flag</code></td>
+<td>benchmark join is not matched</td>
+<td>current row</td>
+<td>binary</td>
+<td>ML/audit</td>
+</tr>
+<tr>
+<td><code>missing_history_flag</code></td>
+<td>shifted history median is null</td>
+<td>prior-only</td>
+<td>binary</td>
+<td>ML/audit</td>
+</tr>
+<tr>
+<td><code>missing_country_mapping_flag</code></td>
+<td>exporter or importer ISO3 missing</td>
+<td>current row</td>
+<td>binary</td>
+<td>ML/audit</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>trade_value_yoy_change</code> is named “year-over-year” in outputs, but technically compares with the previous observed row in the group. If a corridor disappears for a year, the gap is captured separately by <code>corridor_reactivation_flag</code>.</p></section>
+<section class="page page-33 appendix"><div class="page-label">Appendix B · Data dictionary</div>
+
+<h1 id="appendix-data">Key data and output fields</h1>
+<div class="section-rule"></div>
+
+<div class="tiny-table">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Table</th>
+<th>Meaning</th>
+<th>Unit / type</th>
+<th>Caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>obs_id</code></td>
+<td>panel/features/queue/evidence</td>
+<td>stable analytical observation ID</td>
+<td>string</td>
+<td>not a source-system transaction ID</td>
+</tr>
+<tr>
+<td><code>source_row_id</code></td>
+<td>panel/evidence</td>
+<td>stable link to filtered BACI row</td>
+<td>string</td>
+<td>filtered-extract lineage</td>
+</tr>
+<tr>
+<td><code>year</code></td>
+<td>all row tables</td>
+<td>calendar year</td>
+<td>integer</td>
+<td>annual aggregation</td>
+</tr>
+<tr>
+<td><code>corridor_id</code></td>
+<td>panel/features</td>
+<td>exporter-importer identifier</td>
+<td>string</td>
+<td>direction matters</td>
+</tr>
+<tr>
+<td><code>hs6</code></td>
+<td>panel/features/queue</td>
+<td>six-character product code</td>
+<td>string</td>
+<td>one exact code per family</td>
+</tr>
+<tr>
+<td><code>trade_value_usd</code></td>
+<td>panel/features/queue</td>
+<td>BACI value × 1,000</td>
+<td>current USD</td>
+<td>annual aggregate</td>
+</tr>
+<tr>
+<td><code>quantity_metric_ton</code></td>
+<td>panel/features/queue</td>
+<td>reported BACI quantity</td>
+<td>metric tons</td>
+<td>may be unavailable</td>
+</tr>
+<tr>
+<td><code>unit_value_usd_per_metric_ton</code></td>
+<td>panel/features/queue</td>
+<td>value divided by quantity</td>
+<td>USD/mt</td>
+<td>implied average, not invoice price</td>
+</tr>
+<tr>
+<td><code>quality_status</code></td>
+<td>panel/features/queue</td>
+<td>usability classification</td>
+<td>category</td>
+<td>caveat is not suspicion</td>
+</tr>
+<tr>
+<td><code>model_eligible</code></td>
+<td>panel/features</td>
+<td>valid unit value and usable status</td>
+<td>boolean</td>
+<td>excludes 2,188 rows</td>
+</tr>
+<tr>
+<td><code>selected_review_priority_score</code></td>
+<td>queue</td>
+<td>frozen hybrid ranking signal</td>
+<td>0-1 score</td>
+<td>not calibrated probability</td>
+</tr>
+<tr>
+<td><code>rank</code></td>
+<td>queue</td>
+<td>deterministic descending score order</td>
+<td>integer</td>
+<td>scoped to current queue</td>
+</tr>
+<tr>
+<td><code>evidence_id</code></td>
+<td>evidence</td>
+<td>stable evidence-row ID</td>
+<td>string</td>
+<td>one case has four current checks</td>
+</tr>
+<tr>
+<td><code>observed_value</code></td>
+<td>evidence</td>
+<td>metric value behind evidence</td>
+<td>numeric</td>
+<td>interpretation depends on metric</td>
+</tr>
+<tr>
+<td><code>comparison_value</code></td>
+<td>evidence</td>
+<td>benchmark, prior, or peer reference</td>
+<td>numeric</td>
+<td>may be absent for change metrics</td>
+</tr>
+<tr>
+<td><code>caveat</code></td>
+<td>evidence</td>
+<td>required interpretation boundary</td>
+<td>text</td>
+<td>accompanies the evidence fact</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Full generated field definitions remain in <code>reports/data_dictionary.md</code>; the live dashboard presents a curated stakeholder subset.</p></section>
+<section class="page page-34 appendix"><div class="page-label">Appendix C · Model configuration</div>
+
+<h1 id="model-and-selection-configuration">Model and selection configuration</h1>
+<div class="section-rule"></div>
+
+<table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th>Current value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Primary seed</td>
+<td><code>20260117</code></td>
+</tr>
+<tr>
+<td>Train / validation / test</td>
+<td>2017-2020 / 2021-2022 / 2023-2024</td>
+</tr>
+<tr>
+<td>Model inputs</td>
+<td>22 fields from <code>feature_columns()</code></td>
+</tr>
+<tr>
+<td>Logistic</td>
+<td>median imputer + indicators; standard scaler; balanced liblinear</td>
+</tr>
+<tr>
+<td>XGBoost trees</td>
+<td>160</td>
+</tr>
+<tr>
+<td>XGBoost selected</td>
+<td>depth 2; learning rate 0.06; child weight 2; L2 4</td>
+</tr>
+<tr>
+<td>XGBoost fixed</td>
+<td>subsample 0.9; column sample 0.9; L1 0.15; histogram tree method</td>
+</tr>
+<tr>
+<td>Isolation Forest</td>
+<td>160 estimators; median imputer; fixed seed</td>
+</tr>
+<tr>
+<td>Challenger selection</td>
+<td>highest validation average precision among logistic and XGBoost</td>
+</tr>
+<tr>
+<td>Blend candidates</td>
+<td>challenger weights 0.25, 0.50, 0.75</td>
+</tr>
+<tr>
+<td>Blend selection</td>
+<td>validation precision@50; then hard-negative FPR; then AP; then lower challenger weight</td>
+</tr>
+<tr>
+<td>Selected score</td>
+<td>0.75 XGBoost + 0.25 weighted sum</td>
+</tr>
+<tr>
+<td>Official persistence</td>
+<td>Top 50</td>
+</tr>
+</tbody>
+</table>
+<h2 id="logistic-coefficient-interpretation">Logistic coefficient interpretation</h2>
+<p>Coefficients apply after median imputation, added missing indicators, and standard scaling. Their sign and magnitude describe the fitted linear scenario model, not causal effects. The largest absolute current coefficients include benchmark-consistency gap, corridor activity history, benchmark-adjusted drift, shifted-history MAD, and unit-value movement.</p>
+<h2 id="stored-model-bundle">Stored model bundle</h2>
+<p><code>model_bundle.joblib</code> contains the feature list, fitted logistic pipeline, fitted XGBoost model, fitted Isolation Forest, and selection record. Reusing it avoids retraining when the same prepared features are rescored.</p></section>
+<section class="page page-35 appendix"><div class="page-label">Appendix D · Scenario catalogue</div>
+
+<h1 id="controlled-scenario-catalogue">Controlled scenario catalogue</h1>
+<div class="section-rule"></div>
+
+<table>
+<thead>
+<tr>
+<th>Scenario ID</th>
+<th style="text-align: right;">Label</th>
+<th style="text-align: right;">Per split</th>
+<th>Transformation</th>
+<th>Intended test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>synthetic_overvaluation</code></td>
+<td style="text-align: right;">positive</td>
+<td style="text-align: right;">36</td>
+<td>value × uniform 2.2-3.5; quantity fixed</td>
+<td>recover sharp implied-value rise</td>
+</tr>
+<tr>
+<td><code>synthetic_undervaluation</code></td>
+<td style="text-align: right;">positive</td>
+<td style="text-align: right;">36</td>
+<td>value × uniform 0.25-0.45; quantity fixed</td>
+<td>recover sharp implied-value fall</td>
+</tr>
+<tr>
+<td><code>synthetic_low_volume_high_value</code></td>
+<td style="text-align: right;">positive</td>
+<td style="text-align: right;">36</td>
+<td>value × 1.8-2.8; quantity × 0.35-0.65</td>
+<td>recover value/quantity divergence</td>
+</tr>
+<tr>
+<td><code>hard_negative_benchmark_consistent_movement</code></td>
+<td style="text-align: right;">negative</td>
+<td style="text-align: right;">36</td>
+<td>align unit value to family-year median residual</td>
+<td>avoid market-consistent over-alert</td>
+</tr>
+<tr>
+<td><code>hard_negative_proportional_value_quantity_growth</code></td>
+<td style="text-align: right;">negative</td>
+<td style="text-align: right;">36</td>
+<td>multiply value and quantity by same factor</td>
+<td>avoid flagging scale growth with stable unit value</td>
+</tr>
+</tbody>
+</table>
+<h2 id="split-manifest">Split manifest</h2>
+<table>
+<thead>
+<tr>
+<th>Split</th>
+<th>Years</th>
+<th style="text-align: right;">Panel rows</th>
+<th style="text-align: right;">Positive scenarios</th>
+<th style="text-align: right;">Hard negatives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train</td>
+<td>2017-2020</td>
+<td style="text-align: right;">12,318</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">72</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>2021-2022</td>
+<td style="text-align: right;">6,868</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">72</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>2023-2024</td>
+<td style="text-align: right;">6,658</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">72</td>
+</tr>
+</tbody>
+</table>
+<p>Scenario sampling requires model eligibility, positive quantity, a matched benchmark, and enough rows in each family-year pool. A single configured seed drives the current injection manifest. Scenario labels remain physically separated from features.</p></section>
+<section class="page page-36 appendix"><div class="page-label">Appendix E · Provenance</div>
+
+<h1 id="data-sources-and-provenance">Data sources and provenance</h1>
+<div class="tiny-table">
+<table>
+<thead>
+<tr>
+<th>Publisher / dataset</th>
+<th>Release / period</th>
+<th>Project file</th>
+<th>Native unit</th>
+<th>Project role</th>
+<th>Key limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CEPII BACI HS17</td>
+<td>V202601; 2017-2024</td>
+<td><code>baci_hs17_v202601_selected_...parquet</code></td>
+<td>value in thousand USD; quantity in metric tons</td>
+<td>official-derived bilateral trade facts</td>
+<td>annual aggregates; reporting and reconciliation limits</td>
+</tr>
+<tr>
+<td>CEPII country codes</td>
+<td>V202601</td>
+<td><code>country_codes_V202601.csv</code></td>
+<td>code/name</td>
+<td>exporter/importer mapping</td>
+<td>mapping reference only</td>
+</tr>
+<tr>
+<td>CEPII HS17 products</td>
+<td>V202601</td>
+<td><code>product_codes_HS17_V202601.csv</code></td>
+<td>six-character HS6</td>
+<td>product description</td>
+<td>product code cannot reveal grade or contract</td>
+</tr>
+<tr>
+<td>World Bank Commodity Markets</td>
+<td>annual; 2017-2024</td>
+<td><code>CMO-Historical-Data-Annual.xlsx</code></td>
+<td>USD/mt; gold USD/troy oz</td>
+<td>broad market benchmark</td>
+<td>not corridor-specific fair value</td>
+</tr>
+<tr>
+<td>FATF-Egmont TBML trends</td>
+<td>2020</td>
+<td><code>Trade-Based-Money-Laundering-Trends-and-Developments_2020.pdf</code></td>
+<td>publication</td>
+<td>typology and caveat context</td>
+<td>never a model input or case fact</td>
+</tr>
+<tr>
+<td>FATF-Egmont risk indicators</td>
+<td>2021</td>
+<td><code>Trade-Based-Money-Laundering-Risk-Indicators_2021.pdf</code></td>
+<td>publication</td>
+<td>review-question context</td>
+<td>indicators are not labels</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Official links:</p>
+<ul>
+<li><a href="https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37">CEPII BACI database</a></li>
+<li><a href="https://www.worldbank.org/en/research/commodity-markets">World Bank Commodity Markets</a></li>
+<li><a href="https://www.fatf-gafi.org/en/publications/Methodsandtrends/Trade-based-money-laundering-trends-and-developments.html">FATF-Egmont TBML Trends and Developments</a></li>
+<li><a href="https://www.fatf-gafi.org/en/publications/Methodsandtrends/Trade-based-money-laundering-risk-indicators.html">FATF-Egmont TBML Risk Indicators</a></li>
+</ul>
+<p>The source manifest records SHA-256 hashes, row counts, year and HS6 scope, workbook sheets, and reference-file inventory.</p></section>
+<section class="page page-37 appendix"><div class="page-label">Appendix F · Operations</div>
+
+<h1 id="reproducibility-and-deployment-reference">Reproducibility and deployment reference</h1>
+<div class="section-rule"></div>
+
+<h2 id="repository-structure">Repository structure</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>configs/</code></td>
+<td>project scope, products, benchmarks, thresholds, scenarios, typology</td>
+</tr>
+<tr>
+<td><code>src/</code></td>
+<td>offline pipeline stages and shared analytical functions</td>
+</tr>
+<tr>
+<td><code>data/raw</code>, <code>interim</code>, <code>processed</code>, <code>outputs</code></td>
+<td>source, staged, analytical, and presentation artefacts</td>
+</tr>
+<tr>
+<td><code>reports/</code></td>
+<td>generated analysis, model card, dictionaries, figures, companion</td>
+</tr>
+<tr>
+<td><code>dashboard/</code></td>
+<td>Streamlit pages, components, services, and content/theme config</td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>analytical and dashboard validation</td>
+</tr>
+<tr>
+<td><code>.streamlit/config.toml</code></td>
+<td>deployed Streamlit base theme and server settings</td>
+</tr>
+</tbody>
+</table>
+<h2 id="environment-split">Environment split</h2>
+<p><code>requirements-pipeline.txt</code> supports data ingestion, modelling, notebooks, reporting, and tests. The deployed <code>requirements.txt</code> contains only the packages imported by the read-only dashboard. This reduces cloud build time and attack surface, while requiring pipeline artefacts to be generated before deployment.</p>
+<h2 id="launch-and-document-build">Launch and document build</h2>
+<pre><code class="language-powershell">python -m pytest tests -q
+python -m streamlit run dashboard/streamlit_app.py
+python reports/technical_companion/build_technical_companion.py
+</code></pre>
+<h2 id="operational-limitations">Operational limitations</h2>
+<p>No automated refresh schedule, retraining job, database, API, authentication, secrets integration, or monitoring service is implemented. Reproducibility depends on the recorded source release, hashes, configuration, environment, and Git commit.</p></section>
+<section class="page page-38 appendix"><div class="page-label">Appendix G-H · Reference</div>
+
+<h1 id="glossary-and-implementation-traceability">Glossary and implementation traceability</h1>
+<div class="section-rule"></div>
+
+<h2 id="glossary">Glossary</h2>
+<div class="tiny-table">
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AFC</td>
+<td>Anti-financial crime</td>
+</tr>
+<tr>
+<td>TBML</td>
+<td>Trade-based money laundering</td>
+</tr>
+<tr>
+<td>HS6</td>
+<td>Six-digit Harmonized System product code</td>
+</tr>
+<tr>
+<td>Corridor</td>
+<td>Directional exporter-importer pair</td>
+</tr>
+<tr>
+<td>Unit value</td>
+<td>Aggregate value divided by aggregate quantity</td>
+</tr>
+<tr>
+<td>MAD</td>
+<td>Median absolute deviation</td>
+</tr>
+<tr>
+<td>Time leakage</td>
+<td>Future information entering an earlier assessment</td>
+</tr>
+<tr>
+<td>Hard negative</td>
+<td>Controlled benign pattern designed to look unusual</td>
+</tr>
+<tr>
+<td>Lift@k</td>
+<td>Precision@k divided by positive prevalence</td>
+</tr>
+<tr>
+<td>SHAP</td>
+<td>Model-output contribution method; not case evidence</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="dashboard-traceability">Dashboard traceability</h2>
+<div class="tiny-table">
+<table>
+<thead>
+<tr>
+<th>Dashboard page</th>
+<th>Source artefact</th>
+<th>Calculation / module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Business Problem and Value</td>
+<td>panel, project config</td>
+<td><code>dashboard_metrics.py</code></td>
+</tr>
+<tr>
+<td>From Data to Review Queue</td>
+<td>manifests, panel, features</td>
+<td>page composition + shared services</td>
+</tr>
+<tr>
+<td>Trade Landscape and Patterns</td>
+<td>panel, queue, benchmarks</td>
+<td><code>dashboard_metrics.py</code>, charts</td>
+</tr>
+<tr>
+<td>Top 50 Review Queue</td>
+<td>queue + features</td>
+<td>filters, tables, session state</td>
+</tr>
+<tr>
+<td>Selected Case Review</td>
+<td>panel, features, evidence</td>
+<td><code>case_summary.py</code>, <code>why_ranked_high.py</code></td>
+</tr>
+<tr>
+<td>Model Evaluation &amp; Controls</td>
+<td>model scores/comparison/config</td>
+<td>model page + integrity report</td>
+</tr>
+<tr>
+<td>Unscored Gold Records</td>
+<td>panel</td>
+<td><code>gold_coverage.py</code></td>
+</tr>
+<tr>
+<td>Bank Implementation Pathway</td>
+<td>content config</td>
+<td>future-state presentation only</td>
+</tr>
+<tr>
+<td>Data Dictionary</td>
+<td>reports and curated metadata</td>
+<td><code>data_dictionary.py</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="banner"><div><strong>Final interpretation boundary</strong><br>This project demonstrates disciplined review prioritisation over public annual trade data. Investigation, disposition, and any conclusion about wrongdoing remain human responsibilities supported by evidence the current dataset does not contain.</div></div>
+
+<p class="small">Build identity: commit <code>774aac6</code> · BACI V202601 · analysis 2017-2024 · generated 23 July 2026 · <a href="https://tbml-review-triage.streamlit.app/">live dashboard</a> · <a href="https://github.com/jessybaolin/evidence-based-tbml-corridor-drift">repository</a></p></section></body></html>
