@@ -16,6 +16,10 @@ secondaryBackgroundColor = "#FFFFFF"  # white cards + widget/input fills
 dataframeHeaderBackgroundColor = "#FFFFFF"
 textColor = "#22314A"             # navy ink
 font = "sans-serif"
+# Streamlit's own code/`inline code` default is Source Code Pro, which made a
+# third mono face appear beside the two the dashboard already uses. Point it at
+# the same stack as typography.mono_family in dashboard/config/dashboard_theme.yml.
+codeFont = "SFMono-Regular, Consolas, Liberation Mono, monospace"
 
 [server]
 headless = true

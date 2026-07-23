@@ -453,7 +453,7 @@ def apply_global_styles() -> None:
        exact file backing it, set small and monospaced like a custody record. */
     .ledger {{
         color: {p["ledger_ink"]};
-        font-family: "Consolas", "SFMono-Regular", monospace;
+        font-family: {theme["typography"]["mono_family"]};
         font-size: 0.72rem;
         letter-spacing: 0.01em;
         margin: 0.25rem 0 0.9rem 0;
@@ -820,9 +820,10 @@ def apply_global_styles() -> None:
     }}
     .st-key-dashboard_filter_panel .section-heading {{ margin: 0; }}
     .st-key-dashboard_filter_panel .section-icon {{ margin-top: 0.15rem; }}
+    /* Size stays at the shared .section-label 1.12rem — only the top margin is
+       dropped, because this heading sits inside the filter panel's own padding. */
     .st-key-dashboard_filter_panel .section-label {{
         margin-top: 0;
-        font-size: 1rem;
     }}
     .st-key-queue_reset_filters button {{
         min-height: 38px;
@@ -854,7 +855,8 @@ def apply_global_styles() -> None:
     .st-key-queue_results_header {{ margin-top: 0.2rem; }}
     .st-key-queue_results_header .section-heading {{ margin-top: 0; }}
     .st-key-queue_results_header .section-icon {{ color: {outcome_blue}; }}
-    .st-key-queue_results_header .section-label {{ font-size: 1.16rem; }}
+    /* Was 1.16rem; the Review Queue was the only page whose section headings did
+       not sit at the shared .section-label size. */
     .st-key-queue_results_header .section-caption {{
         max-width: 760px;
         margin-bottom: 0;
@@ -1263,7 +1265,7 @@ def apply_global_styles() -> None:
     .caveat-list li:last-child {{ margin-bottom: 0; }}
     .signals-scroll {{ max-height: 460px; overflow-y: auto; }}
     table.data-table td.mono {{
-        font-family: "Consolas", "SFMono-Regular", monospace;
+        font-family: {theme["typography"]["mono_family"]};
         font-size: 0.83rem;
         white-space: nowrap;
         color: {p["ink"]};
@@ -1434,6 +1436,10 @@ def apply_global_styles() -> None:
     }}
     .kpi-icon {{ background: {kpi["icon_bg"]}; color: {kpi["icon_color"]}; }}
     .kpi-copy {{ min-width: 0; }}
+    /* Reserve two lines for the label so a KPI whose label wraps ("Evidence
+       checks per case") does not push its own detail text below the detail text
+       of the cards beside it. Keeps a row of cards on one baseline. */
+    .kpi-card .stat-label {{ min-height: 3.2em; }}
 
     /* Pipeline flow strip. */
     .flow-strip {{
@@ -1595,7 +1601,9 @@ def apply_global_styles() -> None:
         margin-bottom: 3.35rem;
     }}
     .st-key-business_value_page .hero-block .page-title {{
-        font-size: 2.55rem;
+        /* 2.75rem is the size every other page's title renders at, so the first
+           page a reader lands on is not the one odd title in the set. */
+        font-size: 2.75rem;
         line-height: 1.1;
         letter-spacing: 0;
         /* No measure cap: "Evidence-First Trade Pattern Triage" stays on one
@@ -3433,7 +3441,7 @@ def apply_global_styles() -> None:
     }}
     .prep-record-table table.data-table td.mono {{
         color: {p["ledger_ink"]};
-        font-family: "Consolas", "SFMono-Regular", monospace;
+        font-family: {theme["typography"]["mono_family"]};
         font-size: 0.76rem;
     }}
     /* Derived-signals table: same styling as the prepared-row table, but it
@@ -3808,7 +3816,7 @@ def apply_global_styles() -> None:
 
     .blend {{ margin: 0.25rem 0 0.5rem 0; }}
     .blend-eq {{
-        font-family: "Consolas", "SFMono-Regular", monospace;
+        font-family: {theme["typography"]["mono_family"]};
         font-size: 1.0rem;
         font-weight: 700;
         color: {p["ink"]};
@@ -4217,7 +4225,9 @@ def apply_global_styles() -> None:
         font-variant-numeric: tabular-nums;
     }}
     .gc-card-metric small {{
-        font-size: 0.62rem;
+        /* 0.7rem is the dashboard's smallest type step (matches .stamp); the
+           previous 0.62rem rendered at 9.9px, below anything else in the app. */
+        font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
