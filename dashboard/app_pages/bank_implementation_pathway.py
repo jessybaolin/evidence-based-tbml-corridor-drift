@@ -418,14 +418,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 6. Closing statement + design-basis footnote.
+# 6. Closing statement. (The design-basis footnote is deliberately not rendered:
+# it listed internal repository paths a dashboard viewer does not need.)
 st.markdown(
     '<section class="bip-closing reveal">'
     f'{_closing(copy["closing"])}'
-    '</section>'
-    '<div class="bip-footnote">'
-    f'{render_icon("file-text")}<span>{_e(copy["design_basis"])}</span>'
-    '</div>',
+    '</section>',
     unsafe_allow_html=True,
 )
 
