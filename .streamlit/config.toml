@@ -6,12 +6,14 @@
 [theme]
 base = "light"
 primaryColor = "#0F8F8F"          # teal accent (widgets, slider, queue score bars)
-# backgroundColor drives the st.dataframe (glide) header fill, which the
-# dataframeHeaderBackgroundColor option does not honour in this Streamlit build.
-# Set to white so the Top 50 Review Queue header matches its white cells; the
-# visual page plane (page_bg #F3F6FA) is painted separately by styles.py CSS.
+# The visual page plane (page_bg #F3F6FA) is painted separately by styles.py CSS,
+# so these stay white for the panel surfaces Streamlit paints natively.
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#FFFFFF"  # white cards + widget/input fills
+# Paints the st.dataframe (glide) header canvas, so the Top 50 Review Queue
+# header matches its white cells. Verified against the canvas bitmap: this is
+# honoured. Anything that overlays the header in CSS will still tint it.
+dataframeHeaderBackgroundColor = "#FFFFFF"
 textColor = "#22314A"             # navy ink
 font = "sans-serif"
 

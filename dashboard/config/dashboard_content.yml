@@ -939,19 +939,18 @@ pages:
         validation_caveat: >
           Standalone XGBoost was retained as a benchmark but was not an eligible
           final blend under the pre-specified design. The hybrid is therefore a
-          governance choice, not the highest-scoring standalone model.
+          governance choice, not the highest-scoring standalone model. Its 25%
+          weighted-sum component is an auditable anchor rather than a complete
+          explanation: interpretability also rests on model-contribution analysis
+          and the recomputable evidence attached to each case.
       test_heading: "Held-out test: how all five methods compared"
-      comparison_caption: "Share of each method's top 50 that were planted patterns in the unseen {test_years} test years. This is the final check, not how the 75/25 weight was selected."
+      comparison_caption: "Share of each method's top 50 that were planted patterns in the unseen {test_years} test years."
       comparison_x: "Share of the top 50 that were planted patterns (%)"
       tradeoff: >
-        Standalone XGBoost scored slightly higher on the held-out test ({xgb_pct}%
-        versus {hyb_pct}% precision@50). The hybrid is retained because the project
-        deliberately required an auditable weighted-sum component before the test
-        was opened—not because it was the accuracy winner.
-      explainability_note: >
-        The 25% weighted-sum component is an auditable anchor, not a complete
-        explanation of the hybrid. Interpretability also depends on model-
-        contribution analysis and the recomputable evidence attached to each case.
+        Standalone XGBoost scored slightly higher here ({xgb_pct}% versus
+        {hyb_pct}% precision@50). The hybrid is retained by design, not because it
+        won: an auditable weighted-sum component was required before the test was
+        opened.
     honest:
       heading: "What keeps it honest"
       integrity_fail_intro: "A live data check did not pass:"

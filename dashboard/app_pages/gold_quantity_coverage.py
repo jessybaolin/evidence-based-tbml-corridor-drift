@@ -101,7 +101,7 @@ tiles_html = "".join(
     for value, label, detail, icon, extra_class in tiles
 )
 st.markdown(f'<div class="stat-band three anim">{tiles_html}</div>', unsafe_allow_html=True)
-ledger("panel", note="coverage derived live from the official dataset")
+ledger("panel")
 
 # ---- 1 · Is the blind spot material? ----------------------------------------
 s1 = copy["section1"]

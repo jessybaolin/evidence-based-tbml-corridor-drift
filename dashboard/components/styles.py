@@ -919,10 +919,11 @@ def apply_global_styles() -> None:
         box-shadow: 0 4px 14px {shadow};
         background: {p["panel_bg"]};
     }}
-    /* The interactive grid's header can't be recoloured directly (Streamlit hands
-       glide-data-grid an explicit theme, and the overlay can only darken — never
-       lighten to white). A lighter blue band + a firm bottom border marks the
-       header row while keeping the grid's dark header text readable. */
+    /* The grid's header IS recolourable: theme.dataframeHeaderBackgroundColor in
+       .streamlit/config.toml paints the header canvas white, so it matches its
+       own cells. This overlay used to multiply a 22% navy band over that canvas,
+       which is what made the header row read grey however white the theme was.
+       Only the rule marking where the header ends is drawn here now. */
     .st-key-queue_table_region div[data-testid="stDataFrame"]::before {{
         content: "";
         position: absolute;
@@ -930,8 +931,6 @@ def apply_global_styles() -> None:
         height: 40px;
         z-index: 2;
         pointer-events: none;
-        mix-blend-mode: multiply;
-        background: color-mix(in srgb, {p["sidebar_bg"]} 22%, transparent);
         border-bottom: 2px solid color-mix(in srgb, {outcome_blue} 80%, transparent);
     }}
 

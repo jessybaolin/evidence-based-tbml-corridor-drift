@@ -381,12 +381,14 @@ show(headline_bar(_mc, "method", "precision_pct",
 st.caption(method["comparison_caption"].format(
     test_years=fm.year_span(project["test_years"])))
 
+# One callout closes the chart. The interpretability caveat that used to follow
+# it now sits with the blend drawer above, where the 25% component is explained;
+# three stacked notes under one chart read as a pile of disclaimers.
 st.markdown(
     f'<div class="method-tradeoff">{_e(method["tradeoff"].format(
         xgb_pct=round(_xgb_pct), hyb_pct=round(_hyb_pct)))}</div>',
     unsafe_allow_html=True,
 )
-st.caption(method["explainability_note"])
 ledger("model_selection", "hybrid_candidates")
 
 # ---- 4. What keeps it honest ------------------------------------------------
