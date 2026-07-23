@@ -327,7 +327,10 @@ def test_bank_implementation_pathway_bounds_the_ai_extension():
     text = _rendered_text(at)
     assert "Where AI could help: connect the records, leave the decision to the analyst" in text
     assert "It would not decide whether the activity is suspicious" in text
-    assert "The useful part is not writing a summary" in text
+    assert "role in review" in text
+    assert "organise source-linked evidence" in text
+    assert "The ranking points to a case" not in text
+    assert "The useful part is not writing a summary" not in text
     assert "Find the bank activity behind the public signal" in text
     assert "Check whether the records tell the same story" in text
     assert "Lay out the case for the analyst" in text

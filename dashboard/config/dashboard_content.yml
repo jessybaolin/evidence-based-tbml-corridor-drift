@@ -1220,8 +1220,8 @@ pages:
           icon: "rotate-cw"
     ai_extension:
       heading: "Where AI could help: connect the records, leave the decision to the analyst"
-      caption: "The ranking points to a case. With access to the relevant bank records, an AI assistant could help the analyst find related activity, compare documents and organise the evidence. It would not decide whether the activity is suspicious or what action to take."
-      value_statement: "The useful part is not writing a summary. It is bringing together information that may be spread across KYC files, trade documents, shipment records and payment systems, then showing where those records agree, conflict or leave a gap. Every result would link back to its source."
+      role_label: "AI's role in review"
+      role_statement: "The ranking shows where review could begin. With access to approved bank records, an AI assistant could find related activity across KYC files, trade documents, shipment records and payment systems, compare the details, and organise source-linked evidence showing what agrees, conflicts or remains missing. It would not decide whether the activity is suspicious or what action to take."
       steps:
         - kicker: "Find the records"
           title: "Find the bank activity behind the public signal"

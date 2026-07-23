@@ -2394,19 +2394,45 @@ def apply_global_styles() -> None:
         background: #eaeef4;
         border-top: 1px solid #dde3ec;
     }}
-    .bip-ai-lead {{ font-size: 17px; color: #516171; line-height: 1.55; margin: 0 0 26px; max-width: 900px; }}
-    .bip-ai-callout {{
-        background: #0f2942;
-        border-radius: 14px;
-        padding: 22px 26px;
+    .bip-ai-role {{
+        background: #ffffff;
+        border: 1px solid #d7dfea;
+        border-left: 4px solid #6b5b95;
+        border-radius: 10px;
+        padding: 18px 22px;
         display: flex;
-        gap: 16px;
+        gap: 14px;
         align-items: flex-start;
         margin-bottom: 26px;
+        box-shadow: 0 8px 22px -18px rgba(15, 41, 66, .42);
     }}
-    .bip-ai-callout .bip-ai-callout-icon {{ color: #7fd4c7; flex: 0 0 auto; margin-top: 2px; }}
-    .bip-ai-callout-icon svg {{ width: 22px; height: 22px; }}
-    .bip-ai-callout p {{ margin: 0; color: #dbe6ee; font-size: 16px; line-height: 1.6; }}
+    .bip-ai-role-icon {{
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b5b95;
+        background: #efecf5;
+        border-radius: 9px;
+    }}
+    .bip-ai-role-icon svg {{ width: 20px; height: 20px; }}
+    .bip-ai-role-label {{
+        color: #6b5b95;
+        font-size: 11.5px;
+        font-weight: 800;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }}
+    .bip-ai-role p {{
+        max-width: 1080px;
+        margin: 0;
+        color: #33485c;
+        font-size: 15.5px;
+        line-height: 1.58;
+    }}
     .bip-ai-story {{ margin-top: 0; }}
 
     /* Concept mockup. ---------------------------------------------------- */
@@ -2785,6 +2811,7 @@ def apply_global_styles() -> None:
         .bip-value-band {{ grid-template-columns: 1fr; }}
         .bip-value-cell {{ border-right: none; border-bottom: 1px solid #edf1f5; }}
         .bip-value-cell:last-child {{ border-bottom: none; }}
+        .bip-ai-role {{ padding: 16px; }}
         .bip-closing-panel {{ padding: 32px 26px; }}
     }}
     @media (prefers-reduced-motion: reduce) {{
