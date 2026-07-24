@@ -3838,6 +3838,11 @@ def apply_global_styles() -> None:
         font-weight: 800;
         font-variant-numeric: tabular-nums;
     }}
+    /* The shared .section-label carries a 0.7rem top margin (space for the icon
+       layout on other pages). With the icon hidden here, that margin pushed the
+       title down while the badge stayed at the top; dropping it lets the badge
+       and the title line — the same height — sit centred on each other. */
+    [data-testid="stMain"]:has(.mc-page-marker) .section-label {{ margin-top: 0; }}
     /* Sub-headings within a section sit a clear step below the numbered section
        titles. */
     [data-testid="stMain"]:has(.mc-page-marker) .chart-subhead {{
