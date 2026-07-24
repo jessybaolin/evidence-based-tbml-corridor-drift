@@ -3795,8 +3795,11 @@ def apply_global_styles() -> None:
         position: absolute;
         height: 0;
     }}
+    /* This page carries a lot; more air above each section than within it lets
+       the whitespace itself group the content. */
     [data-testid="stMain"]:has(.mc-page-marker) .section-heading {{
         position: relative;
+        margin-top: 3.1rem;
         margin-bottom: 0.9rem;
         padding-bottom: 0.75rem;
         border-bottom: 1px solid {p["border"]};
@@ -3810,6 +3813,37 @@ def apply_global_styles() -> None:
         height: 3px;
         border-radius: 999px;
         background: {p["accent"]};
+    }}
+    /* Numbered sections: the reader can see how many sections there are and which
+       one they are in. The number replaces the decorative section icon; a plain
+       bold sub-heading, having neither the number nor the rule, then reads
+       clearly as a level below — which is what the icons alone did not signal. */
+    [data-testid="stMain"]:has(.mc-page-marker) {{ counter-reset: mc-section; }}
+    [data-testid="stMain"]:has(.mc-page-marker) .section-heading {{
+        counter-increment: mc-section;
+    }}
+    [data-testid="stMain"]:has(.mc-page-marker) .section-icon {{ display: none; }}
+    [data-testid="stMain"]:has(.mc-page-marker) .section-heading::before {{
+        content: counter(mc-section);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 999px;
+        background: {p["accent_soft"]};
+        color: {at};
+        font-size: 0.9rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }}
+    /* Sub-headings within a section sit a clear step below the numbered section
+       titles. */
+    [data-testid="stMain"]:has(.mc-page-marker) .chart-subhead {{
+        color: {navy7};
+        font-size: 0.9rem;
+        margin-top: 1.6rem;
     }}
 
     /* Compact audit facts inside "How these results are calculated". The full
