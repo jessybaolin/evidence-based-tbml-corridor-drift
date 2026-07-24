@@ -1819,7 +1819,8 @@ def apply_global_styles() -> None:
     .st-key-business_value_story .commodity-card {{
         position: relative;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        justify-content: center;
         gap: 0.75rem;
         min-width: 0;
         min-height: 94px;
@@ -1832,6 +1833,30 @@ def apply_global_styles() -> None:
         transition: border-color {standard_ms}ms {motion_easing},
                     box-shadow {standard_ms}ms {motion_easing},
                     transform {standard_ms}ms {motion_easing};
+    }}
+    /* The icon and title share a row; the rationale stacks beneath it. When a
+       card carries a rationale it aligns to the top rather than centring. */
+    .st-key-business_value_story .commodity-card-head {{
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }}
+    .st-key-business_value_story .commodity-card-detail {{
+        justify-content: flex-start;
+        gap: 0.55rem;
+    }}
+    .st-key-business_value_story .commodity-role {{
+        color: {at};
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+    }}
+    .st-key-business_value_story .commodity-body {{
+        color: {p["ink"]};
+        font-size: 0.85rem;
+        line-height: 1.5;
     }}
     .st-key-business_value_story .commodity-card:hover {{
         transform: translateY(-2px);
@@ -1912,6 +1937,18 @@ def apply_global_styles() -> None:
     }}
     .st-key-business_value_story .family-gold-unwrought .commodity-info {{
         color: {family_colors["gold_unwrought"]};
+    }}
+    /* The rationale eyebrow carries its family's accent, darkened where the raw
+       hue is too light to read as small uppercase text (same as the From Data
+       family cards). */
+    .st-key-business_value_story .family-crude-palm-oil .commodity-role {{
+        color: color-mix(in srgb, {family_colors["crude_palm_oil"]} 82%, {p["ink"]});
+    }}
+    .st-key-business_value_story .family-refined-copper-cathodes .commodity-role {{
+        color: {family_colors["refined_copper_cathodes"]};
+    }}
+    .st-key-business_value_story .family-gold-unwrought .commodity-role {{
+        color: color-mix(in srgb, {family_colors["gold_unwrought"]} 70%, {p["ink"]});
     }}
 
     /* Why-it-matters comparison and connected review-queue flow. */

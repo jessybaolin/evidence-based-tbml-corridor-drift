@@ -107,13 +107,21 @@ pages:
         - "Rank unusual patterns so review starts where signals are strongest."
         - "Explain every ranking with recomputable evidence."
         - "Attach caveats and the next review questions to each case."
-    what_heading: "What this project does"
+    what_heading: "What this project does — and why these three commodities"
     # {observations}, {year_start}, {year_end}, {n_commodities} are derived
     # live from the pipeline outputs on the page — never typed in here.
     what_body: >
       This public-data prototype analyses {observations} annual trade
       observations from {year_start}–{year_end} across {n_commodities}
       deliberately different commodities:
+    # Rephrased for clarity from the "product mix is intentionally diverse" line
+    # on the From Data to Review Queue page: it now names both sides of the test.
+    commodity_rationale_statement: >
+      The three were chosen deliberately to test the method from both sides:
+      gold is the demanding case, where high value and volatile prices mean
+      genuinely unusual trade must still be caught; copper and palm oil are
+      routine, well-benchmarked commodities, where the method must stay
+      disciplined and not flag ordinary trade as unusual.
     what_body_2: >
       It ranks {corridor_term} patterns using a combination of transparent
       rules and machine learning, then attaches the evidence, caveats, and
@@ -124,6 +132,18 @@ pages:
       crude_palm_oil: "Oil pressed from oil-palm fruit. It is widely used in cooking oil, packaged food, soap, cosmetics and biofuel."
       refined_copper_cathodes: "High-purity copper made during refining. It is used for electrical wiring, electronics, motors, plumbing and construction."
       gold_unwrought: "This project covers only HS6 710812: non-monetary gold in unwrought forms other than powder, such as bars or ingots. It excludes non-monetary gold powder (710811), semi-manufactured gold (710813) and monetary gold (710820). This gold may be held for investment or processed into jewellery, electronics and industrial components."
+    # Why each commodity earns its place — the selection rationale shown under each
+    # card. The physical description of the commodity stays on the info tooltip.
+    commodity_rationale:
+      crude_palm_oil:
+        role: "Scale and stability case"
+        body: "High-volume Southeast Asian commodity. Credible public benchmark."
+      refined_copper_cathodes:
+        role: "Benchmark case"
+        body: "Standardised industrial commodity. Strong international market pricing."
+      gold_unwrought:
+        role: "Stress case"
+        body: "High value, compact and fungible. Strong relevance to established TBML typologies."
     deliverables_heading: "What the system delivers"
     deliverables:
       observations:

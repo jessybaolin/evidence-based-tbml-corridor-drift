@@ -87,12 +87,15 @@ commodity_icons = {
     "refined_copper_cathodes": "layers",
     "gold_unwrought": "package",
 }
+commodity_rationale = copy["commodity_rationale"]
 commodity_cards = "".join(
     commodity_card_markup(
         title=family_names[fid],
         family_id=fid,
         icon=commodity_icons[fid],
         info=copy["commodity_info"][fid],
+        role=commodity_rationale[fid]["role"],
+        body=commodity_rationale[fid]["body"],
     )
     for fid in content["family_short_labels"] if fid in family_names
 )
@@ -201,6 +204,7 @@ with st.container(key="business_value_page"):
                 f'<div class="story-panel-heading">{_e(copy["what_heading"])}</div>'
                 f'<p class="landing-prose">{what_1}</p>'
                 f'<div class="commodity-grid">{commodity_cards}</div>'
+                f'<p class="landing-prose">{_e(copy["commodity_rationale_statement"])}</p>'
                 f'<p class="landing-prose">{what_2}</p></section>',
                 unsafe_allow_html=True,
             )

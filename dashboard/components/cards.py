@@ -33,20 +33,35 @@ def render_kpi_card(value: str, label: str, detail: str, icon: str) -> None:
     st.markdown(kpi_card_markup(value, html.escape(label), detail, icon), unsafe_allow_html=True)
 
 
-def commodity_card_markup(*, title: str, family_id: str, icon: str, info: str) -> str:
-    """Compact editorial product-family card for narrative scope panels."""
+def commodity_card_markup(*, title: str, family_id: str, icon: str, info: str,
+                          role: str = "", body: str = "") -> str:
+    """Compact editorial product-family card for narrative scope panels.
+
+    With `role`/`body`, the card also shows why the family was chosen (the
+    selection rationale) as visible text; the physical-commodity description
+    stays on the info tooltip either way.
+    """
     safe_family = html.escape(family_id.replace("_", "-"), quote=True)
     safe_title = html.escape(title)
     safe_info = html.escape(info, quote=True)
+    detail = " commodity-card-detail" if (role or body) else ""
+    rationale = ""
+    if role or body:
+        rationale = (
+            f'<div class="commodity-role">{html.escape(role)}</div>'
+            f'<div class="commodity-body">{html.escape(body)}</div>'
+        )
     return (
-        f'<article class="commodity-card family-{safe_family}" data-tip="{safe_info}">'
+        f'<article class="commodity-card family-{safe_family}{detail}" data-tip="{safe_info}">'
+        '<div class="commodity-card-head">'
         f'{render_icon_badge(icon, class_name="commodity-icon")}'
         '<div class="commodity-title-row">'
         f'<div class="commodity-title">{safe_title}</div>'
         '<span class="commodity-info tip" tabindex="0" role="note" '
         f'aria-label="About {html.escape(title, quote=True)}" '
         f'data-tip="{safe_info}">{render_icon("info")}</span>'
-        '</div></article>'
+        '</div></div>'
+        f'{rationale}</article>'
     )
 
 
