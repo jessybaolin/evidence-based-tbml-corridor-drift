@@ -204,7 +204,7 @@ else:
             unsafe_allow_html=True,
         )
 
-ledger("review_queue", "features", note="scores ranked on real official observations only")
+ledger("review_queue", "features")
 
 # Reveal the queue's sections (banner, table, guidance) as they scroll in.
 render_scroll_reveal(

@@ -86,6 +86,9 @@ commodity_icons = {
     "gold_unwrought": "package",
 }
 commodity_rationale = copy["commodity_rationale"]
+rationale_points = "".join(
+    f"<li>{_e(point)}</li>" for point in copy["commodity_rationale_points"]
+)
 commodity_cards = "".join(
     commodity_card_markup(
         title=family_names[fid],
@@ -202,7 +205,8 @@ with st.container(key="business_value_page"):
                 f'<div class="story-panel-heading">{_e(copy["what_heading"])}</div>'
                 f'<p class="landing-prose">{what_1}</p>'
                 f'<div class="commodity-grid">{commodity_cards}</div>'
-                f'<p class="landing-prose">{_e(copy["commodity_rationale_statement"])}</p>'
+                f'<p class="landing-prose">{_e(copy["commodity_rationale_lead"])}</p>'
+                f'<ul class="story-list">{rationale_points}</ul>'
                 f'<p class="landing-prose">{what_2}</p></section>',
                 unsafe_allow_html=True,
             )

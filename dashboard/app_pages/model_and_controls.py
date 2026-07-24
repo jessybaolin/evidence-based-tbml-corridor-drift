@@ -76,7 +76,7 @@ challenger_name = metrics.METHOD_LABELS.get(
 blend = f"{challenger_pct}% {challenger_name} + {rule_pct}% rules"
 
 qb = copy["queue_build"]
-section_title(qb["heading"], qb["caption"], icon="list-ordered")
+section_title(qb["heading"], icon="list-ordered")
 _flow_parts: list[str] = []
 for _i, _s in enumerate(qb["steps"], start=1):
     if _i > 1:

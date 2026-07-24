@@ -114,14 +114,12 @@ pages:
       This public-data prototype analyses {observations} annual trade
       observations from {year_start}–{year_end} across {n_commodities}
       commodities:
-    # Rephrased for clarity from the "product mix is intentionally diverse" line
-    # on the From Data to Review Queue page: it now names both sides of the test.
-    commodity_rationale_statement: >
-      The three were chosen deliberately to test the method from both sides:
-      gold is the demanding case, where high value and volatile prices mean
-      genuinely unusual trade must still be caught; copper and palm oil are
-      routine, well-benchmarked commodities, where the method must stay
-      disciplined and not flag ordinary trade as unusual.
+    # The "why these three" logic is a two-sided test, so it reads as a short
+    # lead line plus one bullet per side rather than one long semicolon sentence.
+    commodity_rationale_lead: "The three were chosen deliberately to test the method from both sides:"
+    commodity_rationale_points:
+      - "Gold is the demanding case: its high value and volatile prices mean genuinely unusual trade must still be caught."
+      - "Copper and palm oil are the routine cases: well-benchmarked commodities where the method must stay disciplined and not flag ordinary trade as unusual."
     what_body_2: >
       The project ranks patterns using a combination of a weighted-sum score and
       a machine-learning model, then attaches the evidence, caveats and possible
@@ -730,7 +728,6 @@ pages:
     # Top-of-page pipeline overview: the four steps from official records to queue.
     queue_build:
       heading: "How the ranking queue is built"
-      caption: "From official trade records to the Top-50 review queue, in four steps."
       steps:
         - title: "Clean official records"
           detail: "Verified public trade data — one row per corridor, product and year."

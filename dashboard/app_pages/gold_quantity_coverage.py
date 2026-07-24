@@ -324,7 +324,7 @@ with st.container(key="gc_next_page"):
         icon=":material/arrow_forward:",
     )
 
-ledger("panel", "features", note="no gap row is model-eligible")
+ledger("panel", "features")
 
 # Reveal the story sections and charts as they scroll into view.
 render_scroll_reveal(

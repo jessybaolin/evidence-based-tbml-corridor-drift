@@ -1808,6 +1808,19 @@ def apply_global_styles() -> None:
         margin-bottom: 0.8rem;
     }}
     .st-key-business_value_story .landing-prose:last-child {{ margin-bottom: 0; }}
+    /* The "why these three" two-sided test, one bullet per side. Sits between the
+       lead line and the closing prose, matched to the page's body copy. */
+    .st-key-business_value_story .story-list {{
+        margin: 0.1rem 0 0.8rem 0;
+        padding-left: 1.2rem;
+        color: {p["ink"]};
+    }}
+    .st-key-business_value_story .story-list li {{
+        font-size: 1rem;
+        line-height: 1.55;
+        margin: 0.3rem 0;
+        padding-left: 0.2rem;
+    }}
 
     /* Editorial product-family cards; family colour remains local here. */
     .st-key-business_value_story .commodity-grid {{
@@ -3299,6 +3312,9 @@ def apply_global_styles() -> None:
         font-size: 0.92rem;
         line-height: 1.5;
     }}
+    /* A second line in a twin card (the "what a row can/cannot reveal" note under
+       the IT IS text) is spaced from the line above it. */
+    .twin-card p.twin-note {{ margin-top: 0.55rem; }}
 
     /* Family cards (why these three products) with the same reveal overlay. */
     .fam-grid {{

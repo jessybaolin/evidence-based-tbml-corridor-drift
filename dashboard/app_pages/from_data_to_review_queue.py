@@ -433,10 +433,14 @@ def _scene_sources() -> None:
         f'<div class="data-table-wrap"><table class="data-table grid-lines"><tbody>'
         f"{record_body}</tbody></table></div>"
     )
+    # The "what a row can and cannot reveal" line now sits inside the IT IS card,
+    # under what the row is. The grid stretches both cards to the taller one's
+    # height, so the two stay the same size.
     twin = (
         f'<div class="twin-grid">'
         f'<div class="twin-card response"><div class="twin-label">{_e(unit["is_label"])}</div>'
-        f"<p>{_e(unit['is_text'])}</p></div>"
+        f"<p>{_e(unit['is_text'])}</p>"
+        f'<p class="twin-note">{_e(unit["closing"])}</p></div>'
         f'<div class="twin-card"><div class="twin-label">{_e(unit["is_not_label"])}</div>'
         f"<p>{_e(unit['is_not_text'])}</p></div>"
         f"</div>"
@@ -446,7 +450,6 @@ def _scene_sources() -> None:
         f'<div class="landing-heading">{_e(unit["heading"])}</div>'
         f'<div class="unit-eq">{_e(unit["equation"])}</div>'
         f"{corridor}{twin}"
-        f'<p class="landing-prose">{_e(unit["closing"])}</p>'
         f"</div>"
     )
 
