@@ -79,9 +79,7 @@ what_1 = _e(copy["what_body"].format(
     observations=observations, year_start=year_start, year_end=year_end,
     n_commodities=n_commodities,
 ))
-# Inject the corridor-definition tooltip around the {corridor_term} placeholder.
-term_html = _tip(copy["corridor_term"], copy["tooltip_corridor"])
-what_2 = term_html.join(_e(part) for part in copy["what_body_2"].split("{corridor_term}"))
+what_2 = _e(copy["what_body_2"])
 commodity_icons = {
     "crude_palm_oil": "droplet",
     "refined_copper_cathodes": "layers",

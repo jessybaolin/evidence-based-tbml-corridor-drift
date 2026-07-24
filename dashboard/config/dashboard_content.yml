@@ -113,7 +113,7 @@ pages:
     what_body: >
       This public-data prototype analyses {observations} annual trade
       observations from {year_start}–{year_end} across {n_commodities}
-      deliberately different commodities:
+      commodities:
     # Rephrased for clarity from the "product mix is intentionally diverse" line
     # on the From Data to Review Queue page: it now names both sides of the test.
     commodity_rationale_statement: >
@@ -123,11 +123,9 @@ pages:
       routine, well-benchmarked commodities, where the method must stay
       disciplined and not flag ordinary trade as unusual.
     what_body_2: >
-      It ranks {corridor_term} patterns using a combination of transparent
-      rules and machine learning, then attaches the evidence, caveats, and
-      possible benign explanations behind each ranking.
-    corridor_term: "exporter–importer–product–year"
-    tooltip_corridor: "One exporter, one importer, one product and one calendar year, aggregated from public trade records."
+      The project ranks patterns using a combination of a weighted-sum score and
+      a machine-learning model, then attaches the evidence, caveats and possible
+      benign explanations behind each ranking.
     commodity_info:
       crude_palm_oil: "Oil pressed from oil-palm fruit. It is widely used in cooking oil, packaged food, soap, cosmetics and biofuel."
       refined_copper_cathodes: "High-purity copper made during refining. It is used for electrical wiring, electronics, motors, plumbing and construction."
@@ -647,31 +645,10 @@ pages:
           product: "Product"
           value: "Trade value"
           quantity: "Quantity"
-      families:
-        heading: "Why these three product families"
-        note: "The commodity itself is never treated as suspicious."
-        hs6_label: "HS6 code"
-        unit_label: "Benchmark quoted in"
-        tests_label: "What it tests"
-        roles:
-          gold_unwrought:
-            role: "Stress case"
-            body: "High value, compact and fungible. Strong relevance to established TBML typologies."
-            tests: "Sensitivity — pronounced valuation patterns should reach the top of the queue."
-          refined_copper_cathodes:
-            role: "Benchmark case"
-            body: "Standardised industrial commodity. Strong international market pricing."
-            tests: "Transferability — the method should hold on conventional, well-priced industrial trade."
-          crude_palm_oil:
-            role: "Scale and stability case"
-            body: "High-volume Southeast Asian commodity. Credible public benchmark."
-            tests: "Discipline — large, ordinary flows should not flood the queue."
-        tags:
-          - "Typology relevance"
-          - "Regional and market relevance"
-          - "Public benchmark availability"
-          - "Analytical feasibility"
-        statement: "The product mix is intentionally diverse: gold tests sensitivity, while copper and palm oil test whether the method remains disciplined on more routine trade."
+      # The "why these three product families" cards were removed from this page
+      # to keep the data-preparation walk clean; that rationale now lives on the
+      # Business Problem and Value page (commodity_rationale), beside the
+      # commodities it introduces.
     scene2:
       heading: "How official records become comparable analytical observations"
       stages:

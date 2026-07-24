@@ -450,33 +450,10 @@ def _scene_sources() -> None:
         f"</div>"
     )
 
-    # Why these three product families: each card carries its family colour, and
-    # the copy is shown directly (no hover reveal).
-    fams = s1["families"]
-    order = ["gold_unwrought", "refined_copper_cathodes", "crude_palm_oil"]
-    fam_cards = []
-    for beat, fid in zip(("b6", "b7", "b7"), order):
-        if fid not in family_hs6:
-            continue
-        role = fams["roles"][fid]
-        fam_cards.append(
-            f'<div class="fam-card sb {beat} fam-{fid}">'
-            f'<div class="fam-head"><span class="chip-dot"></span>'
-            f'<span class="fam-name">{_e(short_labels.get(fid, fid))}</span></div>'
-            f'<div class="fam-role">{_e(role["role"])}</div>'
-            f'<div class="fam-body">{_e(role["body"])}</div>'
-            f"</div>"
-        )
-    tags = "".join(f'<span class="tag">{_e(tag)}</span>' for tag in fams["tags"])
-    _block(
-        f'<div class="landing-section sb reveal b6">'
-        f'<div class="landing-heading">{_e(fams["heading"])}</div>'
-        f'<div class="fam-grid">{"".join(fam_cards)}</div>'
-        f'<div class="sb b8"><div class="tag-row">{tags}</div>'
-        f'<p class="landing-prose">{_e(fams["statement"])}</p></div>'
-        f'</div>'
-    )
-    ledger("panel", "hs_families", "benchmark_series")
+    # The "why these three product families" cards were removed from this page;
+    # that rationale now lives on the Business Problem and Value page, beside the
+    # commodities it introduces.
+    ledger("panel", "benchmark_series")
 
 
 # ---- Scene 2 · Prepare the data -------------------------------------------------
