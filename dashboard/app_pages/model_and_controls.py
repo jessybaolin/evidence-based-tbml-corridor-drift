@@ -77,12 +77,15 @@ blend = f"{challenger_pct}% {challenger_name} + {rule_pct}% rules"
 
 qb = copy["queue_build"]
 section_title(qb["heading"], icon="list-ordered")
+# The step badges were dropped: they were the same accent-circle number as the
+# section badges, so a step ("2 Time-safe features") read like a section
+# ("2 How the ranking is tested"). The arrows already carry the sequence.
 _flow_parts: list[str] = []
 for _i, _s in enumerate(qb["steps"], start=1):
     if _i > 1:
         _flow_parts.append('<span class="mc-flow-arrow" aria-hidden="true">→</span>')
     _flow_parts.append(
-        f'<div class="mc-flow-step"><span class="mc-flow-num">{_i}</span>'
+        f'<div class="mc-flow-step">'
         f'<div class="mc-flow-title">'
         f'{_e(str(_s["title"]).format(queue_size=queue_size, blend=blend))}</div>'
         f'<div class="mc-flow-detail">'

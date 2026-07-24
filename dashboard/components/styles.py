@@ -3644,19 +3644,6 @@ def apply_global_styles() -> None:
         box-shadow: 0 4px 14px {shadow};
         padding: 0.7rem 0.8rem 0.8rem 0.8rem;
     }}
-    .mc-flow-num {{
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.5rem;
-        height: 1.5rem;
-        border-radius: 50%;
-        background: {p["accent_soft"]};
-        color: {at};
-        font-size: 0.78rem;
-        font-weight: 800;
-        margin-bottom: 0.4rem;
-    }}
     .mc-flow-title {{ color: {p["ink"]}; font-size: 0.92rem; font-weight: 750; line-height: 1.3; }}
     .mc-flow-detail {{ color: {p["muted"]}; font-size: 0.8rem; line-height: 1.4; margin-top: 0.2rem; }}
     .mc-flow-arrow {{
