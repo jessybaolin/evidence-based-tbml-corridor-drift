@@ -34,7 +34,9 @@ artifacts/
 .agents/
 
 # Local-only docs + references (never pushed)
-docs/
+docs/*
+!docs/deliverables/
+!docs/deliverables/**
 references/
 
 # Streamlit dashboard prototype (never committed, even if references/ is later un-ignored)
