@@ -27,6 +27,7 @@ PAGES = [
     "bank_implementation_pathway.py",
     "model_and_controls.py",
     "gold_quantity_coverage.py",
+    "documentation.py",
     "appendix.py",
 ]
 
@@ -390,6 +391,7 @@ def test_navigation_group_order_and_renamed_reference_page():
     assert '"title": "Unscored Gold Records"' in source
     assert '"title": "Gold Quantity Coverage"' not in source
     assert '"title": "Bank Implementation Pathway"' in source
+    assert '"title": "Documentation"' in source
     assert '"title": "Data Dictionary"' in source
 
 
@@ -398,6 +400,19 @@ def test_renamed_methodology_and_dictionary_titles_render():
     dictionary = _run_page("appendix.py")
     assert "Model Evaluation &amp; Controls" in _rendered_text(model)
     assert "Data Dictionary" in _rendered_text(dictionary)
+
+
+def test_documentation_download_placeholders_render():
+    at = _run_page("documentation.py")
+    assert not at.exception
+    text = _rendered_text(at)
+    assert "Documentation &amp; Downloads" in text
+    assert "Project Brief" in text
+    assert "Technical Documentation" in text
+    assert len(at.download_button) == 2
+    assert [button.disabled for button in at.download_button] == [False, False]
+    assert text.count("PDF available") == 2
+    assert "PDF not attached" not in text
 
 
 def test_review_queue_filters_and_empty_state():

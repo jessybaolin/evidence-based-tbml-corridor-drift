@@ -116,6 +116,8 @@ PAGE_GROUPS = {
     "Appendix": [
         {"path": "app_pages/appendix.py", "title": "Data Dictionary",
          "icon": ":material/menu_book:"},
+        {"path": "app_pages/documentation.py", "title": "Documentation",
+         "icon": ":material/download:"},
     ],
 }
 

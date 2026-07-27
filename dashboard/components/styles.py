@@ -1480,6 +1480,58 @@ def apply_global_styles() -> None:
        of the cards beside it. Keeps a row of cards on one baseline. */
     .kpi-card .stat-label {{ min-height: 3.2em; }}
 
+    /* Documentation download cards: compact, stable placeholders until the
+       finalized PDFs are attached as static files. */
+    .doc-download-card {{
+        display: flex;
+        gap: 0.85rem;
+        min-height: 132px;
+        background: {p["panel_bg"]};
+        border: 1px solid {p["border"]};
+        border-top: 3px solid {challenge_accent};
+        border-radius: 8px;
+        padding: 0.95rem 1.05rem;
+        box-shadow: 0 4px 14px {shadow};
+        transition: transform {hover_ms}ms ease-out, box-shadow {hover_ms}ms ease-out;
+    }}
+    .doc-download-card:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(198, 93, 99, 0.14);
+    }}
+    .doc-download-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.3rem;
+        height: 2.3rem;
+        border-radius: 8px;
+        background: rgba(198, 93, 99, 0.12);
+        color: {challenge_accent};
+        flex: none;
+    }}
+    .doc-download-icon svg {{ width: 1.15rem; height: 1.15rem; }}
+    .doc-download-copy {{ min-width: 0; }}
+    .doc-download-title {{
+        color: {p["ink"]};
+        font-size: 1rem;
+        font-weight: 750;
+        line-height: 1.25;
+    }}
+    .doc-download-detail {{
+        color: {p["muted"]};
+        font-size: 0.88rem;
+        line-height: 1.45;
+        margin-top: 0.3rem;
+    }}
+    .doc-download-meta {{
+        color: {challenge_accent};
+        font-size: 0.76rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-top: 0.55rem;
+    }}
+
     /* Pipeline flow strip. */
     .flow-strip {{
         display: flex;
