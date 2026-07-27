@@ -18,6 +18,67 @@ page_header(copy["title"], copy["subtitle"], copy["eyebrow"])
 DELIVERABLES_DIR = Path(__file__).resolve().parents[2] / "docs" / "deliverables"
 
 
+def _render_documentation_styles() -> None:
+    theme = load.load_theme()
+    p = theme["palette"]
+    challenge_accent = theme["status"]["severity"]["high"]["color"]
+    shadow = p.get("card_shadow", "rgba(29,45,70,0.08)")
+    css = f"""
+    <style>
+    .doc-download-card {{
+        display: flex !important;
+        gap: 0.85rem !important;
+        min-height: 132px !important;
+        background: {p["panel_bg"]} !important;
+        border: 1px solid {p["border"]} !important;
+        border-top: 3px solid {challenge_accent} !important;
+        border-radius: 8px !important;
+        padding: 0.95rem 1.05rem !important;
+        box-shadow: 0 4px 14px {shadow} !important;
+        transition: transform 180ms ease-out, box-shadow 180ms ease-out !important;
+    }}
+    .doc-download-card:hover {{
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(198, 93, 99, 0.14) !important;
+    }}
+    .doc-download-icon {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 2.3rem !important;
+        height: 2.3rem !important;
+        border-radius: 8px !important;
+        background: rgba(198, 93, 99, 0.12) !important;
+        color: {challenge_accent} !important;
+        flex: none !important;
+    }}
+    .doc-download-icon svg {{ width: 1.15rem !important; height: 1.15rem !important; }}
+    .doc-download-copy {{ min-width: 0 !important; }}
+    .doc-download-title {{
+        color: {p["ink"]} !important;
+        font-size: 1rem !important;
+        font-weight: 750 !important;
+        line-height: 1.25 !important;
+    }}
+    .doc-download-detail {{
+        color: {p["muted"]} !important;
+        font-size: 0.88rem !important;
+        line-height: 1.45 !important;
+        margin-top: 0.3rem !important;
+    }}
+    .doc-download-meta {{
+        color: {challenge_accent} !important;
+        font-size: 0.76rem !important;
+        font-weight: 750 !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+        margin-top: 0.55rem !important;
+    }}
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+
 def _e(text: object) -> str:
     return html.escape(str(text), quote=True)
 
@@ -57,6 +118,7 @@ def _download_card(item: dict, key: str) -> None:
     )
 
 
+_render_documentation_styles()
 section_title(copy["section_heading"], copy["section_caption"], icon="package")
 
 cols = st.columns(2, gap="medium")
