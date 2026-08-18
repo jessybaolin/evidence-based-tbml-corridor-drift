@@ -230,8 +230,8 @@ def apply_global_styles() -> None:
         width: 100%;
         min-height: 2.15rem;
         margin: 0;
-        padding: 0.3rem 0.58rem;
-        gap: 0.58rem;
+        padding: 0.42rem 0.6rem;
+        gap: 0.5rem;
         border: 0;
         border-left: 3px solid transparent;
         border-radius: 7px;
@@ -260,7 +260,7 @@ def apply_global_styles() -> None:
         min-width: 0;
         flex: 1;
         color: {p["sidebar_ink"]};
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         font-weight: 600;
         line-height: 1.25;
         white-space: nowrap;

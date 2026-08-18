@@ -7,7 +7,7 @@
 # drift from the pipeline's approved wording.
 
 app:
-  title: "Review Priority Triage System"
+  title: "TBML Review-Priority System"
   short_title: "TBML Triage System"
   subtitle: "Turns official public trade data into a ranked queue of unusual corridor–product–year patterns for human review."
   icon: "🔎"

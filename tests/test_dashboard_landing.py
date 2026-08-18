@@ -125,7 +125,7 @@ def test_dashboard_sidebar_links_directly_to_project_walkthrough():
     at = _run_page("executive_overview.py")
     assert not at.exception
     sidebar_html = "\n".join(str(block.value) for block in at.sidebar.markdown)
-    assert "Review Priority Triage System" in sidebar_html
+    assert "TBML Review-Priority System" in sidebar_html
     assert "Review-priority analytics" not in sidebar_html
     assert "Project walkthrough" in sidebar_html
     assert "https://www.youtube.com/watch?v=s-p0yXFv6fQ" in sidebar_html
