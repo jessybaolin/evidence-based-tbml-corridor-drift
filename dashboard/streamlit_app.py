@@ -75,6 +75,26 @@ def _render_about(about: dict | None) -> None:
         unsafe_allow_html=True,
     )
 
+
+def _render_walkthrough_link(walkthrough: dict | None) -> None:
+    """Render the persistent external video action below the sidebar brand."""
+    if not walkthrough:
+        return
+    label = str(walkthrough.get("label", "") or "").strip()
+    url = str(walkthrough.get("url", "") or "").strip()
+    accessible_label = str(walkthrough.get("accessible_label", label) or label).strip()
+    if not label or not url:
+        return
+    st.markdown(
+        f'<a class="sidebar-walkthrough" href="{html.escape(url, quote=True)}" '
+        f'target="_blank" rel="noopener noreferrer" '
+        f'aria-label="{html.escape(accessible_label, quote=True)}">'
+        f'<span class="sidebar-walkthrough-icon">{render_icon("youtube")}</span>'
+        f'<span class="sidebar-walkthrough-label">{html.escape(label)}</span>'
+        f'</a>',
+        unsafe_allow_html=True,
+    )
+
 st.set_page_config(
     page_title=content["app"]["short_title"],
     page_icon=content["app"]["icon"],
@@ -151,14 +171,19 @@ if on_landing:
     apply_landing_styles()
 else:
     with st.sidebar:
-        st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="brand-sub">{content["app"]["tagline"]}</div>', unsafe_allow_html=True)
-        # Keep the landing-page return with the app identity rather than among
-        # content pages or creator links. CSS presents this as an icon-only home
-        # control while retaining the label for assistive technology.
-        with st.container(key="sidebar_home"):
-            st.page_link(landing_page, label="Main Page", icon=":material/home:")
-        st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
+        # Keep the brand utilities in one zero-gap layout block. Streamlit wraps
+        # each element separately; the keyed parent lets CSS replace those
+        # implicit gaps with deliberate spacing around the video action.
+        with st.container(key="sidebar_brand"):
+            st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="brand-sub">{content["app"]["tagline"]}</div>', unsafe_allow_html=True)
+            # Keep the landing-page return with the app identity rather than among
+            # content pages or creator links. CSS presents this as an icon-only home
+            # control while retaining the label for assistive technology.
+            with st.container(key="sidebar_home"):
+                st.page_link(landing_page, label="Main Page", icon=":material/home:")
+            _render_walkthrough_link(content.get("project_walkthrough"))
+            st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
         for group_name, entries in PAGE_GROUPS.items():
             st.markdown(f'<div class="nav-group">{group_name}</div>', unsafe_allow_html=True)
             for entry in entries:

@@ -149,11 +149,17 @@ def apply_global_styles() -> None:
         color: {p["sidebar_muted"]};
         font-size: 0.9rem;
         line-height: 1.4;
-        margin: 0 0 0.35rem 0;
+        margin: 0;
+    }}
+    .st-key-sidebar_brand [data-testid="stVerticalBlock"] {{
+        gap: 0 !important;
+    }}
+    .st-key-sidebar_brand {{
+        margin-bottom: -0.62rem;
     }}
     .brand-rule {{
         border-top: 1px solid rgba(234, 240, 248, 0.22);
-        margin: 0.35rem 0 0.5rem 0;
+        margin: 0.04rem 0 0.28rem 0;
     }}
 
     /* Icon-only return to the welcome page. It sits in the brand area rather
@@ -214,6 +220,59 @@ def apply_global_styles() -> None:
         transform: none !important;
     }}
     .st-key-sidebar_home [data-testid="stPageLink"] a:focus-visible {{
+        outline: 2px solid {teal500};
+        outline-offset: 2px;
+    }}
+
+    /* Persistent project orientation link. The YouTube brand mark retains its
+       familiar red while the surrounding row stays within the navy sidebar. */
+    .sidebar-walkthrough {{
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 2.15rem;
+        margin: 0;
+        padding: 0.3rem 0.58rem;
+        gap: 0.58rem;
+        border: 0;
+        border-left: 3px solid transparent;
+        border-radius: 7px;
+        color: {p["sidebar_ink"]} !important;
+        background: transparent;
+        text-decoration: none !important;
+        transition: background-color {hover_ms}ms ease-out,
+                    border-left-color {hover_ms}ms ease-out,
+                    transform {hover_ms}ms ease-out;
+    }}
+    .sidebar-walkthrough-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.25rem;
+        height: 1.25rem;
+        flex: 0 0 1.25rem;
+        color: #FF0000 !important;
+    }}
+    .sidebar-walkthrough .sidebar-walkthrough-icon svg {{
+        width: 100%;
+        height: 100%;
+        color: #FF0000 !important;
+    }}
+    .sidebar-walkthrough-label {{
+        min-width: 0;
+        flex: 1;
+        color: {p["sidebar_ink"]};
+        font-size: 0.88rem;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
+    }}
+    .sidebar-walkthrough:hover {{
+        background: {hover_bg};
+        border-left-color: {teal500};
+        transform: translateX(2px);
+    }}
+    .sidebar-walkthrough:focus-visible {{
         outline: 2px solid {teal500};
         outline-offset: 2px;
     }}

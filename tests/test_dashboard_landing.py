@@ -121,6 +121,17 @@ def test_dashboard_sidebar_offers_a_return_to_main_page():
     assert "clip: rect(0, 0, 0, 0)" in styles
 
 
+def test_dashboard_sidebar_links_directly_to_project_walkthrough():
+    at = _run_page("executive_overview.py")
+    assert not at.exception
+    sidebar_html = "\n".join(str(block.value) for block in at.sidebar.markdown)
+    assert "Project walkthrough" in sidebar_html
+    assert "https://www.youtube.com/watch?v=s-p0yXFv6fQ" in sidebar_html
+    assert 'target="_blank"' in sidebar_html
+    assert 'rel="noopener noreferrer"' in sidebar_html
+    assert "sidebar-walkthrough-icon" in sidebar_html
+
+
 def test_direct_deep_navigation_bypasses_the_landing():
     # AppTest.switch_page mirrors a deep link: the landing never executes, so
     # its session flag is never initialised and no CTA appears. Use a page that

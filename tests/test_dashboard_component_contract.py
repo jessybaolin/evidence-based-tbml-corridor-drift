@@ -13,7 +13,7 @@ def test_icon_registry_is_local_and_uses_current_color():
     expected = {
         "database", "calendar", "package", "shield-check", "chart-pie", "brain",
         "layers", "landmark", "line-chart", "file-search", "file-text", "rotate-cw",
-        "info",
+        "info", "youtube",
     }
     assert expected <= set(icon_names())
     svg = render_icon("database")
@@ -21,6 +21,9 @@ def test_icon_registry_is_local_and_uses_current_color():
     assert 'fill="none"' in svg
     assert 'aria-hidden="true"' in svg
     assert "http" not in svg
+    youtube = render_icon("youtube")
+    assert 'fill="currentColor"' in youtube
+    assert 'fill="white"' in youtube
 
 
 def test_kpi_markup_uses_one_shared_anatomy_and_teal_accent():

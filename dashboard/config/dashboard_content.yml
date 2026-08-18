@@ -16,6 +16,13 @@ app:
   tagline: "Review-priority analytics"
   icon: "🔎"
 
+# Persistent orientation link shown below the sidebar brand area. It opens the
+# hosted walkthrough directly on YouTube rather than creating another app page.
+project_walkthrough:
+  label: "Project walkthrough"
+  accessible_label: "Watch the Evidence-First TBML project walkthrough on YouTube"
+  url: "https://www.youtube.com/watch?v=s-p0yXFv6fQ"
+
 # Full-screen welcome (landing) copy. The hero title spells the acronym out in
 # full — the compact "Evidence-First TBML Triage System" stays the sidebar
 # brand. title_lines are rendered as separate hero lines (semantic phrases), so
