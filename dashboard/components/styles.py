@@ -159,23 +159,27 @@ def apply_global_styles() -> None:
     }}
     .brand-rule {{
         border-top: 1px solid rgba(234, 240, 248, 0.22);
-        margin: 0.04rem 0 0.28rem 0;
+        margin: 0.12rem 0 0.28rem 0;
     }}
 
-    /* Icon-only return to the welcome page. It sits in the brand area rather
-       than in a navigation group, so it reads as a global home action. The text
-       stays in the accessibility tree but is visually clipped. */
+    /* Keep the two global orientation actions on one compact row directly
+       above the navigation divider. */
+    .st-key-sidebar_actions [data-testid="stHorizontalBlock"] {{
+        align-items: center !important;
+        gap: 0.35rem !important;
+    }}
+    .st-key-sidebar_actions [data-testid="column"] {{
+        min-width: 0 !important;
+    }}
+
+    /* Icon-only return to the welcome page. The label remains available to
+       assistive technology while the control aligns with the walkthrough. */
     .st-key-sidebar_home {{
-        height: 0;
         margin: 0;
-        position: relative;
         z-index: 2;
     }}
     .st-key-sidebar_home [data-testid="stPageLink"] {{ margin: 0 !important; }}
     .st-key-sidebar_home [data-testid="stPageLink"] a {{
-        position: absolute;
-        right: 0;
-        bottom: 0.2rem;
         width: 2.15rem;
         height: 2.15rem;
         min-height: 2.15rem;

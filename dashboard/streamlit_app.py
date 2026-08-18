@@ -177,12 +177,17 @@ else:
         with st.container(key="sidebar_brand"):
             st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="brand-sub">{content["app"]["tagline"]}</div>', unsafe_allow_html=True)
-            # Keep the landing-page return with the app identity rather than among
-            # content pages or creator links. CSS presents this as an icon-only home
-            # control while retaining the label for assistive technology.
-            with st.container(key="sidebar_home"):
-                st.page_link(landing_page, label="Main Page", icon=":material/home:")
-            _render_walkthrough_link(content.get("project_walkthrough"))
+            # Global orientation actions share one row: the walkthrough remains
+            # the primary action while Home stays compact and accessible.
+            with st.container(key="sidebar_actions"):
+                walkthrough_col, home_col = st.columns(
+                    [5, 1], gap="small", vertical_alignment="center"
+                )
+                with walkthrough_col:
+                    _render_walkthrough_link(content.get("project_walkthrough"))
+                with home_col:
+                    with st.container(key="sidebar_home"):
+                        st.page_link(landing_page, label="Main Page", icon=":material/home:")
             st.markdown('<div class="brand-rule"></div>', unsafe_allow_html=True)
         for group_name, entries in PAGE_GROUPS.items():
             st.markdown(f'<div class="nav-group">{group_name}</div>', unsafe_allow_html=True)
