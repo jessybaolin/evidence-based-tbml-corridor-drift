@@ -176,7 +176,6 @@ else:
         # implicit gaps with deliberate spacing around the video action.
         with st.container(key="sidebar_brand"):
             st.markdown(f'<div class="brand-title">{content["app"]["title"]}</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="brand-sub">{content["app"]["tagline"]}</div>', unsafe_allow_html=True)
             # Global orientation actions share one row: the walkthrough remains
             # the primary action while Home stays compact and accessible.
             with st.container(key="sidebar_actions"):

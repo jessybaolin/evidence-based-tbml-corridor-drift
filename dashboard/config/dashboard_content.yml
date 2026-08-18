@@ -7,13 +7,9 @@
 # drift from the pipeline's approved wording.
 
 app:
-  title: "Evidence-First TBML Triage System"
+  title: "Review Priority Triage System"
   short_title: "TBML Triage System"
   subtitle: "Turns official public trade data into a ranked queue of unusual corridor–product–year patterns for human review."
-  # Short sidebar descriptor. The full `subtitle` sentence is the landing hero's
-  # value line; the persistent sidebar carries only this compact tag so the nav
-  # stays scannable (and deep-linkers who skip the landing still get context).
-  tagline: "Review-priority analytics"
   icon: "🔎"
 
 # Persistent orientation link shown below the sidebar brand area. It opens the
@@ -24,9 +20,9 @@ project_walkthrough:
   url: "https://www.youtube.com/watch?v=s-p0yXFv6fQ"
 
 # Full-screen welcome (landing) copy. The hero title spells the acronym out in
-# full — the compact "Evidence-First TBML Triage System" stays the sidebar
-# brand. title_lines are rendered as separate hero lines (semantic phrases), so
-# the break points are controlled here, not by the CSS.
+# full while the sidebar uses the compact product name above. title_lines are
+# rendered as separate hero lines (semantic phrases), so the break points are
+# controlled here, not by the CSS.
 landing:
   eyebrow: "Review-priority analytics"
   title_lines:

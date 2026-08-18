@@ -145,12 +145,6 @@ def apply_global_styles() -> None:
         font-weight: 800;
         margin: 0.1rem 0 0.45rem 0;
     }}
-    .brand-sub {{
-        color: {p["sidebar_muted"]};
-        font-size: 0.9rem;
-        line-height: 1.4;
-        margin: 0;
-    }}
     .st-key-sidebar_brand [data-testid="stVerticalBlock"] {{
         gap: 0 !important;
     }}
